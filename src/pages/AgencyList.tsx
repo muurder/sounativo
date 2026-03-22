@@ -8,6 +8,34 @@ import { logger } from '../utils/logger';
 
 const ITEMS_PER_PAGE = 9;
 
+const getInitials = (name: string) => {
+  if (!name) return 'AG';
+  const parts = name.trim().split(/\s+/);
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+  return name.substring(0, 2).toUpperCase();
+};
+
+const AgencyAvatar: React.FC<{ agency: Agency, className: string, fallbackClassName: string }> = ({ agency, className, fallbackClassName }) => {
+  const [imgError, setImgError] = React.useState(false);
+
+  if (!agency.logo || imgError) {
+    return (
+      <div className={fallbackClassName}>
+        {getInitials(agency.name)}
+      </div>
+    );
+  }
+
+  return (
+    <img 
+      src={agency.logo} 
+      alt={agency.name} 
+      className={className}
+      onError={() => setImgError(true)}
+    />
+  );
+};
+
 const AgencyList: React.FC = () => {
   const { searchAgencies, loading: dataLoading } = useData();
   const [searchTerm, setSearchTerm] = useState('');
@@ -175,10 +203,10 @@ const AgencyList: React.FC = () => {
                             {/* Avatar invading banner */}
                             <div className="relative -mt-10 px-6 flex justify-center">
                               <div className="relative">
-                                <img 
-                                  src={agency.logo} 
-                                  alt={agency.name} 
-                                  className="w-20 h-20 rounded-full object-cover border-4 border-white shadow-xl"
+                                <AgencyAvatar 
+                                  agency={agency} 
+                                  className="w-20 h-20 rounded-full object-cover border-4 border-white shadow-xl bg-white"
+                                  fallbackClassName="w-20 h-20 rounded-full border-4 border-white shadow-xl bg-emerald-100 flex items-center justify-center text-emerald-800 font-bold text-2xl tracking-wider"
                                 />
                                 {agency.subscriptionStatus === 'ACTIVE' && (
                                   <div className="absolute -bottom-1 -right-1 bg-emerald-500 rounded-full p-1 border-2 border-white">
@@ -211,8 +239,12 @@ const AgencyList: React.FC = () => {
                         ) : (
                           <>
                             <div className="flex items-center gap-6 flex-1">
-                              <div className="relative flex-shrink-0">
-                                <img src={agency.logo} alt={agency.name} className="w-14 h-14 rounded-full object-cover border border-gray-100 shadow-sm"/>
+                              <div className="relative flex-shrink-0 bg-white rounded-full">
+                                <AgencyAvatar 
+                                  agency={agency} 
+                                  className="w-14 h-14 rounded-full object-cover border border-gray-100 shadow-sm bg-white"
+                                  fallbackClassName="w-14 h-14 rounded-full border border-gray-100 shadow-sm bg-emerald-100 flex items-center justify-center text-emerald-800 font-bold text-lg tracking-wider"
+                                />
                               </div>
                               <div className="min-w-0 flex-1">
                                 <h3 className="font-bold text-gray-900 leading-tight group-hover:text-emerald-600 transition-colors text-lg truncate">{agency.name}</h3>
