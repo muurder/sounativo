@@ -47,7 +47,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const fetchUserData = async (authId: string, email: string) => {
     // CRITICAL FIX: Add guard to prevent redundant re-fetches if user is already in state
     // This stops the infinite loop from DataContext's useEffect triggering reloadUser repeatedly
-    if (user && user.id === authId && user.email === email && !localStorage.getItem('viajastore_pending_role')) {
+    if (user && user.id === authId && user.email === email && !localStorage.getItem('sounativo_pending_role')) {
       logger.log("[AuthContext] fetchUserData: User data already in state, skipping re-fetch for ID:", authId);
       return; 
     }
@@ -306,12 +306,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               if (newSession?.user) {
                 if (event === 'SIGNED_IN') {
                    logger.log("[AuthContext] Event: SIGNED_IN");
-                   const pendingRole = localStorage.getItem('viajastore_pending_role');
+                   const pendingRole = localStorage.getItem('sounativo_pending_role');
                    if (pendingRole) {
                        try {
                          const success = await ensureUserRecord(newSession.user, pendingRole);
                          if (success) {
-                            localStorage.removeItem('viajastore_pending_role');
+                            localStorage.removeItem('sounativo_pending_role');
                          }
                        } catch (ensureError) {
                          logger.error("[AuthContext] Error ensuring user record in listener:", ensureError);
@@ -333,7 +333,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               } else if (event === 'SIGNED_OUT') {
                 logger.log("[AuthContext] Event: SIGNED_OUT, clearing user state.");
                 setUser(null);
-                localStorage.removeItem('viajastore_pending_role'); // Clear pending role on sign out
+                localStorage.removeItem('sounativo_pending_role'); // Clear pending role on sign out
               }
             }
           });
@@ -357,12 +357,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         
         if (session?.user) {
           logger.log("[AuthContext] Session found on init", session.user.email);
-          const pendingRole = localStorage.getItem('viajastore_pending_role');
+          const pendingRole = localStorage.getItem('sounativo_pending_role');
           if (pendingRole) {
               logger.log("[AuthContext] Pending role found:", pendingRole);
               try {
                 await ensureUserRecord(session.user, pendingRole);
-                localStorage.removeItem('viajastore_pending_role');
+                localStorage.removeItem('sounativo_pending_role');
               } catch (ensureError) {
                 logger.error("[AuthContext] Error ensuring user record:", ensureError);
                 // Continue anyway - don't block initialization
@@ -457,10 +457,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         : `${window.location.origin}/`;
 
     if (role) {
-        localStorage.setItem('viajastore_pending_role', role);
+        localStorage.setItem('sounativo_pending_role', role);
         logger.log("[AuthContext] Setting pending role for Google login:", role);
     } else {
-        localStorage.removeItem('viajastore_pending_role');
+        localStorage.removeItem('sounativo_pending_role');
     }
 
     const { error } = await (supabase.auth as any).signInWithOAuth({
@@ -545,7 +545,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // We store a pending role to be applied on the next SIGNED_IN event and stop here.
     if (!hasSession) {
       try {
-        localStorage.setItem('viajastore_pending_role', role.toString());
+        localStorage.setItem('sounativo_pending_role', role.toString());
       } catch {
         // ignore - non-fatal
       }
@@ -581,7 +581,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             String(profileError.message || '').toLowerCase().includes('violates row-level security')
           ) {
             try {
-              localStorage.setItem('viajastore_pending_role', role.toString());
+              localStorage.setItem('sounativo_pending_role', role.toString());
             } catch {
               // ignore
             }

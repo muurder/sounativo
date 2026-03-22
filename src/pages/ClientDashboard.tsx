@@ -2956,7 +2956,7 @@ const ClientDashboard: React.FC = () => {
               {(selectedBooking?._agency?.logo || editingReview?.agencyLogo) && (<img src={selectedBooking?._agency?.logo || editingReview?.agencyLogo} alt="" className="w-12 h-12 rounded-full object-cover border border-gray-200" />)}
               <div>
                 <p className="text-xs text-gray-500 uppercase font-bold">Agência</p>
-                <p className="font-bold text-gray-900">{selectedBooking?._agency?.name || editingReview?.agencyName || 'Parceiro ViajaStore'}</p>
+                <p className="font-bold text-gray-900">{selectedBooking?._agency?.name || editingReview?.agencyName || 'Parceiro SouNativo'}</p>
               </div>
             </div>
             <form onSubmit={showEditReviewModal ? handleEditReviewSubmit : handleReviewSubmit}>

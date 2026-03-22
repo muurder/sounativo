@@ -3,7 +3,7 @@
 -- =====================================================
 -- ⚠️  ATENÇÃO: ESTE SCRIPT É DESTRUTIVO ⚠️
 -- 
--- Este script limpa TODAS as tabelas de dados do ViajaStore,
+-- Este script limpa TODAS as tabelas de dados do SouNativo,
 -- preservando apenas tabelas de configuração (planos, temas base).
 -- 
 -- USE APENAS EM AMBIENTE DE DESENVOLVIMENTO/TESTE!

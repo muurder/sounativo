@@ -74,13 +74,13 @@ export const CheckoutSuccess: React.FC = () => {
   const voucherCode = booking.voucherCode;
   const tripDate = booking.date ? new Date(booking.date).toLocaleDateString('pt-BR') : new Date().toLocaleDateString('pt-BR');
   const tripTitle = booking._trip?.title || 'Pacote de Viagem';
-  const agencyName = booking._agency?.name || 'ViajaStore';
+  const agencyName = booking._agency?.name || 'SouNativo';
 
   const handleShare = async () => {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: 'Minha Viagem ViajaStore',
+          title: 'Minha Viagem SouNativo',
           text: `Reservei minha viagem para ${tripTitle}! Voucher: ${voucherCode}`,
           url: window.location.href,
         });

@@ -59,7 +59,7 @@ const AgencyProfile: React.FC = () => {
            <div className="flex flex-wrap gap-6 text-sm text-gray-600 justify-center md:justify-start border-t border-gray-100 pt-6">
               <span className="flex items-center"><MapPin size={16} className="mr-2" /> Brasil</span>
               <span className="flex items-center">CNPJ: {agency.cnpj}</span>
-              <span className="flex items-center text-green-600 font-semibold">✓ Verificado ViajaStore</span>
+              <span className="flex items-center text-green-600 font-semibold">✓ Verificado SouNativo</span>
            </div>
         </div>
       </div>

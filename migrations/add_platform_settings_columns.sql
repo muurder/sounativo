@@ -16,7 +16,7 @@ ALTER TABLE public.platform_settings
 -- Atualizar default_settings com valores atuais se estiver vazio
 UPDATE public.platform_settings
 SET default_settings = jsonb_build_object(
-  'platform_name', COALESCE(platform_name, 'ViajaStore'),
+  'platform_name', COALESCE(platform_name, 'SouNativo'),
   'platform_logo_url', platform_logo_url,
   'maintenance_mode', COALESCE(maintenance_mode, false),
   'layout_style', COALESCE(layout_style, 'rounded'),

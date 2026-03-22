@@ -1279,7 +1279,7 @@ export const AdminDashboard: React.FC = () => {
   const [activitySearch, setActivitySearch] = useState('');
 
   const [platformSettingsForm, setPlatformSettingsForm] = useState({
-    platform_name: 'ViajaStore',
+    platform_name: 'SouNativo',
     platform_logo_url: '',
     maintenance_mode: false,
     layout_style: 'rounded' as 'rounded' | 'square' | 'minimal',
@@ -1294,7 +1294,7 @@ export const AdminDashboard: React.FC = () => {
   useEffect(() => {
     if (platformSettings) {
       setPlatformSettingsForm({
-        platform_name: platformSettings.platform_name || 'ViajaStore',
+        platform_name: platformSettings.platform_name || 'SouNativo',
         platform_logo_url: platformSettings.platform_logo_url || '',
         maintenance_mode: platformSettings.maintenance_mode || false,
         layout_style: platformSettings.layout_style || 'rounded',
@@ -5369,7 +5369,7 @@ export const AdminDashboard: React.FC = () => {
                       value={platformSettingsForm.platform_name}
                       onChange={(e) => setPlatformSettingsForm({ ...platformSettingsForm, platform_name: e.target.value })}
                       className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all"
-                      placeholder="ViajaStore"
+                      placeholder="SouNativo"
                       required
                     />
                     <p className="text-xs text-gray-500 mt-2">Este nome aparecerá no header, footer e título da página.</p>

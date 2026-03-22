@@ -44,7 +44,7 @@ export const AgencyReviews: React.FC<AgencyReviewsProps> = ({ reviews, currentAg
                                 <div className="flex items-center gap-3">
                                     <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-500">{review.clientName?.charAt(0)}</div>
                                     <div>
-                                        <p className="font-bold text-gray-900 text-sm">{review.clientName || 'Cliente ViajaStore'}</p>
+                                        <p className="font-bold text-gray-900 text-sm">{review.clientName || 'Cliente SouNativo'}</p>
                                         <p className="text-xs text-gray-500">{new Date(review.createdAt).toLocaleDateString()}</p>
                                     </div>
                                 </div>

@@ -63,7 +63,7 @@ const GuideList: React.FC = () => {
     const phone = guide.whatsapp || guide.phone;
     if (!phone) return '#';
     const number = phone.replace(/\D/g, '');
-    return `https://wa.me/${number}?text=${encodeURIComponent('Olá! Vi seu perfil na ViajaStore.')}`;
+    return `https://wa.me/${number}?text=${encodeURIComponent('Olá! Vi seu perfil no SouNativo.')}`;
   };
 
   const allSpecialties = Array.from(new Set(allGuides.flatMap(g => g.specialties || g.customSettings?.tags || []).filter(t => t !== 'GUIA')));

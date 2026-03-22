@@ -2,7 +2,7 @@
 -- SQL Migration: Sistema de Broadcast (Comunicados)
 -- =====================================================
 -- Este script cria as tabelas necessárias para o sistema
--- de comunicados (broadcast) no ViajaStore
+-- de comunicados (broadcast) no SouNativo
 -- =====================================================
 
 -- 1. Tabela: broadcast_messages

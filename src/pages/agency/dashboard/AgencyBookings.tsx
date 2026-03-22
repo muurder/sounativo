@@ -253,7 +253,7 @@ export const BookingDetailsView: React.FC<BookingDetailsViewProps> = ({ bookings
                         const duration = trip.durationDays;
                         addField('Duração:', `${duration} Dias`);
                         y += 5;
-                        addField('Agência Responsável:', agency?.name || 'ViajaStore Partner');
+                        addField('Agência Responsável:', agency?.name || 'SouNativo Partner');
                         if (agency?.phone) addField('Contato Agência:', agency.phone);
                         y += 10;
 
@@ -327,7 +327,7 @@ export const BookingDetailsView: React.FC<BookingDetailsViewProps> = ({ bookings
                         y = 280;
                         doc.setFontSize(8);
                         doc.setTextColor(150, 150, 150);
-                        doc.text('Emitido por ViajaStore - O maior marketplace de viagens do Brasil.', 105, y, { align: 'center' });
+                        doc.text('Emitido por SouNativo - O maior marketplace de viagens do Brasil.', 105, y, { align: 'center' });
                         doc.save(`voucher_${selectedBooking.voucherCode}.pdf`);
                         showToast('Voucher baixado com sucesso!', 'success');
                     } catch (error) {

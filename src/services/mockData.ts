@@ -41,7 +41,7 @@ export const MOCK_CLIENTS: Client[] = [
   {
     id: 'c1',
     name: 'João Viajante',
-    email: 'cliente@viajastore.com',
+    email: 'cliente@sounativo.com',
     password: '123',
     role: UserRole.CLIENT,
     avatar: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?auto=format&fit=crop&w=150&q=80',

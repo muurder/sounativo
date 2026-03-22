@@ -686,71 +686,72 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       logger.warn("[DataContext] Supabase not configured, cannot add booking.");
       return undefined;
     }
-    logger.log("[DataContext] Adding booking:", booking);
+    logger.log("[DataContext] Adding booking (atomic):", booking);
+
+    // Find agency ID derived from trip
+    const trip = tripsRef.current.find(t => t.id === booking.tripId);
+    if (!trip) {
+      logger.error("[DataContext] Trip not found for booking:", booking.tripId);
+      showToast("Erro: Pacote não encontrado.", 'error');
+      throw new Error("Trip not found");
+    }
+    const agencyId = trip.agencyId; // Assuming Trip has agencyId
+
     try {
-      const { data, error } = await sb.from('bookings').insert({
-        id: booking.id,
-        trip_id: booking.tripId,
-        client_id: booking.clientId,
-        status: booking.status,
-        total_price: booking.totalPrice,
-        passengers: booking.passengers,
-        voucher_code: booking.voucherCode,
-        payment_method: booking.paymentMethod
-      }).select().single();
-
-      if (error) throw error;
-
-      // Save passenger details if provided
+      // Prepare passengers JSONB
+      let passengerPayload: any[] = [];
       if (booking.passengerDetails && booking.passengerDetails.length > 0) {
-        const passengerRecords = booking.passengerDetails.map((passenger, index) => {
-          // Extract document from passenger.document or passenger.cpf (if exists in data)
+        passengerPayload = booking.passengerDetails.map((passenger, index) => {
           const rawDoc = passenger.document || (passenger as any).cpf || '';
           const documentDigits = rawDoc.replace(/\D/g, '') || null;
-
           return {
-            booking_id: booking.id,
             full_name: passenger.name,
             document: documentDigits,
             birth_date: passenger.birthDate || null,
             phone: passenger.whatsapp || passenger.phone?.replace(/\D/g, '') || null,
-            is_primary: index === 0 // First passenger is primary
+            is_primary: index === 0
           };
         });
-
-        const { error: passengerError } = await sb
-          .from('booking_passengers')
-          .insert(passengerRecords);
-
-        if (passengerError) {
-          logger.error("[DataContext] Error saving passenger details:", passengerError);
-          // Don't fail the booking if passenger details fail - log and continue
-        } else {
-          logger.log("[DataContext] Passenger details saved successfully");
-        }
       }
 
+      // Call Atomic RPC
+      const { data, error } = await sb.rpc('create_complete_booking', {
+        p_trip_id: booking.tripId,
+        p_client_id: booking.clientId,
+        p_agency_id: agencyId,
+        p_total_price: booking.totalPrice,
+        p_status: booking.status,
+        p_payment_status: 'PENDING', // Default to pending if not specified? Or use booking.paymentStatus?
+        p_passengers: passengerPayload
+      });
+
+      if (error) throw error;
+
+      const createdBookingData = data as any; // Type assertion
+
       showToast('Reserva criada com sucesso!', 'success');
+      logger.log("[DataContext] Atomic booking created:", createdBookingData.id);
 
-      // Increment sales count for the trip
-      const { error: tripUpdateError } = await sb.rpc('increment_sales', { trip_id_param: booking.tripId, increment_value: 1 }); // Call RPC function
-      if (tripUpdateError) logger.error("[DataContext] Error incrementing sales:", tripUpdateError);
-
-      // Augment data before returning (using refs for stability)
-      const newBooking = {
+      // Augment data before returning
+      const newBooking: Booking = {
         ...booking,
-        _trip: tripsRef.current.find(t => t.id === booking.tripId),
-        _agency: agenciesRef.current.find(a => a.agencyId === tripsRef.current.find(t => t.id === booking.tripId)?.agencyId)
+        id: createdBookingData.id, // Use ID from DB
+        _trip: trip,
+        _agency: agenciesRef.current.find(a => a.agencyId === agencyId)
       };
 
       logActivity(ActivityActionType.BOOKING_CREATED, { bookingId: newBooking.id, tripId: newBooking.tripId, totalPrice: newBooking.totalPrice });
       if (user) _fetchBookingsForCurrentUser();
-      logger.log("[DataContext] Booking added successfully:", newBooking.id);
+
       return newBooking;
 
     } catch (error: any) {
       logger.error("[DataContext] Error adding booking:", error.message);
-      showToast(`Erro ao adicionar reserva: ${error.message}`, 'error');
+      let errorMsg = error.message;
+      if (error.message.includes('Não há vagas')) {
+        errorMsg = 'Esgotado! Não há vagas suficientes para esta reserva.';
+      }
+      showToast(`Erro ao adicionar reserva: ${errorMsg}`, 'error');
       throw error;
     }
   }, [showToast, logActivity, _fetchBookingsForCurrentUser, user, guardSupabase, tripsRef, agenciesRef]); // tripsRef, agenciesRef added to dependencies
@@ -1416,16 +1417,29 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       logger.error("[DataContext] Error updating operational data:", error.message);
       showToast(`Erro ao atualizar dados operacionais: ${error.message}`, 'error');
 
-      // Rollback on error: refetch only this trip
-      const { data: tripData } = await sb.from('trips').select('*').eq('id', tripId).single();
-      if (tripData) {
-        setTrips(prevTrips => prevTrips.map(t =>
-          t.id === tripId ? tripData as Trip : t
-        ));
+      // Rollback logic with fallback
+      try {
+        logger.log("[DataContext] Attempting to rollback trip data...");
+        const { data: tripData, error: rollbackError } = await sb.from('trips').select('*').eq('id', tripId).single();
+
+        if (!rollbackError && tripData) {
+          // Restore specific trip data locally
+          setTrips(prevTrips => prevTrips.map(t =>
+            t.id === tripId ? tripData as Trip : t
+          ));
+          logger.log("[DataContext] Rollback successful for trip:", tripId);
+        } else {
+          throw new Error("Rollback fetch failed");
+        }
+      } catch (rollbackEx) {
+        // Fallback: If rollback fails, force full refresh to ensure consistency
+        logger.error("[DataContext] Critical: Rollback failed, forcing full refresh.", rollbackEx);
+        _fetchGlobalAndClientProfiles();
       }
+
       throw error;
     }
-  }, [showToast, guardSupabase]);
+  }, [showToast, guardSupabase, _fetchGlobalAndClientProfiles]);
 
   const softDeleteEntity = useCallback(async (id: string, table: string) => {
     const sb = guardSupabase();

@@ -44,7 +44,7 @@ export const HireGuides: React.FC = () => {
         const phone = guide.whatsapp || guide.phone;
         if (!phone) return '#';
         const number = phone.replace(/\D/g, '');
-        return `https://wa.me/${number}?text=${encodeURIComponent('Olá! Vi seu perfil na ViajaStore e gostaria de cotar seus serviços.')}`;
+        return `https://wa.me/${number}?text=${encodeURIComponent('Olá! Vi seu perfil no SouNativo e gostaria de cotar seus serviços.')}`;
     };
 
     return (

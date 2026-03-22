@@ -25,7 +25,7 @@ import BroadcastSpotlight from '../../components/BroadcastSpotlight';
 
 // Mock Opportunities
 const MOCK_JOBS = [
-    { id: 1, title: 'Guia para Grupo Corporativo', date: '2024-12-20', location: 'Capitólio, MG', agency: 'ViajaStore Official', budget: 'R$ 600,00' },
+    { id: 1, title: 'Guia para Grupo Corporativo', date: '2024-12-20', location: 'Capitólio, MG', agency: 'SouNativo Official', budget: 'R$ 600,00' },
     { id: 2, title: 'Transfer e City Tour', date: '2024-12-22', location: 'São Paulo, SP', agency: 'Rota Segura', budget: 'R$ 450,00' },
     { id: 3, title: 'Guia Bilingue (Inglês)', date: '2025-01-05', location: 'Paraty, RJ', agency: 'Global Trips', budget: 'R$ 800,00' },
 ];

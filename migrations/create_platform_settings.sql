@@ -8,7 +8,7 @@
 -- Criar tabela
 CREATE TABLE IF NOT EXISTS public.platform_settings (
   id integer NOT NULL DEFAULT 1,
-  platform_name text NOT NULL DEFAULT 'ViajaStore',
+  platform_name text NOT NULL DEFAULT 'SouNativo',
   platform_logo_url text,
   maintenance_mode boolean NOT NULL DEFAULT false,
   -- Personalização de Layout
@@ -31,9 +31,9 @@ INSERT INTO public.platform_settings (
   default_settings
 )
 VALUES (
-  1, 'ViajaStore', NULL, false,
+  1, 'SouNativo', NULL, false,
   'rounded', '#ffffff', false, 1.0,
-  '{"platform_name": "ViajaStore", "platform_logo_url": null, "maintenance_mode": false, "layout_style": "rounded", "background_color": "#ffffff", "background_blur": false, "background_transparency": 1.0}'::jsonb
+  '{"platform_name": "SouNativo", "platform_logo_url": null, "maintenance_mode": false, "layout_style": "rounded", "background_color": "#ffffff", "background_blur": false, "background_transparency": 1.0}'::jsonb
 )
 ON CONFLICT (id) DO NOTHING;
 

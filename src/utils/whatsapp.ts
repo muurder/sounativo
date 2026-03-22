@@ -12,7 +12,7 @@ export const buildWhatsAppLink = (whatsapp: string | undefined, trip: Trip): str
   const path = `/viagem/${trip.slug || trip.id}`;
   const tripUrl = isHashRouter ? `${baseUrl}/#${path}` : `${baseUrl}${path}`;
 
-  const message = `Olá! Vi o pacote *${trip.title}* na ViajaStore.
+  const message = `Olá! Vi o pacote *${trip.title}* no SouNativo.
 Destino: ${trip.destination}
 Duração: ${trip.durationDays} dias
 Preço: A partir de R$ ${trip.price.toLocaleString('pt-BR')}

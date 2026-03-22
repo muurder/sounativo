@@ -105,7 +105,7 @@ export const generateTripVoucherPDF = async ({
     doc.setTextColor(30, 41, 59); // Dark gray
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(18);
-    const agencyName = agency?.name || 'ViajaStore Partner';
+    const agencyName = agency?.name || 'SouNativo Partner';
     const logoWidth = logoBase64 ? 50 : 0;
     doc.text(agencyName, 15 + logoWidth, 25);
     
@@ -416,7 +416,7 @@ export const generateTripVoucherPDF = async ({
     
     doc.setFontSize(8);
     doc.setTextColor(148, 163, 184); // Slate 400
-    doc.text('Emitido por ViajaStore - O maior marketplace de viagens do Brasil.', 105, pageHeight - 12, { align: 'center' });
+    doc.text('Emitido por SouNativo - O maior marketplace de viagens do Brasil.', 105, pageHeight - 12, { align: 'center' });
 
     // Save PDF - This should trigger download
     const fileName = `voucher_${voucherCode || 'reserva'}.pdf`;

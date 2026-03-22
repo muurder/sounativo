@@ -119,14 +119,10 @@ const Layout: React.FC = () => {
   useEffect(() => {
     if (!location.pathname.includes('/viagem/')) {
       if ((isAgencyMode || isAgencyDashboard) && currentAgency) {
-        const platformName = (platformSettings?.platform_name && platformSettings.platform_name !== 'ViajaStore')
-          ? platformSettings.platform_name
-          : 'SouNativo';
+        const platformName = platformSettings?.platform_name || 'SouNativo';
         document.title = `${currentAgency.name} | ${platformName}`;
       } else {
-        const platformName = (platformSettings?.platform_name && platformSettings.platform_name !== 'ViajaStore')
-          ? platformSettings.platform_name
-          : 'SouNativo';
+        const platformName = platformSettings?.platform_name || 'SouNativo';
         document.title = `${platformName} | O maior marketplace de viagens`;
       }
     }
@@ -185,7 +181,7 @@ const Layout: React.FC = () => {
   const TEST_ACCOUNTS: QuickAccount[] = [
     { name: 'Admin Teste', email: 'admin@teste.com', password: 'admin123', role: 'ADMIN', icon: ShieldCheck },
     { name: 'Cliente Teste', email: 'cliente@teste.com', password: 'cliente123', role: 'CLIENT', icon: User },
-    { name: 'Admin (admin@sounativo.com)', email: 'admin@viajastore.com', password: '', role: 'ADMIN', icon: ShieldCheck, requiresPassword: true },
+    { name: 'Admin (admin@sounativo.com)', email: 'admin@sounativo.com', password: '', role: 'ADMIN', icon: ShieldCheck, requiresPassword: true },
     { name: 'Agência (pedro@gmail.com)', email: 'pedro@gmail.com', password: '', role: 'AGENCY', icon: Building, requiresPassword: true },
     { name: 'Cliente (4agencia@gmail.com)', email: '4agencia@gmail.com', password: '', role: 'CLIENT', icon: User, requiresPassword: true },
   ];
@@ -466,11 +462,9 @@ const Layout: React.FC = () => {
                     <>
                       {platformSettings?.platform_logo_url ? (
                         <>
-                          <img src={platformSettings.platform_logo_url} alt={(platformSettings?.platform_name && platformSettings.platform_name !== 'ViajaStore') ? platformSettings.platform_name : 'SouNativo'} className="h-8 w-auto mr-2" />
+                          <img src={platformSettings.platform_logo_url} alt={platformSettings?.platform_name || 'SouNativo'} className="h-8 w-auto mr-2" />
                           <span className="font-bold text-xl tracking-tight text-primary-800 hidden md:inline">
-                            {(platformSettings?.platform_name && platformSettings.platform_name !== 'ViajaStore')
-                              ? platformSettings.platform_name
-                              : 'SouNativo'}
+                            {platformSettings?.platform_name || 'SouNativo'}
                           </span>
                         </>
                       ) : (
@@ -766,7 +760,7 @@ const Layout: React.FC = () => {
         {isMicrositeClientArea ? (
           <div className="w-full px-4 sm:px-6 lg:px-8 text-center">
             <Link to="/" className="inline-flex items-center text-gray-400 hover:text-primary-600 font-bold uppercase tracking-wider transition-colors">
-              <Globe size={12} className="mr-2" /> Voltar para o Marketplace {(platformSettings?.platform_name && platformSettings.platform_name !== 'ViajaStore') ? platformSettings.platform_name : 'SouNativo'}
+              <Globe size={12} className="mr-2" /> Voltar para o Marketplace {platformSettings?.platform_name || 'SouNativo'}
             </Link>
           </div>
         ) : (
@@ -780,7 +774,7 @@ const Layout: React.FC = () => {
                   </div>
                 ) : (
                   <div className="mb-4">
-                    <span className="text-xl font-bold text-gray-900">{(platformSettings?.platform_name && platformSettings.platform_name !== 'ViajaStore') ? platformSettings.platform_name : 'SouNativo'}</span>
+                    <span className="text-xl font-bold text-gray-900">{platformSettings?.platform_name || 'SouNativo'}</span>
                     <p className="text-gray-500 text-sm mt-2 max-w-sm">Conectando você às melhores experiências de viagem do Brasil.</p>
                   </div>
                 )}
@@ -813,12 +807,12 @@ const Layout: React.FC = () => {
             </div>
             <div className="border-t border-gray-200 pt-8 flex flex-col md:flex-row justify-between items-center">
               <p className="text-sm text-gray-400">
-                &copy; {new Date().getFullYear()} {(platformSettings?.platform_name && platformSettings.platform_name !== 'ViajaStore') ? platformSettings.platform_name : 'SouNativo'}. Todos os direitos reservados.
+                &copy; {new Date().getFullYear()} {platformSettings?.platform_name || 'SouNativo'}. Todos os direitos reservados.
               </p>
               <div className="flex items-center gap-2 mt-4 md:mt-0">
                 <span className="text-[10px] text-gray-400 uppercase font-bold">Powered by</span>
                 <Logo className="h-4" showText={false} />
-                <span className="text-xs font-extrabold text-gray-600">{(platformSettings?.platform_name && platformSettings.platform_name !== 'ViajaStore') ? platformSettings.platform_name : 'SouNativo'}</span>
+                <span className="text-xs font-extrabold text-gray-600">{platformSettings?.platform_name || 'SouNativo'}</span>
               </div>
             </div>
           </div>

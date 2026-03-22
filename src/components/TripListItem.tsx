@@ -150,7 +150,7 @@ const TripListItem: React.FC<TripListItemProps> = ({ trip, onHover, highlighted,
               </>
             ) : (
               <div className="bg-gray-100 text-gray-600 px-3 py-1.5 rounded-lg font-bold text-xs">
-                Novo no ViajaStore
+                Novo no SouNativo
               </div>
             )}
           </div>
