@@ -2161,9 +2161,7 @@ export const AdminDashboard: React.FC = () => {
       return;
     }
 
-    setIsProcessing(true);
-
-    // Only show confirm dialog if not already confirmed
+    // Check confirmation first to avoid blocking UI state
     if (!skipConfirm && !window.confirm(`Mover "${name}" para a lixeira?`)) {
       return;
     }
@@ -2363,6 +2361,11 @@ export const AdminDashboard: React.FC = () => {
   const handleUserStatusToggle = async (user: Client) => {
     const currentStatus = user.status || 'ACTIVE'; // Default to ACTIVE if undefined
     const newStatus = currentStatus === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE';
+    const actionText = newStatus === 'ACTIVE' ? 'reativar' : 'pausar (suspender)';
+
+    if (!window.confirm(`Tem certeza que deseja ${actionText} o usuário "${user.name}"?`)) {
+      return;
+    }
 
     logger.log('[AdminDashboard] Toggling user status:', {
       userId: user.id,
