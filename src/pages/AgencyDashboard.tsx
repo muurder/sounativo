@@ -94,6 +94,7 @@ import {
 import { PLANS } from '../services/mockData';
 import { logger } from '../utils/logger';
 import { slugify } from '../utils/slugify';
+import { generateSlugFromName, generateUniqueSlug } from '../utils/slugUtils';
 import { getDailyHeroImage } from '../utils/dailyHeroImage';
 
 import SubscriptionModal from '../components/SubscriptionModal';
@@ -294,7 +295,6 @@ const AgencyDashboard: React.FC = () => {
     try {
       setLoading(true);
       // Ensure unique slug
-      const { generateSlugFromName, generateUniqueSlug } = await import('../utils/slugUtils');
       const baseSlug = generateSlugFromName(tripData.title);
       const uniqueSlug = await generateUniqueSlug(baseSlug, 'trips');
 
@@ -353,7 +353,6 @@ const AgencyDashboard: React.FC = () => {
 
     setIsDuplicatingTrip(trip.id);
     try {
-      const { generateSlugFromName, generateUniqueSlug } = await import('../utils/slugUtils');
       const newTitle = `${trip.title} (Cópia)`;
       const baseSlug = generateSlugFromName(newTitle);
       const uniqueSlug = await generateUniqueSlug(baseSlug, 'trips');

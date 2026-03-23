@@ -41,7 +41,7 @@ import {
 } from '../services/mockData';
 import { useToast } from './ToastContext';
 import { slugify } from '../utils/slugify';
-import { validateSlug, generateUniqueSlug } from '../utils/slugUtils';
+import { validateSlug, generateUniqueSlug, normalizeSlug } from '../utils/slugUtils';
 import { logger } from '../utils/logger';
 import { debounce } from '../utils/debounce';
 
@@ -1396,8 +1396,6 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       try {
         // FIX: Validate and generate unique slug before inserting
-        const { normalizeSlug, validateSlug, generateUniqueSlug } =
-          await import('../utils/slugUtils');
         const normalizedSlug = normalizeSlug(trip.slug, trip.title);
         const slugValidation = validateSlug(normalizedSlug);
 

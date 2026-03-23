@@ -5,14 +5,27 @@ import { DataProvider } from './context/DataContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { ToastProvider } from './context/ToastContext';
 import Layout from './components/Layout';
-import Home from './pages/Home';
-import { TripList } from './pages/TripList';
-import TripDetails from './pages/TripDetails';
-import { AgencyLayout } from './pages/agency/AgencyLayout';
-import Settings from './pages/Settings';
-import { About, Contact, Terms, Help, Privacy, Blog, Careers, Press } from './pages/StaticPages';
-import { NotFound, Unauthorized, CheckoutSuccess, ForgotPassword } from './pages/UtilityPages';
-import { AdminDashboard } from './pages/AdminDashboard';
+const Home = lazy(() => import('./pages/Home'));
+const TripList = lazy(() => import('./pages/TripList').then(m => ({ default: m.TripList })));
+const TripDetails = lazy(() => import('./pages/TripDetails'));
+const Settings = lazy(() => import('./pages/Settings'));
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard').then(m => ({ default: m.AdminDashboard })));
+const AgencyLayout = lazy(() => import('./pages/agency/AgencyLayout').then(m => ({ default: m.AgencyLayout })));
+
+// Static & Utility Pages
+const About = lazy(() => import('./pages/StaticPages').then(m => ({ default: m.About })));
+const Contact = lazy(() => import('./pages/StaticPages').then(m => ({ default: m.Contact })));
+const Terms = lazy(() => import('./pages/StaticPages').then(m => ({ default: m.Terms })));
+const Help = lazy(() => import('./pages/StaticPages').then(m => ({ default: m.Help })));
+const Privacy = lazy(() => import('./pages/StaticPages').then(m => ({ default: m.Privacy })));
+const Blog = lazy(() => import('./pages/StaticPages').then(m => ({ default: m.Blog })));
+const Careers = lazy(() => import('./pages/StaticPages').then(m => ({ default: m.Careers })));
+const Press = lazy(() => import('./pages/StaticPages').then(m => ({ default: m.Press })));
+
+const NotFound = lazy(() => import('./pages/UtilityPages').then(m => ({ default: m.NotFound })));
+const Unauthorized = lazy(() => import('./pages/UtilityPages').then(m => ({ default: m.Unauthorized })));
+const CheckoutSuccess = lazy(() => import('./pages/UtilityPages').then(m => ({ default: m.CheckoutSuccess })));
+const ForgotPassword = lazy(() => import('./pages/UtilityPages').then(m => ({ default: m.ForgotPassword })));
 
 const LoadingSpinner = () => (
   <div className="flex items-center justify-center min-h-[50vh]">

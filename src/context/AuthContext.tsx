@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, ReactNode, useEffect } from
 import { User, UserRole, Client, Agency, Admin } from '../types';
 import { supabase } from '../services/supabase';
 import { slugify } from '../utils/slugify';
-import { generateUniqueSlug, generateSlugFromName } from '../utils/slugUtils';
+import { generateUniqueSlug, generateSlugFromName, validateSlug } from '../utils/slugUtils';
 import { useToast } from './ToastContext'; // Import useToast
 import { logger } from '../utils/logger';
 
@@ -938,12 +938,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           const newSlug = (userData as Agency).slug || '';
           if (newSlug.trim()) {
             // Validate slug format
-            const { validateSlug } = await import('../utils/slugUtils');
             const validation = validateSlug(newSlug.trim());
             if (validation.valid) {
               // Check if slug is unique (if not empty and different from current)
               if ((user as Agency).slug !== newSlug.trim()) {
-                const { generateUniqueSlug } = await import('../utils/slugUtils');
                 const uniqueSlug = await generateUniqueSlug(newSlug.trim(), 'agencies', user.id);
                 updates.slug = uniqueSlug;
               } else {
@@ -954,7 +952,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             }
           } else if ((user as Agency).slug === '') {
             // If current slug is empty and new slug is also empty, generate from name
-            const { generateSlugFromName, generateUniqueSlug } = await import('../utils/slugUtils');
             const baseSlug = generateSlugFromName(user.name);
             const uniqueSlug = await generateUniqueSlug(baseSlug, 'agencies', user.id);
             updates.slug = uniqueSlug;

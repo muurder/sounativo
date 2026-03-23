@@ -111,15 +111,21 @@ export default defineConfig({
   build: {
     chunkSizeWarningLimit: 500,
     rollupOptions: {
-      external: ['jspdf', 'jspdf-autotable'],
+      external: [],
       output: {
         manualChunks: (id) => {
           if (id.includes('node_modules')) {
-            if (id.includes('recharts')) {
-              return 'vendor-recharts';
+            if (id.includes('recharts') || id.includes('d3')) {
+              return 'vendor-charts';
+            }
+            if (id.includes('@supabase/postgrest-js')) {
+              return 'vendor-supabase-db';
+            }
+            if (id.includes('@supabase/gotrue-js') || id.includes('@supabase/auth-js')) {
+              return 'vendor-supabase-auth';
             }
             if (id.includes('@supabase')) {
-              return 'vendor-supabase';
+              return 'vendor-supabase-core';
             }
             if (id.includes('react-router')) {
               return 'vendor-router';
@@ -139,10 +145,7 @@ export default defineConfig({
             return 'vendor';
           }
         },
-        globals: {
-          jspdf: 'jsPDF',
-          'jspdf-autotable': 'jspdf_autotable'
-        }
+        globals: {}
       }
     }
   }
