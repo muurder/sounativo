@@ -139,9 +139,7 @@ export default defineConfig({
             if (id.includes('lucide-react')) {
               return 'vendor-icons';
             }
-            if (id.includes('jspdf')) {
-              return 'vendor-pdf';
-            }
+
             return 'vendor';
           }
         },

@@ -1,5 +1,5 @@
 import { jsPDF } from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 import { Booking, Trip, Agency, PassengerDetail, Client } from '../types';
 import { logger } from './logger';
 
@@ -72,12 +72,6 @@ export const generateTripVoucherPDF = async ({
 }: GenerateTripVoucherPDFParams): Promise<void> => {
   try {
     const doc = new jsPDF();
-
-    // Verify autoTable is available
-    const hasAutoTable = typeof (doc as any).autoTable === 'function';
-    if (!hasAutoTable) {
-      logger.warn('jspdf-autotable plugin not loaded, using manual table rendering');
-    }
 
     // Initialize Y position tracker
     let currentY = 60;
@@ -310,43 +304,17 @@ export const generateTripVoucherPDF = async ({
     // Generate Table
     let finalY = currentY;
     try {
-      // Check if autoTable is available
-      if (hasAutoTable) {
-        (doc as any).autoTable({
-          startY: currentY,
-          head: [['Nome Completo', 'Documento', 'Tipo']],
-          body: tableBody,
-          theme: 'striped',
-          headStyles: { fillColor: [241, 245, 249], textColor: [71, 85, 105], fontStyle: 'bold' },
-          styles: { fontSize: 10, cellPadding: 4 },
-          alternateRowStyles: { fillColor: [255, 255, 255] },
-        });
-        finalY = (doc as any).lastAutoTable?.finalY || currentY;
-      } else {
-        // Fallback: Manual table drawing if autoTable is not available
-        logger.warn('autoTable not available, using manual table');
-        doc.setFontSize(10);
-        doc.setTextColor(71, 85, 105);
-        doc.setFont('helvetica', 'bold');
-        doc.text('Nome Completo', 15, finalY);
-        doc.text('Documento', 80, finalY);
-        doc.text('Tipo', 140, finalY);
-        finalY += 5;
-        doc.setDrawColor(226, 232, 240);
-        doc.line(15, finalY, 195, finalY);
-        finalY += 8;
-
-        tableBody.forEach((row: string[]) => {
-          doc.setFontSize(9);
-          doc.setFont('helvetica', 'normal');
-          doc.setTextColor(30, 41, 59);
-          doc.text((row[0] || '').substring(0, 30), 15, finalY);
-          doc.text((row[1] || '---').substring(0, 20), 80, finalY);
-          doc.text(row[2] || '', 140, finalY);
-          finalY += 7;
-        });
-        finalY += 5;
-      }
+      // Use autoTable directly
+      autoTable(doc, {
+        startY: currentY,
+        head: [['Nome Completo', 'Documento', 'Tipo']],
+        body: tableBody,
+        theme: 'striped',
+        headStyles: { fillColor: [241, 245, 249], textColor: [71, 85, 105], fontStyle: 'bold' },
+        styles: { fontSize: 10, cellPadding: 4 },
+        alternateRowStyles: { fillColor: [255, 255, 255] },
+      });
+      finalY = (doc as any).lastAutoTable?.finalY || currentY;
     } catch (tableError: any) {
       logger.error('Error generating table:', tableError);
       // Fallback: Simple text list
