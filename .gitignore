@@ -31,4 +31,8 @@ dist-ssr
 *.tmp
 *.temp
 *.swp
-*~
+
+# AI Tools
+.gemini/
+.agents/
+.agent/

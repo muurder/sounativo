@@ -66,10 +66,10 @@ export const FeaturedSection: React.FC = () => {
       <div className="container mx-auto px-4 md:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-12 mt-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-white drop-shadow-lg mb-3">
+          <h2 className="text-3xl md:text-4xl font-bold text-stone-900 mb-3">
             Experiências Curadas para Você
           </h2>
-          <p className="text-lg text-white/90 drop-shadow-md max-w-2xl mx-auto">
+          <p className="text-lg text-stone-600 max-w-2xl mx-auto">
             Viagens autênticas selecionadas por especialistas locais
           </p>
         </div>
