@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { X, User, Calendar, Phone, CreditCard, ArrowRight, Baby } from 'lucide-react';
 import { PassengerDetail, PassengerConfig } from '../types';
-import { updatePassengerType, calculatePassengerType, getDefaultPassengerConfig } from '../utils/passengerUtils';
+import {
+  updatePassengerType,
+  calculatePassengerType,
+  getDefaultPassengerConfig,
+} from '../utils/passengerUtils';
 
 interface PassengerDataModalProps {
   isOpen: boolean;
@@ -28,7 +32,7 @@ export const PassengerDataModal: React.FC<PassengerDataModalProps> = ({
   mainPassengerCpf,
   mainPassengerPhone,
   mainPassengerBirthDate,
-  passengerConfig
+  passengerConfig,
 }) => {
   const config = passengerConfig || getDefaultPassengerConfig();
   const [passengers, setPassengers] = useState<PassengerDetail[]>([]);
@@ -43,7 +47,7 @@ export const PassengerDataModal: React.FC<PassengerDataModalProps> = ({
           document: mainPassengerCpf || '',
           phone: mainPassengerPhone || '',
           birthDate: mainPassengerBirthDate || '',
-          type: 'adult'
+          type: 'adult',
         },
         // Add adults (excluding main passenger)
         ...Array.from({ length: adultsCount - 1 }, () => ({
@@ -51,7 +55,7 @@ export const PassengerDataModal: React.FC<PassengerDataModalProps> = ({
           document: '',
           phone: '',
           birthDate: '',
-          type: 'adult' as const
+          type: 'adult' as const,
         })),
         // Add children
         ...Array.from({ length: childrenCount }, () => ({
@@ -59,25 +63,34 @@ export const PassengerDataModal: React.FC<PassengerDataModalProps> = ({
           document: '',
           phone: '',
           birthDate: '',
-          type: 'child' as const
-        }))
+          type: 'child' as const,
+        })),
       ];
       setPassengers(initialPassengers);
       setErrors({});
     }
-  }, [isOpen, passengerCount, adultsCount, childrenCount, mainPassengerName, mainPassengerCpf, mainPassengerPhone, mainPassengerBirthDate]);
+  }, [
+    isOpen,
+    passengerCount,
+    adultsCount,
+    childrenCount,
+    mainPassengerName,
+    mainPassengerCpf,
+    mainPassengerPhone,
+    mainPassengerBirthDate,
+  ]);
 
   const handleInputChange = (index: number, field: keyof PassengerDetail, value: string) => {
     const updated = [...passengers];
     updated[index] = { ...updated[index], [field]: value };
-    
+
     // If birthDate changed, recalculate type and age using trip's age limit
     if (field === 'birthDate' && value) {
       updated[index] = updatePassengerType(updated[index], config.childAgeLimit);
     }
-    
+
     setPassengers(updated);
-    
+
     // Clear error for this field
     if (errors[index]) {
       const newErrors = { ...errors };
@@ -88,7 +101,7 @@ export const PassengerDataModal: React.FC<PassengerDataModalProps> = ({
 
   const validateForm = (): boolean => {
     const newErrors: Record<number, string> = {};
-    
+
     passengers.forEach((passenger, index) => {
       if (!passenger.name.trim()) {
         newErrors[index] = 'Nome completo é obrigatório';
@@ -112,7 +125,7 @@ export const PassengerDataModal: React.FC<PassengerDataModalProps> = ({
     e.preventDefault();
     if (validateForm()) {
       // Ensure all passengers have their type calculated before submitting
-      const passengersWithTypes = passengers.map(p => {
+      const passengersWithTypes = passengers.map((p) => {
         if (p.birthDate && !p.type) {
           return updatePassengerType(p, config.childAgeLimit);
         }
@@ -147,8 +160,11 @@ export const PassengerDataModal: React.FC<PassengerDataModalProps> = ({
           <div>
             <h2 className="text-2xl font-bold text-white">Dados dos Passageiros</h2>
             <p className="text-primary-100 text-sm mt-1">
-              Preencha os dados de todos os passageiros ({adultsCount} {adultsCount === 1 ? 'adulto' : 'adultos'}
-              {childrenCount > 0 && ` + ${childrenCount} ${childrenCount === 1 ? 'criança' : 'crianças'}`})
+              Preencha os dados de todos os passageiros ({adultsCount}{' '}
+              {adultsCount === 1 ? 'adulto' : 'adultos'}
+              {childrenCount > 0 &&
+                ` + ${childrenCount} ${childrenCount === 1 ? 'criança' : 'crianças'}`}
+              )
             </p>
           </div>
           <button
@@ -165,150 +181,160 @@ export const PassengerDataModal: React.FC<PassengerDataModalProps> = ({
               const passengerType = calculatePassengerType(passenger, config.childAgeLimit);
               const isChild = passengerType === 'child';
               const isMain = index === 0;
-              
+
               return (
-              <div key={index} className={`rounded-xl p-6 border-2 ${
-                isChild 
-                  ? 'bg-amber-50 border-amber-200' 
-                  : 'bg-gray-50 border-gray-200'
-              }`}>
-                <div className="flex items-center gap-3 mb-4">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${
-                    isChild 
-                      ? 'bg-amber-500 text-white' 
-                      : 'bg-primary-600 text-white'
-                  }`}>
-                    {index + 1}
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-bold text-gray-900">
-                        {isMain ? 'Passageiro Principal' : `Acompanhante ${index}`}
-                      </h3>
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-bold flex items-center gap-1 ${
-                        isChild
-                          ? 'bg-amber-100 text-amber-700'
-                          : 'bg-blue-100 text-blue-700'
-                      }`}>
-                        {isChild ? (
-                          <>
-                            <Baby size={12} />
-                            Criança
-                          </>
-                        ) : (
-                          <>
-                            <User size={12} />
-                            Adulto
-                          </>
-                        )}
-                      </span>
-                      {passenger.age !== undefined && (
-                        <span className="text-xs text-gray-500">
-                          ({passenger.age} {passenger.age === 1 ? 'ano' : 'anos'})
+                <div
+                  key={index}
+                  className={`rounded-xl p-6 border-2 ${
+                    isChild ? 'bg-amber-50 border-amber-200' : 'bg-gray-50 border-gray-200'
+                  }`}
+                >
+                  <div className="flex items-center gap-3 mb-4">
+                    <div
+                      className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${
+                        isChild ? 'bg-amber-500 text-white' : 'bg-primary-600 text-white'
+                      }`}
+                    >
+                      {index + 1}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-bold text-gray-900">
+                          {isMain ? 'Passageiro Principal' : `Acompanhante ${index}`}
+                        </h3>
+                        <span
+                          className={`px-2 py-0.5 rounded-full text-xs font-bold flex items-center gap-1 ${
+                            isChild ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700'
+                          }`}
+                        >
+                          {isChild ? (
+                            <>
+                              <Baby size={12} />
+                              Criança
+                            </>
+                          ) : (
+                            <>
+                              <User size={12} />
+                              Adulto
+                            </>
+                          )}
                         </span>
+                        {passenger.age !== undefined && (
+                          <span className="text-xs text-gray-500">
+                            ({passenger.age} {passenger.age === 1 ? 'ano' : 'anos'})
+                          </span>
+                        )}
+                      </div>
+                      {isMain && (
+                        <p className="text-xs text-gray-500 mt-0.5">Você (cliente logado)</p>
+                      )}
+                      {!isMain && passenger.type && (
+                        <p className="text-xs text-gray-500 mt-0.5">
+                          {isChild ? 'Menor de 12 anos' : '12 anos ou mais'}
+                        </p>
                       )}
                     </div>
-                    {isMain && (
-                      <p className="text-xs text-gray-500 mt-0.5">Você (cliente logado)</p>
-                    )}
-                    {!isMain && passenger.type && (
-                      <p className="text-xs text-gray-500 mt-0.5">
-                        {isChild ? 'Menor de 12 anos' : '12 anos ou mais'}
-                      </p>
-                    )}
+                  </div>
+
+                  {errors[index] && (
+                    <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                      {errors[index]}
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-bold text-gray-700 mb-2">
+                        Nome Completo *
+                      </label>
+                      <div className="relative">
+                        <User
+                          className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                          size={20}
+                        />
+                        <input
+                          type="text"
+                          value={passenger.name}
+                          onChange={(e) => handleInputChange(index, 'name', e.target.value)}
+                          className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
+                          placeholder="Nome completo do passageiro"
+                          required
+                          disabled={index === 0}
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-bold text-gray-700 mb-2">
+                        CPF {index === 0 ? '*' : ''}
+                      </label>
+                      <div className="relative">
+                        <CreditCard
+                          className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                          size={20}
+                        />
+                        <input
+                          type="text"
+                          value={passenger.document || ''}
+                          onChange={(e) => {
+                            const formatted = formatCPF(e.target.value);
+                            handleInputChange(index, 'document', formatted);
+                          }}
+                          className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
+                          placeholder="000.000.000-00"
+                          maxLength={14}
+                          required={index === 0}
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-bold text-gray-700 mb-2">
+                        Data de Nascimento
+                      </label>
+                      <div className="relative">
+                        <Calendar
+                          className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                          size={20}
+                        />
+                        <input
+                          type="date"
+                          value={passenger.birthDate || ''}
+                          onChange={(e) => handleInputChange(index, 'birthDate', e.target.value)}
+                          className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
+                        />
+                      </div>
+                      {passenger.birthDate && passenger.age !== undefined && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          {passenger.age < 12
+                            ? `✓ Classificado como criança (${passenger.age} ${passenger.age === 1 ? 'ano' : 'anos'})`
+                            : `✓ Classificado como adulto (${passenger.age} ${passenger.age === 1 ? 'ano' : 'anos'})`}
+                        </p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-bold text-gray-700 mb-2">WhatsApp</label>
+                      <div className="relative">
+                        <Phone
+                          className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                          size={20}
+                        />
+                        <input
+                          type="text"
+                          value={passenger.phone || ''}
+                          onChange={(e) => {
+                            const formatted = formatPhone(e.target.value);
+                            handleInputChange(index, 'phone', formatted);
+                          }}
+                          className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
+                          placeholder="(00) 00000-0000"
+                          maxLength={15}
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
-
-                {errors[index] && (
-                  <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-                    {errors[index]}
-                  </div>
-                )}
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-bold text-gray-700 mb-2">
-                      Nome Completo *
-                    </label>
-                    <div className="relative">
-                      <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-                      <input
-                        type="text"
-                        value={passenger.name}
-                        onChange={(e) => handleInputChange(index, 'name', e.target.value)}
-                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
-                        placeholder="Nome completo do passageiro"
-                        required
-                        disabled={index === 0}
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-2">
-                      CPF {index === 0 ? '*' : ''}
-                    </label>
-                    <div className="relative">
-                      <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-                      <input
-                        type="text"
-                        value={passenger.document || ''}
-                        onChange={(e) => {
-                          const formatted = formatCPF(e.target.value);
-                          handleInputChange(index, 'document', formatted);
-                        }}
-                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
-                        placeholder="000.000.000-00"
-                        maxLength={14}
-                        required={index === 0}
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-2">
-                      Data de Nascimento
-                    </label>
-                    <div className="relative">
-                      <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-                      <input
-                        type="date"
-                        value={passenger.birthDate || ''}
-                        onChange={(e) => handleInputChange(index, 'birthDate', e.target.value)}
-                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
-                      />
-                    </div>
-                    {passenger.birthDate && passenger.age !== undefined && (
-                      <p className="text-xs text-gray-500 mt-1">
-                        {passenger.age < 12 
-                          ? `✓ Classificado como criança (${passenger.age} ${passenger.age === 1 ? 'ano' : 'anos'})`
-                          : `✓ Classificado como adulto (${passenger.age} ${passenger.age === 1 ? 'ano' : 'anos'})`
-                        }
-                      </p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-2">
-                      WhatsApp
-                    </label>
-                    <div className="relative">
-                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-                      <input
-                        type="text"
-                        value={passenger.phone || ''}
-                        onChange={(e) => {
-                          const formatted = formatPhone(e.target.value);
-                          handleInputChange(index, 'phone', formatted);
-                        }}
-                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
-                        placeholder="(00) 00000-0000"
-                        maxLength={15}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
               );
             })}
           </div>
@@ -334,4 +360,3 @@ export const PassengerDataModal: React.FC<PassengerDataModalProps> = ({
     </div>
   );
 };
-

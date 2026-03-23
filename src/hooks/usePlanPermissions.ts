@@ -20,14 +20,14 @@ export const usePlanPermissions = (): PlanPermissions => {
   const { agencies, trips } = useData();
 
   return useMemo(() => {
-    const currentAgency = agencies.find(a => a.id === user?.id);
-    
+    const currentAgency = agencies.find((a) => a.id === user?.id);
+
     // Default to STARTER if no plan is set
     const subscriptionPlan = (currentAgency?.subscriptionPlan as PlanType) || 'STARTER';
-    
+
     // Count active trips for this agency
-    const agencyTrips = trips.filter(t => 
-      t.agencyId === currentAgency?.agencyId && t.is_active === true
+    const agencyTrips = trips.filter(
+      (t) => t.agencyId === currentAgency?.agencyId && t.is_active === true
     );
     const currentActiveTrips = agencyTrips.length;
 
@@ -35,7 +35,7 @@ export const usePlanPermissions = (): PlanPermissions => {
     const maxTripsMap: Record<PlanType, number> = {
       STARTER: 2,
       BASIC: 5,
-      PREMIUM: Infinity
+      PREMIUM: Infinity,
     };
 
     const maxTrips = maxTripsMap[subscriptionPlan] || 1;
@@ -47,8 +47,7 @@ export const usePlanPermissions = (): PlanPermissions => {
       canAccessOperational,
       maxTrips,
       canPostTrip,
-      currentActiveTrips
+      currentActiveTrips,
     };
   }, [agencies, trips, user?.id]);
 };
-

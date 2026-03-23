@@ -21,7 +21,7 @@ export default {
           200: '#99CBBF',
           300: '#66B19F',
           400: '#33977F',
-          500: '#0F4C3A', // Verde Floresta - LUXURY NATURE
+          500: '#0F4C3A',
           600: '#0C3D2E',
           700: '#092E23',
           800: '#061F17',
@@ -34,7 +34,7 @@ export default {
           200: '#E7B7A3',
           300: '#DB9375',
           400: '#CF6F47',
-          500: '#C66B3D', // Terracota - LUXURY NATURE
+          500: '#C66B3D',
           600: '#9E5631',
           700: '#774025',
           800: '#4F2B19',
@@ -42,7 +42,7 @@ export default {
           foreground: '#ffffff',
         },
         accent: {
-          DEFAULT: '#FAFAF9', // Stone 50 - Background Premium
+          DEFAULT: '#FAFAF9',
           50: '#FAFAF9',
           100: '#F5F5F4',
           200: '#E7E5E4',

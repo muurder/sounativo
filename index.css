@@ -1,10 +1,8 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  /* Default Blue Theme - Will be overridden by JS */
   --color-primary-50: 239 246 255;
   --color-primary-100: 219 234 254;
   --color-primary-500: 59 130 246;
@@ -17,8 +15,7 @@
 }
 
 body {
-  background-color: #f9fafb; /* bg-gray-50 */
-  color: #111827; /* text-gray-900 */
+  @apply bg-gray-50 text-gray-900;
 }
 
 /* Hide scrollbar for Chrome, Safari and Opera */
@@ -26,13 +23,11 @@ body {
     display: none;
 }
 
-/* Hide scrollbar for IE, Edge and Firefox */
 .scrollbar-hide {
-    -ms-overflow-style: none;  /* IE and Edge */
-    scrollbar-width: none;  /* Firefox */
+    -ms-overflow-style: none;
+    scrollbar-width: none;
 }
 
-/* Custom thin scrollbar for specific sections if needed */
 .scrollbar-thin::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -45,14 +40,9 @@ body {
     border-radius: 20px;
 }
 
-/* Keyframes for animations */
 @keyframes fadeIn {
-    from {
-        opacity: 0;
-    }
-    to {
-        opacity: 1;
-    }
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
 @keyframes fadeInDown {
@@ -78,12 +68,8 @@ body {
 }
 
 @keyframes kenburns {
-    0% {
-        transform: scale(1);
-    }
-    100% {
-        transform: scale(1.1);
-    }
+    0% { transform: scale(1); }
+    100% { transform: scale(1.1); }
 }
 
 @keyframes scaleIn {

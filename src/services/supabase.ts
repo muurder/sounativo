@@ -1,9 +1,8 @@
-
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { logger } from '../utils/logger';
 
 // Access environment variables safely
-const env = ((import.meta as any) && (import.meta as any).env) ? (import.meta as any).env : {};
+const env = (import.meta as any) && (import.meta as any).env ? (import.meta as any).env : {};
 
 const supabaseUrl = env?.VITE_SUPABASE_URL;
 const supabaseKey = env?.VITE_SUPABASE_ANON_KEY;
@@ -19,7 +18,9 @@ const isPlaceholder =
 
 if (isPlaceholder) {
   logger.warn('[Supabase] AVISO: As credenciais do Supabase parecem inválidas ou padrão.');
-  logger.warn('Verifique se você criou o arquivo .env na raiz com VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY reais do seu painel. O app usará dados de exemplo.');
+  logger.warn(
+    'Verifique se você criou o arquivo .env na raiz com VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY reais do seu painel. O app usará dados de exemplo.'
+  );
 } else {
   logger.info(`[Supabase] Conectado a: ${supabaseUrl.substring(0, 20)}...`);
   supabaseInstance = createClient(supabaseUrl, supabaseKey);
@@ -63,7 +64,9 @@ export type SupabaseConnectionCheckResult = {
   db: { ok: boolean; ms: number; table: string; error: string | null };
 };
 
-export async function checkSupabaseConnection(table: string = 'trips'): Promise<SupabaseConnectionCheckResult> {
+export async function checkSupabaseConnection(
+  table: string = 'trips'
+): Promise<SupabaseConnectionCheckResult> {
   const diag = getSupabaseDiagnostics();
   const startAuth = performance.now();
 
@@ -72,8 +75,17 @@ export async function checkSupabaseConnection(table: string = 'trips'): Promise<
       configured: false,
       url: diag.url,
       projectRef: diag.projectRef,
-      auth: { ok: false, ms: Math.round(performance.now() - startAuth), error: 'Supabase não configurado (VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY).' },
-      db: { ok: false, ms: 0, table, error: 'Supabase não configurado (VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY).' },
+      auth: {
+        ok: false,
+        ms: Math.round(performance.now() - startAuth),
+        error: 'Supabase não configurado (VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY).',
+      },
+      db: {
+        ok: false,
+        ms: 0,
+        table,
+        error: 'Supabase não configurado (VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY).',
+      },
     };
   }
 

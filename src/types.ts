@@ -1,5 +1,3 @@
-
-
 export enum UserRole {
   CLIENT = 'CLIENT',
   AGENCY = 'AGENCY',
@@ -115,13 +113,7 @@ export type TripCategory =
   | 'VIAGEM_BARATA'
   | 'ARTE';
 
-export type TravelerType =
-  | 'SOZINHO'
-  | 'CASAL'
-  | 'FAMILIA'
-  | 'AMIGOS'
-  | 'MOCHILAO'
-  | 'MELHOR_IDADE';
+export type TravelerType = 'SOZINHO' | 'CASAL' | 'FAMILIA' | 'AMIGOS' | 'MOCHILAO' | 'MELHOR_IDADE';
 
 export interface ItineraryDay {
   day: number;
@@ -144,7 +136,15 @@ export interface PassengerSeat {
 }
 
 // UPDATE: Added CAR_4 and VAN_20
-export type VehicleType = 'CAR_4' | 'BUS_46' | 'BUS_50' | 'MICRO_26' | 'VAN_15' | 'VAN_20' | 'DD_60' | 'CUSTOM';
+export type VehicleType =
+  | 'CAR_4'
+  | 'BUS_46'
+  | 'BUS_50'
+  | 'MICRO_26'
+  | 'VAN_15'
+  | 'VAN_20'
+  | 'DD_60'
+  | 'CUSTOM';
 
 export interface VehicleLayoutConfig {
   type: VehicleType;

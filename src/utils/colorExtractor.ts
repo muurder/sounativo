@@ -38,75 +38,75 @@ export const extractColorsFromImage = async (file: File): Promise<ExtractedColor
         // Set canvas size to image size (limit to 200px for performance)
         const maxSize = 200;
         const scale = Math.min(maxSize / img.width, maxSize / img.height);
-      canvas.width = img.width * scale;
-      canvas.height = img.height * scale;
+        canvas.width = img.width * scale;
+        canvas.height = img.height * scale;
 
-      // Draw image to canvas
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        // Draw image to canvas
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-      // Get image data
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const data = imageData.data;
+        // Get image data
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imageData.data;
 
-      // Color frequency map
-      const colorMap = new Map<string, number>();
-      const colorSamples: Array<[number, number, number]> = [];
+        // Color frequency map
+        const colorMap = new Map<string, number>();
+        const colorSamples: Array<[number, number, number]> = [];
 
-      // Improved color sampling: sample every 8th pixel for better accuracy
-      // Also use a more sophisticated quantization (16 levels instead of 8)
-      for (let i = 0; i < data.length; i += 32) {
-        const r = data[i];
-        const g = data[i + 1];
-        const b = data[i + 2];
-        const a = data[i + 3];
+        // Improved color sampling: sample every 8th pixel for better accuracy
+        // Also use a more sophisticated quantization (16 levels instead of 8)
+        for (let i = 0; i < data.length; i += 32) {
+          const r = data[i];
+          const g = data[i + 1];
+          const b = data[i + 2];
+          const a = data[i + 3];
 
-        // Skip transparent or very transparent pixels
-        if (a < 200) continue;
+          // Skip transparent or very transparent pixels
+          if (a < 200) continue;
 
-        // Improved quantization: 16 levels (more precise)
-        const qr = Math.floor(r / 16) * 16;
-        const qg = Math.floor(g / 16) * 16;
-        const qb = Math.floor(b / 16) * 16;
-        const key = `${qr},${qg},${qb}`;
+          // Improved quantization: 16 levels (more precise)
+          const qr = Math.floor(r / 16) * 16;
+          const qg = Math.floor(g / 16) * 16;
+          const qb = Math.floor(b / 16) * 16;
+          const key = `${qr},${qg},${qb}`;
 
-        colorMap.set(key, (colorMap.get(key) || 0) + 1);
-        colorSamples.push([r, g, b]);
-      }
-
-      // Find dominant color (most frequent)
-      let maxCount = 0;
-      let dominantKey = '';
-      for (const [key, count] of colorMap.entries()) {
-        if (count > maxCount) {
-          maxCount = count;
-          dominantKey = key;
+          colorMap.set(key, (colorMap.get(key) || 0) + 1);
+          colorSamples.push([r, g, b]);
         }
-      }
 
-      // Convert dominant color
-      const [dr, dg, db] = dominantKey.split(',').map(Number);
-      const dominant = rgbToHex(dr, dg, db);
-
-      // Find secondary color (most different from dominant)
-      let maxDistance = 0;
-      let secondaryColor = [dr, dg, db];
-
-      for (const [r, g, b] of colorSamples) {
-        const distance = colorDistance([r, g, b], [dr, dg, db]);
-        if (distance > maxDistance) {
-          maxDistance = distance;
-          secondaryColor = [r, g, b];
+        // Find dominant color (most frequent)
+        let maxCount = 0;
+        let dominantKey = '';
+        for (const [key, count] of colorMap.entries()) {
+          if (count > maxCount) {
+            maxCount = count;
+            dominantKey = key;
+          }
         }
-      }
 
-      // If no good secondary found, use a complementary color
-      if (maxDistance < 100) {
-        secondaryColor = getComplementaryColor([dr, dg, db]);
-      }
+        // Convert dominant color
+        const [dr, dg, db] = dominantKey.split(',').map(Number);
+        const dominant = rgbToHex(dr, dg, db);
 
-      const secondary = rgbToHex(secondaryColor[0], secondaryColor[1], secondaryColor[2]);
+        // Find secondary color (most different from dominant)
+        let maxDistance = 0;
+        let secondaryColor = [dr, dg, db];
 
-      resolve({ dominant, secondary });
+        for (const [r, g, b] of colorSamples) {
+          const distance = colorDistance([r, g, b], [dr, dg, db]);
+          if (distance > maxDistance) {
+            maxDistance = distance;
+            secondaryColor = [r, g, b];
+          }
+        }
+
+        // If no good secondary found, use a complementary color
+        if (maxDistance < 100) {
+          secondaryColor = getComplementaryColor([dr, dg, db]);
+        }
+
+        const secondary = rgbToHex(secondaryColor[0], secondaryColor[1], secondaryColor[2]);
+
+        resolve({ dominant, secondary });
       } catch (error) {
         reject(error);
       }
@@ -132,23 +132,27 @@ export const extractColorsFromImage = async (file: File): Promise<ExtractedColor
  * Convert RGB to Hex
  */
 const rgbToHex = (r: number, g: number, b: number): string => {
-  return '#' + [r, g, b].map(x => {
-    const hex = Math.round(x).toString(16);
-    return hex.length === 1 ? '0' + hex : hex;
-  }).join('');
+  return (
+    '#' +
+    [r, g, b]
+      .map((x) => {
+        const hex = Math.round(x).toString(16);
+        return hex.length === 1 ? '0' + hex : hex;
+      })
+      .join('')
+  );
 };
 
 /**
  * Calculate color distance (Euclidean distance in RGB space)
  */
-const colorDistance = (color1: [number, number, number], color2: [number, number, number]): number => {
+const colorDistance = (
+  color1: [number, number, number],
+  color2: [number, number, number]
+): number => {
   const [r1, g1, b1] = color1;
   const [r2, g2, b2] = color2;
-  return Math.sqrt(
-    Math.pow(r2 - r1, 2) + 
-    Math.pow(g2 - g1, 2) + 
-    Math.pow(b2 - b1, 2)
-  );
+  return Math.sqrt(Math.pow(r2 - r1, 2) + Math.pow(g2 - g1, 2) + Math.pow(b2 - b1, 2));
 };
 
 /**
@@ -165,11 +169,7 @@ const getComplementaryColor = (rgb: [number, number, number]): [number, number, 
 const hexToRgb = (hex: string): [number, number, number] => {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
   return result
-    ? [
-        parseInt(result[1], 16),
-        parseInt(result[2], 16),
-        parseInt(result[3], 16)
-      ]
+    ? [parseInt(result[1], 16), parseInt(result[2], 16), parseInt(result[3], 16)]
     : [0, 0, 0];
 };
 
@@ -181,7 +181,7 @@ const lightenColor = (rgb: [number, number, number], amount: number): [number, n
   return [
     Math.round(r + (255 - r) * amount),
     Math.round(g + (255 - g) * amount),
-    Math.round(b + (255 - b) * amount)
+    Math.round(b + (255 - b) * amount),
   ];
 };
 
@@ -190,23 +190,22 @@ const lightenColor = (rgb: [number, number, number], amount: number): [number, n
  */
 const darkenColor = (rgb: [number, number, number], amount: number): [number, number, number] => {
   const [r, g, b] = rgb;
-  return [
-    Math.round(r * (1 - amount)),
-    Math.round(g * (1 - amount)),
-    Math.round(b * (1 - amount))
-  ];
+  return [Math.round(r * (1 - amount)), Math.round(g * (1 - amount)), Math.round(b * (1 - amount))];
 };
 
 /**
  * Desaturate a color (convert to grayscale mix)
  */
-const desaturateColor = (rgb: [number, number, number], amount: number): [number, number, number] => {
+const desaturateColor = (
+  rgb: [number, number, number],
+  amount: number
+): [number, number, number] => {
   const [r, g, b] = rgb;
   const gray = Math.round(r * 0.299 + g * 0.587 + b * 0.114);
   return [
     Math.round(r + (gray - r) * amount),
     Math.round(g + (gray - g) * amount),
-    Math.round(b + (gray - b) * amount)
+    Math.round(b + (gray - b) * amount),
   ];
 };
 
@@ -215,56 +214,56 @@ const desaturateColor = (rgb: [number, number, number], amount: number): [number
  */
 export const generateColorPalettes = (baseColor: string): ColorPalette[] => {
   const baseRgb = hexToRgb(baseColor);
-  
+
   // 1. Vibrant (Default) - Base color + complementary
   const complementary = getComplementaryColor(baseRgb);
   const vibrant: ColorPalette = {
     name: 'Vibrante',
     primary: baseColor,
-    secondary: rgbToHex(complementary[0], complementary[1], complementary[2])
+    secondary: rgbToHex(complementary[0], complementary[1], complementary[2]),
   };
-  
+
   // 2. Soft (Pastel/Monochromatic) - Lightened base + neutral gray
   const lightened = lightenColor(baseRgb, 0.4);
   const soft: ColorPalette = {
     name: 'Suave',
     primary: rgbToHex(lightened[0], lightened[1], lightened[2]),
-    secondary: '#6B7280'
+    secondary: '#6B7280',
   };
-  
+
   // 3. Professional (Dark) - Darkened base + dark gray/black
   const darkened = darkenColor(baseRgb, 0.3);
   const professional: ColorPalette = {
     name: 'Profissional',
     primary: rgbToHex(darkened[0], darkened[1], darkened[2]),
-    secondary: '#111827'
+    secondary: '#111827',
   };
-  
+
   // 4. Elegant (Monochromatic) - Base + lighter/darker variations
   const lighter = lightenColor(baseRgb, 0.2);
   const darker = darkenColor(baseRgb, 0.15);
   const elegant: ColorPalette = {
     name: 'Elegante',
     primary: baseColor,
-    secondary: rgbToHex(darker[0], darker[1], darker[2])
+    secondary: rgbToHex(darker[0], darker[1], darker[2]),
   };
-  
+
   // 5. Modern (Analogous) - Base + adjacent color on color wheel
   const analogous = getAnalogousColor(baseRgb);
   const modern: ColorPalette = {
     name: 'Moderno',
     primary: baseColor,
-    secondary: rgbToHex(analogous[0], analogous[1], analogous[2])
+    secondary: rgbToHex(analogous[0], analogous[1], analogous[2]),
   };
-  
+
   // 6. Bold (Triadic) - Base + triadic colors
   const triadic = getTriadicColor(baseRgb);
   const bold: ColorPalette = {
     name: 'Ousado',
     primary: baseColor,
-    secondary: rgbToHex(triadic[0], triadic[1], triadic[2])
+    secondary: rgbToHex(triadic[0], triadic[1], triadic[2]),
   };
-  
+
   return [vibrant, soft, professional, elegant, modern, bold];
 };
 
@@ -278,7 +277,7 @@ const getAnalogousColor = (rgb: [number, number, number]): [number, number, numb
   return [
     Math.min(255, Math.max(0, r + 20)),
     Math.min(255, Math.max(0, g + 30)),
-    Math.min(255, Math.max(0, b - 10))
+    Math.min(255, Math.max(0, b - 10)),
   ];
 };
 
@@ -298,13 +297,13 @@ export const extractColorsFromUrl = async (imageUrl: string): Promise<ExtractedC
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
-    
+
     img.onload = async () => {
       try {
         // Create a temporary file-like object
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
-        
+
         if (!ctx) {
           reject(new Error('Canvas context not available'));
           return;
@@ -320,7 +319,7 @@ export const extractColorsFromUrl = async (imageUrl: string): Promise<ExtractedC
             reject(new Error('Failed to convert image to blob'));
             return;
           }
-          
+
           const file = new File([blob], 'logo.png', { type: 'image/png' });
           extractColorsFromImage(file).then(resolve).catch(reject);
         });
@@ -336,4 +335,3 @@ export const extractColorsFromUrl = async (imageUrl: string): Promise<ExtractedC
     img.src = imageUrl;
   });
 };
-

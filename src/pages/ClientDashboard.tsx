@@ -1,10 +1,58 @@
-
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
-import { UserRole, Booking, BookingWithDetails, Address, AgencyReview, Agency, Trip, Client } from '../types';
+import {
+  UserRole,
+  Booking,
+  BookingWithDetails,
+  Address,
+  AgencyReview,
+  Agency,
+  Trip,
+  Client,
+} from '../types';
 import { TripCard } from '../components/TripCard';
-import { User, ShoppingBag, Heart, MapPin, Calendar, Settings, Download, Save, LogOut, X, QrCode, Trash2, AlertTriangle, Camera, Lock, Shield, Loader, Star, MessageCircle, Send, ExternalLink, Edit, Briefcase, Smile, Plane, Compass, Users, Clock, CreditCard, Eye, ArrowRight, CheckCircle2, AlertCircle, XCircle, Grid3x3, List, ArrowUpDown, ArrowDownAZ, Home } from 'lucide-react';
+import {
+  User,
+  ShoppingBag,
+  Heart,
+  MapPin,
+  Calendar,
+  Settings,
+  Download,
+  Save,
+  LogOut,
+  X,
+  QrCode,
+  Trash2,
+  AlertTriangle,
+  Camera,
+  Lock,
+  Shield,
+  Loader,
+  Star,
+  MessageCircle,
+  Send,
+  ExternalLink,
+  Edit,
+  Briefcase,
+  Smile,
+  Plane,
+  Compass,
+  Users,
+  Clock,
+  CreditCard,
+  Eye,
+  ArrowRight,
+  CheckCircle2,
+  AlertCircle,
+  XCircle,
+  Grid3x3,
+  List,
+  ArrowUpDown,
+  ArrowDownAZ,
+  Home,
+} from 'lucide-react';
 import { useNavigate, useParams, Link, useSearchParams } from 'react-router-dom';
 import { useToast } from '../context/ToastContext';
 import { generateTripVoucherPDF } from '../utils/pdfGenerator';
@@ -49,7 +97,7 @@ const BookingDetailsModalContent: React.FC<BookingDetailsModalContentProps> = ({
   fetchTripImages,
   getTripById,
   onClose,
-  showToast
+  showToast,
 }) => {
   const [tripWithImages, setTripWithImages] = useState<Trip>(initialTrip);
   const [imgError, setImgError] = useState(false);
@@ -146,9 +194,10 @@ const BookingDetailsModalContent: React.FC<BookingDetailsModalContentProps> = ({
   };
 
   // Get boarding point
-  const boardingPoint = tripWithImages.boardingPoints && tripWithImages.boardingPoints.length > 0
-    ? tripWithImages.boardingPoints[0]
-    : null;
+  const boardingPoint =
+    tripWithImages.boardingPoints && tripWithImages.boardingPoints.length > 0
+      ? tripWithImages.boardingPoints[0]
+      : null;
 
   // WhatsApp URL
   const whatsappUrl = buildWhatsAppUrl(agency?.whatsapp || agency?.phone, tripWithImages.title);
@@ -184,7 +233,7 @@ const BookingDetailsModalContent: React.FC<BookingDetailsModalContentProps> = ({
             document: rawDoc,
             birthDate: p.birth_date || p.birthDate,
             type: passengerType || 'adult',
-            age: undefined
+            age: undefined,
           };
         });
       }
@@ -194,7 +243,7 @@ const BookingDetailsModalContent: React.FC<BookingDetailsModalContentProps> = ({
         agency: agency || null,
         passengers: pdfPassengers,
         voucherCode: booking.voucherCode,
-        client: currentClient || null
+        client: currentClient || null,
       });
       showToast('PDF gerado com sucesso!', 'success');
     } catch (error: any) {
@@ -229,7 +278,9 @@ const BookingDetailsModalContent: React.FC<BookingDetailsModalContentProps> = ({
         {/* Header Content */}
         <div className="absolute inset-0 flex flex-col justify-end p-8 pb-8">
           <div className="max-w-2xl">
-            <h2 className="text-3xl font-bold text-white mb-3 leading-tight drop-shadow-lg">{tripWithImages.title}</h2>
+            <h2 className="text-3xl font-bold text-white mb-3 leading-tight drop-shadow-lg">
+              {tripWithImages.title}
+            </h2>
             <div className="flex items-center gap-4 text-white/95 mb-4">
               {tripWithImages.destination && (
                 <>
@@ -240,12 +291,21 @@ const BookingDetailsModalContent: React.FC<BookingDetailsModalContentProps> = ({
             </div>
             {/* Status Badge */}
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/20 backdrop-blur-sm border border-white/30">
-              <div className={`w-2 h-2 rounded-full ${booking.status === 'CONFIRMED' ? 'bg-emerald-400' :
-                booking.status === 'PENDING' ? 'bg-amber-400' : 'bg-red-400'
-                }`} />
+              <div
+                className={`w-2 h-2 rounded-full ${
+                  booking.status === 'CONFIRMED'
+                    ? 'bg-emerald-400'
+                    : booking.status === 'PENDING'
+                      ? 'bg-amber-400'
+                      : 'bg-red-400'
+                }`}
+              />
               <span className="text-sm font-semibold text-white">
-                {booking.status === 'CONFIRMED' ? 'Confirmada' :
-                  booking.status === 'PENDING' ? 'Pendente' : 'Cancelada'}
+                {booking.status === 'CONFIRMED'
+                  ? 'Confirmada'
+                  : booking.status === 'PENDING'
+                    ? 'Pendente'
+                    : 'Cancelada'}
               </span>
             </div>
           </div>
@@ -289,20 +349,34 @@ const BookingDetailsModalContent: React.FC<BookingDetailsModalContentProps> = ({
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="space-y-2">
-                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Valor Total</p>
-                  <p className="text-3xl font-bold text-slate-900">{formatCurrency(booking.totalPrice)}</p>
-                </div>
-                <div className="space-y-2">
-                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Método de Pagamento</p>
-                  <p className="text-lg font-semibold text-slate-800">
-                    {booking.paymentMethod === 'PIX' ? 'PIX' :
-                      booking.paymentMethod === 'CREDIT_CARD' ? 'Cartão de Crédito' :
-                        booking.paymentMethod === 'BOLETO' ? 'Boleto' : '---'}
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                    Valor Total
+                  </p>
+                  <p className="text-3xl font-bold text-slate-900">
+                    {formatCurrency(booking.totalPrice)}
                   </p>
                 </div>
                 <div className="space-y-2">
-                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Código da Reserva</p>
-                  <p className="text-lg font-mono font-bold text-primary-600 tracking-wider">{booking.voucherCode}</p>
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                    Método de Pagamento
+                  </p>
+                  <p className="text-lg font-semibold text-slate-800">
+                    {booking.paymentMethod === 'PIX'
+                      ? 'PIX'
+                      : booking.paymentMethod === 'CREDIT_CARD'
+                        ? 'Cartão de Crédito'
+                        : booking.paymentMethod === 'BOLETO'
+                          ? 'Boleto'
+                          : '---'}
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                    Código da Reserva
+                  </p>
+                  <p className="text-lg font-mono font-bold text-primary-600 tracking-wider">
+                    {booking.voucherCode}
+                  </p>
                 </div>
               </div>
             </div>
@@ -325,21 +399,25 @@ const BookingDetailsModalContent: React.FC<BookingDetailsModalContentProps> = ({
                   </div>
                   <div>
                     <h3 className="text-xl font-bold text-slate-900">Passageiros</h3>
-                    <p className="text-sm text-slate-500 mt-0.5">{bookingPassengers.length} {bookingPassengers.length === 1 ? 'passageiro' : 'passageiros'}</p>
+                    <p className="text-sm text-slate-500 mt-0.5">
+                      {bookingPassengers.length}{' '}
+                      {bookingPassengers.length === 1 ? 'passageiro' : 'passageiros'}
+                    </p>
                   </div>
                 </div>
               </div>
               <div className="grid grid-cols-1 gap-4">
                 {bookingPassengers.map((passenger: any, idx: number) => {
                   // Handle different field names
-                  const passengerName = passenger.full_name || passenger.name || `Passageiro ${idx + 1}`;
+                  const passengerName =
+                    passenger.full_name || passenger.name || `Passageiro ${idx + 1}`;
                   const passengerDoc = passenger.document || passenger.cpf || '';
                   const passengerBirthDate = passenger.birth_date || passenger.birthDate || null;
 
                   const formattedDoc = passengerDoc
-                    ? (passengerDoc.replace(/\D/g, '').length === 11
+                    ? passengerDoc.replace(/\D/g, '').length === 11
                       ? passengerDoc.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4')
-                      : passengerDoc)
+                      : passengerDoc
                     : '---';
 
                   const isPrimary = passenger.is_primary || passenger.isPrimary || idx === 0;
@@ -354,7 +432,10 @@ const BookingDetailsModalContent: React.FC<BookingDetailsModalContentProps> = ({
                       if (!isNaN(birth.getTime())) {
                         age = today.getFullYear() - birth.getFullYear();
                         const monthDiff = today.getMonth() - birth.getMonth();
-                        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+                        if (
+                          monthDiff < 0 ||
+                          (monthDiff === 0 && today.getDate() < birth.getDate())
+                        ) {
                           age--;
                         }
                         ageDisplay = age < 12 ? 'Criança' : age < 18 ? 'Adolescente' : 'Adulto';
@@ -367,16 +448,20 @@ const BookingDetailsModalContent: React.FC<BookingDetailsModalContentProps> = ({
                   return (
                     <div
                       key={idx}
-                      className={`group relative overflow-hidden rounded-xl p-6 border-2 transition-all duration-200 ${isPrimary
-                        ? 'bg-gradient-to-br from-primary-50 via-white to-primary-50/30 border-primary-300/60 shadow-md'
-                        : 'bg-white border-slate-200/80 hover:border-slate-300 hover:shadow-md'
-                        }`}
+                      className={`group relative overflow-hidden rounded-xl p-6 border-2 transition-all duration-200 ${
+                        isPrimary
+                          ? 'bg-gradient-to-br from-primary-50 via-white to-primary-50/30 border-primary-300/60 shadow-md'
+                          : 'bg-white border-slate-200/80 hover:border-slate-300 hover:shadow-md'
+                      }`}
                     >
                       <div className="flex items-start gap-5">
-                        <div className={`w-14 h-14 rounded-xl flex items-center justify-center font-bold text-base shadow-lg transition-transform group-hover:scale-110 ${isPrimary
-                          ? 'bg-gradient-to-br from-primary-600 to-primary-700 text-white'
-                          : 'bg-gradient-to-br from-slate-500 to-slate-600 text-white'
-                          }`}>
+                        <div
+                          className={`w-14 h-14 rounded-xl flex items-center justify-center font-bold text-base shadow-lg transition-transform group-hover:scale-110 ${
+                            isPrimary
+                              ? 'bg-gradient-to-br from-primary-600 to-primary-700 text-white'
+                              : 'bg-gradient-to-br from-slate-500 to-slate-600 text-white'
+                          }`}
+                        >
                           {idx + 1}
                         </div>
                         <div className="flex-1 min-w-0">
@@ -392,10 +477,13 @@ const BookingDetailsModalContent: React.FC<BookingDetailsModalContentProps> = ({
                               )}
                             </div>
                             {ageDisplay && (
-                              <span className={`px-3 py-1 rounded-lg text-xs font-semibold ${age! < 12
-                                ? 'bg-amber-100 text-amber-700 border border-amber-200'
-                                : 'bg-slate-100 text-slate-700 border border-slate-200'
-                                }`}>
+                              <span
+                                className={`px-3 py-1 rounded-lg text-xs font-semibold ${
+                                  age! < 12
+                                    ? 'bg-amber-100 text-amber-700 border border-amber-200'
+                                    : 'bg-slate-100 text-slate-700 border border-slate-200'
+                                }`}
+                              >
                                 {ageDisplay}
                               </span>
                             )}
@@ -405,8 +493,12 @@ const BookingDetailsModalContent: React.FC<BookingDetailsModalContentProps> = ({
                               <div className="flex items-center gap-2.5 p-3 bg-slate-50 rounded-lg border border-slate-200/60">
                                 <CreditCard size={16} className="text-slate-500 flex-shrink-0" />
                                 <div>
-                                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-0.5">Documento</p>
-                                  <p className="font-mono text-sm font-bold text-slate-900">{formattedDoc}</p>
+                                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-0.5">
+                                    Documento
+                                  </p>
+                                  <p className="font-mono text-sm font-bold text-slate-900">
+                                    {formattedDoc}
+                                  </p>
                                 </div>
                               </div>
                             )}
@@ -414,9 +506,15 @@ const BookingDetailsModalContent: React.FC<BookingDetailsModalContentProps> = ({
                               <div className="flex items-center gap-2.5 p-3 bg-slate-50 rounded-lg border border-slate-200/60">
                                 <Calendar size={16} className="text-slate-500 flex-shrink-0" />
                                 <div>
-                                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-0.5">Data de Nascimento</p>
+                                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-0.5">
+                                    Data de Nascimento
+                                  </p>
                                   <p className="text-sm font-bold text-slate-900">
-                                    {new Date(passengerBirthDate).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}
+                                    {new Date(passengerBirthDate).toLocaleDateString('pt-BR', {
+                                      day: '2-digit',
+                                      month: 'long',
+                                      year: 'numeric',
+                                    })}
                                   </p>
                                 </div>
                               </div>
@@ -425,8 +523,12 @@ const BookingDetailsModalContent: React.FC<BookingDetailsModalContentProps> = ({
                               <div className="flex items-center gap-2.5 p-3 bg-slate-50 rounded-lg border border-slate-200/60">
                                 <User size={16} className="text-slate-500 flex-shrink-0" />
                                 <div>
-                                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-0.5">Idade</p>
-                                  <p className="text-sm font-bold text-slate-900">{age} {age === 1 ? 'ano' : 'anos'}</p>
+                                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-0.5">
+                                    Idade
+                                  </p>
+                                  <p className="text-sm font-bold text-slate-900">
+                                    {age} {age === 1 ? 'ano' : 'anos'}
+                                  </p>
                                 </div>
                               </div>
                             )}
@@ -449,7 +551,9 @@ const BookingDetailsModalContent: React.FC<BookingDetailsModalContentProps> = ({
               <div className="text-center py-8">
                 <Users size={48} className="text-slate-300 mx-auto mb-3" />
                 <p className="text-slate-500 font-medium">Nenhum passageiro encontrado</p>
-                <p className="text-sm text-slate-400 mt-1">Os dados dos passageiros não estão disponíveis no momento.</p>
+                <p className="text-sm text-slate-400 mt-1">
+                  Os dados dos passageiros não estão disponíveis no momento.
+                </p>
               </div>
             </div>
           )}
@@ -462,10 +566,16 @@ const BookingDetailsModalContent: React.FC<BookingDetailsModalContentProps> = ({
                   <div className="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center">
                     <Calendar size={16} className="text-slate-600" />
                   </div>
-                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Data de Partida</p>
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                    Data de Partida
+                  </p>
                 </div>
                 <p className="text-base font-bold text-slate-900">
-                  {new Date(tripWithImages.startDate).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}
+                  {new Date(tripWithImages.startDate).toLocaleDateString('pt-BR', {
+                    day: '2-digit',
+                    month: 'long',
+                    year: 'numeric',
+                  })}
                 </p>
               </div>
             )}
@@ -475,7 +585,9 @@ const BookingDetailsModalContent: React.FC<BookingDetailsModalContentProps> = ({
                   <div className="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center">
                     <Clock size={16} className="text-slate-600" />
                   </div>
-                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Duração</p>
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                    Duração
+                  </p>
                 </div>
                 <p className="text-base font-bold text-slate-900">
                   {tripWithImages.durationDays} {tripWithImages.durationDays === 1 ? 'dia' : 'dias'}
@@ -488,10 +600,16 @@ const BookingDetailsModalContent: React.FC<BookingDetailsModalContentProps> = ({
                   <div className="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center">
                     <Calendar size={16} className="text-slate-600" />
                   </div>
-                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Data da Reserva</p>
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                    Data da Reserva
+                  </p>
                 </div>
                 <p className="text-base font-bold text-slate-900">
-                  {new Date(booking.date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}
+                  {new Date(booking.date).toLocaleDateString('pt-BR', {
+                    day: '2-digit',
+                    month: 'long',
+                    year: 'numeric',
+                  })}
                 </p>
               </div>
             )}
@@ -507,7 +625,9 @@ const BookingDetailsModalContent: React.FC<BookingDetailsModalContentProps> = ({
                 <h3 className="text-xl font-bold text-slate-900">Ponto de Embarque</h3>
               </div>
               <div className="bg-white rounded-xl p-6 border border-slate-200/60 shadow-sm">
-                <p className="font-bold text-slate-900 text-lg mb-3">{boardingPoint.location || boardingPoint.address}</p>
+                <p className="font-bold text-slate-900 text-lg mb-3">
+                  {boardingPoint.location || boardingPoint.address}
+                </p>
                 {boardingPoint.time && (
                   <div className="flex items-center gap-2 mb-4 text-slate-600">
                     <Clock size={16} className="text-slate-400" />
@@ -528,7 +648,6 @@ const BookingDetailsModalContent: React.FC<BookingDetailsModalContentProps> = ({
               </div>
             </div>
           )}
-
         </div>
       </div>
     </>
@@ -544,7 +663,13 @@ interface TripImageProps {
   onImageLoaded?: (tripId: string, images: string[]) => void;
 }
 
-const TripImage: React.FC<TripImageProps> = ({ tripId, tripImages, tripTitle, fetchTripImages, onImageLoaded }) => {
+const TripImage: React.FC<TripImageProps> = ({
+  tripId,
+  tripImages,
+  tripTitle,
+  fetchTripImages,
+  onImageLoaded,
+}) => {
   const [imageUrl, setImageUrl] = useState<string | null>(tripImages?.[0] || null);
   const [imgError, setImgError] = useState(false);
   const onImageLoadedRef = useRef(onImageLoaded);
@@ -643,7 +768,17 @@ interface BookingCardProps {
   user?: any;
 }
 
-const BookingCard: React.FC<BookingCardProps> = ({ booking, trip, agency, hasReviewed, onOpenVoucher, onViewDetails, fetchTripImages, currentClient, user }) => {
+const BookingCard: React.FC<BookingCardProps> = ({
+  booking,
+  trip,
+  agency,
+  hasReviewed,
+  onOpenVoucher,
+  onViewDetails,
+  fetchTripImages,
+  currentClient,
+  user,
+}) => {
   const { showToast } = useToast();
   const navigate = useNavigate();
 
@@ -699,7 +834,7 @@ const BookingCard: React.FC<BookingCardProps> = ({ booking, trip, agency, hasRev
   useEffect(() => {
     if (booking.booking_passengers && booking.booking_passengers.length > 0) {
       // Use passengers from booking (already loaded from query)
-      const formattedPassengers = booking.booking_passengers.map(p => {
+      const formattedPassengers = booking.booking_passengers.map((p) => {
         let formattedDoc = p.document || '---';
         if (formattedDoc && formattedDoc !== '---') {
           const digits = formattedDoc.replace(/\D/g, '');
@@ -733,7 +868,7 @@ const BookingCard: React.FC<BookingCardProps> = ({ booking, trip, agency, hasRev
           birthDate: p.birth_date,
           type: passengerType,
           age,
-          isPrimary: p.is_primary || false
+          isPrimary: p.is_primary || false,
         };
       });
       setPassengers(formattedPassengers);
@@ -754,7 +889,7 @@ const BookingCard: React.FC<BookingCardProps> = ({ booking, trip, agency, hasRev
               .order('created_at', { ascending: true });
 
             if (!error && data) {
-              const formattedPassengers = data.map(p => {
+              const formattedPassengers = data.map((p) => {
                 let formattedDoc = p.document || '---';
                 if (formattedDoc && formattedDoc !== '---') {
                   const digits = formattedDoc.replace(/\D/g, '');
@@ -788,7 +923,7 @@ const BookingCard: React.FC<BookingCardProps> = ({ booking, trip, agency, hasRev
                   birthDate: p.birth_date,
                   type: passengerType,
                   age,
-                  isPrimary: p.is_primary || false
+                  isPrimary: p.is_primary || false,
                 };
               });
               setPassengers(formattedPassengers);
@@ -806,7 +941,7 @@ const BookingCard: React.FC<BookingCardProps> = ({ booking, trip, agency, hasRev
                   document: formattedDoc,
                   birthDate: p.birthDate || p.birth_date,
                   type: p.type || 'Adulto',
-                  isPrimary: false
+                  isPrimary: false,
                 };
               });
               setPassengers(formattedPassengers);
@@ -855,9 +990,10 @@ const BookingCard: React.FC<BookingCardProps> = ({ booking, trip, agency, hasRev
   const otherPassengers = passengerCount - 1;
 
   // Category display
-  const categoryDisplay = trip.categories && trip.categories.length > 0
-    ? trip.categories.map((c: any) => c.name || c).join(' • ')
-    : trip.category || 'Viagem';
+  const categoryDisplay =
+    trip.categories && trip.categories.length > 0
+      ? trip.categories.map((c: any) => c.name || c).join(' • ')
+      : trip.category || 'Viagem';
 
   const durationDisplay = trip.durationDays
     ? `${trip.durationDays} ${trip.durationDays === 1 ? 'dia' : 'dias'}`
@@ -922,11 +1058,14 @@ const BookingCard: React.FC<BookingCardProps> = ({ booking, trip, agency, hasRev
       <div className="relative h-48 md:h-40 w-full md:w-64 md:float-left md:mr-6">
         {/* Background image - trip image or fallback travel image */}
         <img
-          src={tripImage || 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80'}
+          src={
+            tripImage || 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80'
+          }
           alt={trip.title}
           className="w-full h-full object-cover"
           onError={(e) => {
-            (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80';
+            (e.target as HTMLImageElement).src =
+              'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80';
           }}
         />
         {/* Gradient overlay */}
@@ -949,9 +1088,7 @@ const BookingCard: React.FC<BookingCardProps> = ({ booking, trip, agency, hasRev
 
         {/* Trip title on image */}
         <div className="absolute bottom-3 left-3 right-3">
-          <h4 className="text-white font-bold text-lg drop-shadow-lg line-clamp-2">
-            {trip.title}
-          </h4>
+          <h4 className="text-white font-bold text-lg drop-shadow-lg line-clamp-2">{trip.title}</h4>
         </div>
       </div>
 
@@ -959,15 +1096,16 @@ const BookingCard: React.FC<BookingCardProps> = ({ booking, trip, agency, hasRev
       <div className="p-6">
         {/* Title & Destination */}
         <div className="mb-3">
-          <h3 className="text-xl font-bold text-gray-900 mb-1 line-clamp-2">
-            {trip.title}
-          </h3>
+          <h3 className="text-xl font-bold text-gray-900 mb-1 line-clamp-2">{trip.title}</h3>
           <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
             <MapPin size={14} className="text-primary-600" />
             <span>{trip.destination}</span>
           </div>
           {agency && (
-            <Link to={`/${agency.slug || ''}`} className="text-sm text-primary-600 hover:underline font-medium">
+            <Link
+              to={`/${agency.slug || ''}`}
+              className="text-sm text-primary-600 hover:underline font-medium"
+            >
               Organizado por {agency.name}
             </Link>
           )}
@@ -995,7 +1133,9 @@ const BookingCard: React.FC<BookingCardProps> = ({ booking, trip, agency, hasRev
               )}
             </div>
             <span className="text-sm text-gray-600">
-              {otherPassengers > 0 ? `Você e +${otherPassengers} pessoa${otherPassengers > 1 ? 's' : ''}` : 'Você'}
+              {otherPassengers > 0
+                ? `Você e +${otherPassengers} pessoa${otherPassengers > 1 ? 's' : ''}`
+                : 'Você'}
             </span>
           </div>
         )}
@@ -1027,16 +1167,16 @@ const BookingCard: React.FC<BookingCardProps> = ({ booking, trip, agency, hasRev
 
                 if (passengers.length > 0) {
                   // Use formatted passengers from state
-                  pdfPassengers = passengers.map(p => ({
+                  pdfPassengers = passengers.map((p) => ({
                     name: p.name,
                     document: p.document?.replace(/\D/g, '') || '', // Raw digits for PDF
                     birthDate: p.birthDate,
                     type: p.type === 'Criança' ? 'child' : 'adult',
-                    age: p.age
+                    age: p.age,
                   }));
                 } else if (booking.booking_passengers && booking.booking_passengers.length > 0) {
                   // Use booking_passengers directly
-                  pdfPassengers = booking.booking_passengers.map(p => {
+                  pdfPassengers = booking.booking_passengers.map((p) => {
                     const rawDoc = p.document?.replace(/\D/g, '') || '';
                     let passengerType: string | undefined;
                     if (p.birth_date) {
@@ -1046,7 +1186,10 @@ const BookingCard: React.FC<BookingCardProps> = ({ booking, trip, agency, hasRev
                         if (!isNaN(birth.getTime())) {
                           let age = today.getFullYear() - birth.getFullYear();
                           const monthDiff = today.getMonth() - birth.getMonth();
-                          if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+                          if (
+                            monthDiff < 0 ||
+                            (monthDiff === 0 && today.getDate() < birth.getDate())
+                          ) {
                             age--;
                           }
                           passengerType = age < 12 ? 'child' : 'adult';
@@ -1060,7 +1203,7 @@ const BookingCard: React.FC<BookingCardProps> = ({ booking, trip, agency, hasRev
                       document: rawDoc,
                       birthDate: p.birth_date,
                       type: passengerType || 'adult',
-                      age: undefined
+                      age: undefined,
                     };
                   });
                 } else if (booking.passengerDetails && booking.passengerDetails.length > 0) {
@@ -1070,19 +1213,24 @@ const BookingCard: React.FC<BookingCardProps> = ({ booking, trip, agency, hasRev
                     document: (p.document || p.cpf || '').replace(/\D/g, ''),
                     birthDate: p.birthDate || p.birth_date,
                     type: p.type || 'adult',
-                    age: p.age
+                    age: p.age,
                   }));
                 } else {
                   // Last resort: use client as main passenger
                   const rawDoc = (currentClient?.cpf || '').replace(/\D/g, '');
-                  pdfPassengers = [{
-                    name: currentClient?.name || user?.name || 'Cliente',
-                    document: rawDoc,
-                    type: 'adult'
-                  }];
+                  pdfPassengers = [
+                    {
+                      name: currentClient?.name || user?.name || 'Cliente',
+                      document: rawDoc,
+                      type: 'adult',
+                    },
+                  ];
                 }
 
-                logger.info(`Generating PDF from BookingCard with ${pdfPassengers.length} passenger(s):`, pdfPassengers.map(p => ({ name: p.name, document: p.document })));
+                logger.info(
+                  `Generating PDF from BookingCard with ${pdfPassengers.length} passenger(s):`,
+                  pdfPassengers.map((p) => ({ name: p.name, document: p.document }))
+                );
 
                 // Generate PDF using unified function
                 await generateTripVoucherPDF({
@@ -1091,7 +1239,7 @@ const BookingCard: React.FC<BookingCardProps> = ({ booking, trip, agency, hasRev
                   agency: agency || null,
                   passengers: pdfPassengers,
                   voucherCode: booking.voucherCode,
-                  client: currentClient || null
+                  client: currentClient || null,
                 });
 
                 showToast('PDF gerado com sucesso!', 'success');
@@ -1143,12 +1291,36 @@ const BookingCard: React.FC<BookingCardProps> = ({ booking, trip, agency, hasRev
 };
 
 const ClientDashboard: React.FC = () => {
-  const { user, updateUser, logout, deleteAccount, uploadImage, updatePassword, loading: authLoading, reloadUser } = useAuth();
-  const { bookings, getTripById, clients, addAgencyReview, getReviewsByClientId, deleteAgencyReview, updateAgencyReview, refreshUserData: refreshAllData, getPublicTrips, trips, updateClientProfile, fetchTripImages } = useData();
+  const {
+    user,
+    updateUser,
+    logout,
+    deleteAccount,
+    uploadImage,
+    updatePassword,
+    loading: authLoading,
+    reloadUser,
+  } = useAuth();
+  const {
+    bookings,
+    getTripById,
+    clients,
+    addAgencyReview,
+    getReviewsByClientId,
+    deleteAgencyReview,
+    updateAgencyReview,
+    refreshUserData: refreshAllData,
+    getPublicTrips,
+    trips,
+    updateClientProfile,
+    fetchTripImages,
+  } = useData();
   const { showToast } = useToast();
 
   const [selectedBooking, setSelectedBooking] = useState<any | null>(null);
-  const [selectedBookingDetails, setSelectedBookingDetails] = useState<BookingWithDetails | null>(null);
+  const [selectedBookingDetails, setSelectedBookingDetails] = useState<BookingWithDetails | null>(
+    null
+  );
   const [bookingPassengers, setBookingPassengers] = useState<any[]>([]);
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
@@ -1156,11 +1328,11 @@ const ClientDashboard: React.FC = () => {
   // Sorting and view preferences (persisted in localStorage)
   const [sortBy, setSortBy] = useState<'date' | 'alphabetical'>(() => {
     const saved = localStorage.getItem('clientDashboard_sortBy');
-    return (saved === 'date' || saved === 'alphabetical') ? saved : 'date';
+    return saved === 'date' || saved === 'alphabetical' ? saved : 'date';
   });
   const [viewMode, setViewMode] = useState<'card' | 'list'>(() => {
     const saved = localStorage.getItem('clientDashboard_viewMode');
-    return (saved === 'card' || saved === 'list') ? saved : 'card';
+    return saved === 'card' || saved === 'list' ? saved : 'card';
   });
 
   // Save preferences to localStorage
@@ -1189,7 +1361,9 @@ const ClientDashboard: React.FC = () => {
   const isMicrositeMode = !!agencySlug;
 
   // Impersonate logic: if admin is impersonating, use that client's data
-  const impersonatedClient = impersonateClientId ? clients.find(c => c.id === impersonateClientId) : null;
+  const impersonatedClient = impersonateClientId
+    ? clients.find((c) => c.id === impersonateClientId)
+    : null;
   const isImpersonating = !!impersonateClientId && user?.role === 'ADMIN';
 
   // Ensure impersonate parameter is preserved when navigating
@@ -1200,9 +1374,12 @@ const ClientDashboard: React.FC = () => {
   }, [isImpersonating, impersonateClientId, searchParams, setSearchParams]);
 
   // Ensure user is defined before accessing its id or role
-  const dataContextClient = isImpersonating && impersonatedClient
-    ? impersonatedClient
-    : (user ? clients.find(c => c.id === user.id) : undefined);
+  const dataContextClient =
+    isImpersonating && impersonatedClient
+      ? impersonatedClient
+      : user
+        ? clients.find((c) => c.id === user.id)
+        : undefined;
   const currentClient = dataContextClient || (user as any); // Fallback to basic user if dataContextClient is undefined
 
   // Fix: Initialize with empty defaults, will be populated by useEffect
@@ -1211,7 +1388,7 @@ const ClientDashboard: React.FC = () => {
     email: '',
     phone: '',
     cpf: '',
-    birthDate: ''
+    birthDate: '',
   });
 
   // Fix: Initialize with empty defaults, will be populated by useEffect
@@ -1222,12 +1399,12 @@ const ClientDashboard: React.FC = () => {
     complement: '',
     district: '',
     city: '',
-    state: ''
+    state: '',
   }));
 
   const [passForm, setPassForm] = useState({
     newPassword: '',
-    confirmPassword: ''
+    confirmPassword: '',
   });
 
   // State for account deletion password
@@ -1285,9 +1462,8 @@ const ClientDashboard: React.FC = () => {
 
   // Generate greeting on mount - use impersonated client name if impersonating
   useEffect(() => {
-    const nameToUse = isImpersonating && impersonatedClient?.name
-      ? impersonatedClient.name
-      : user?.name;
+    const nameToUse =
+      isImpersonating && impersonatedClient?.name ? impersonatedClient.name : user?.name;
     if (nameToUse) {
       setGreeting(getRandomGreeting(nameToUse.split(' ')[0]));
     }
@@ -1314,29 +1490,48 @@ const ClientDashboard: React.FC = () => {
         email: currentClient.email || '',
         phone: currentClient.phone || '',
         cpf: currentClient.cpf || '',
-        birthDate: currentClient.birthDate || ''
+        birthDate: currentClient.birthDate || '',
       });
-      setAddressForm(currentClient.address || {
-        zipCode: '', street: '', number: '', complement: '', district: '', city: '', state: ''
-      });
+      setAddressForm(
+        currentClient.address || {
+          zipCode: '',
+          street: '',
+          number: '',
+          complement: '',
+          district: '',
+          city: '',
+          state: '',
+        }
+      );
     }
   }, [currentClient]);
-
 
   useEffect(() => {
     if (!authLoading && user?.role === 'AGENCY' && !window.location.hash.includes('dashboard')) {
       const agencyUser = user as Agency;
       const slug = agencyUser.slug || slugify(agencyUser.name);
       navigate(`/${slug}`);
-    } else if (!authLoading && user && user.role !== UserRole.CLIENT && user.role !== UserRole.ADMIN && !isImpersonating) {
+    } else if (
+      !authLoading &&
+      user &&
+      user.role !== UserRole.CLIENT &&
+      user.role !== UserRole.ADMIN &&
+      !isImpersonating
+    ) {
       // Allow ADMIN to access client dashboard without impersonation
-      navigate(isMicrositeMode ? `/${agencySlug}/unauthorized` : '/unauthorized', { replace: true });
+      navigate(isMicrositeMode ? `/${agencySlug}/unauthorized` : '/unauthorized', {
+        replace: true,
+      });
     }
   }, [user, authLoading, isMicrositeMode, agencySlug, navigate, isImpersonating]);
 
   useEffect(() => {
     if (editingReview) {
-      setReviewForm({ rating: editingReview.rating, comment: editingReview.comment, tags: editingReview.tags || [] });
+      setReviewForm({
+        rating: editingReview.rating,
+        comment: editingReview.comment,
+        tags: editingReview.tags || [],
+      });
       setShowEditReviewModal(true);
     } else {
       setShowEditReviewModal(false);
@@ -1376,7 +1571,14 @@ const ClientDashboard: React.FC = () => {
             .order('created_at', { ascending: true });
 
           if (!error && data) {
-            logger.info(`Loaded ${data.length} passengers for booking ${selectedBooking.id}:`, data.map(p => ({ name: p.full_name, document: p.document || p.cpf, birth_date: p.birth_date })));
+            logger.info(
+              `Loaded ${data.length} passengers for booking ${selectedBooking.id}:`,
+              data.map((p) => ({
+                name: p.full_name,
+                document: p.document || p.cpf,
+                birth_date: p.birth_date,
+              }))
+            );
             setBookingPassengers(data);
           } else {
             logger.warn(`No passengers found for booking ${selectedBooking.id}`, error);
@@ -1393,13 +1595,23 @@ const ClientDashboard: React.FC = () => {
   }, [selectedBooking]);
 
   // Allow access if user is CLIENT, ADMIN (can access directly), or ADMIN impersonating a client
-  if (authLoading || !user || (user.role !== UserRole.CLIENT && user.role !== UserRole.ADMIN && !isImpersonating)) {
-    return <div className="min-h-[60vh] flex items-center justify-center"><Loader className="animate-spin text-slate-600" size={32} /></div>;
+  if (
+    authLoading ||
+    !user ||
+    (user.role !== UserRole.CLIENT && user.role !== UserRole.ADMIN && !isImpersonating)
+  ) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <Loader className="animate-spin text-slate-600" size={32} />
+      </div>
+    );
   }
 
   // Use up-to-date values from DataContext - use impersonated client ID if impersonating
   const effectiveClientId = isImpersonating && impersonatedClient ? impersonatedClient.id : user.id;
-  const myBookings = bookings.filter(b => b.clientId === effectiveClientId) as BookingWithDetails[];
+  const myBookings = bookings.filter(
+    (b) => b.clientId === effectiveClientId
+  ) as BookingWithDetails[];
 
   // Separate bookings into "Próximas" (future) and "Histórico" (past)
   const today = new Date();
@@ -1411,7 +1623,11 @@ const ClientDashboard: React.FC = () => {
   };
 
   // Sort function based on selected sort option
-  const sortBookings = (a: BookingWithDetails, b: BookingWithDetails, ascending: boolean = true) => {
+  const sortBookings = (
+    a: BookingWithDetails,
+    b: BookingWithDetails,
+    ascending: boolean = true
+  ) => {
     if (sortBy === 'alphabetical') {
       const tripA = getTripForSorting(a);
       const tripB = getTripForSorting(b);
@@ -1433,7 +1649,7 @@ const ClientDashboard: React.FC = () => {
   };
 
   const upcomingBookings = myBookings
-    .filter(booking => {
+    .filter((booking) => {
       const trip = getTripForSorting(booking);
       if (!trip?.startDate) return false;
       const tripDate = new Date(trip.startDate);
@@ -1443,7 +1659,7 @@ const ClientDashboard: React.FC = () => {
     .sort((a, b) => sortBookings(a, b, true)); // Ascending for upcoming
 
   const pastBookings = myBookings
-    .filter(booking => {
+    .filter((booking) => {
       const trip = getTripForSorting(booking);
       if (!trip?.startDate) return true; // If no date, consider as past
       const tripDate = new Date(trip.startDate);
@@ -1465,7 +1681,9 @@ const ClientDashboard: React.FC = () => {
   };
 
   const favoriteIds = currentClient?.favorites || [];
-  const favoriteTrips = favoriteIds.map((id: string) => getTripById(id)).filter((t: Trip | undefined) => t !== undefined) as Trip[]; // Cast to Trip[]
+  const favoriteTrips = favoriteIds
+    .map((id: string) => getTripById(id))
+    .filter((t: Trip | undefined) => t !== undefined) as Trip[]; // Cast to Trip[]
 
   const handleLogout = async () => {
     await logout();
@@ -1520,18 +1738,18 @@ const ClientDashboard: React.FC = () => {
         const data = await response.json();
 
         if (!data.erro) {
-          setAddressForm(prev => ({
+          setAddressForm((prev) => ({
             ...prev,
             street: data.logradouro || '',
             district: data.bairro || '',
             city: data.localidade || '',
-            state: data.uf || ''
+            state: data.uf || '',
           }));
         } else {
           showToast('CEP não encontrado.', 'warning');
         }
       } catch (error) {
-        logger.error("Erro ao buscar CEP", error);
+        logger.error('Erro ao buscar CEP', error);
         showToast('Erro ao buscar CEP. Verifique a conexão.', 'error');
       } finally {
         setLoadingCep(false);
@@ -1555,7 +1773,7 @@ const ClientDashboard: React.FC = () => {
           phone: editForm.phone,
           cpf: editForm.cpf,
           birthDate: editForm.birthDate,
-          address: addressForm
+          address: addressForm,
         });
         showToast('Perfil atualizado com sucesso!', 'success');
         // Refresh data to show updated values
@@ -1571,7 +1789,7 @@ const ClientDashboard: React.FC = () => {
           phone: editForm.phone,
           cpf: editForm.cpf,
           birthDate: editForm.birthDate,
-          address: addressForm
+          address: addressForm,
         });
 
         if (res.success) {
@@ -1629,7 +1847,10 @@ const ClientDashboard: React.FC = () => {
         setPassForm({ newPassword: '', confirmPassword: '' });
       } else {
         // Error feedback
-        showToast('Erro: ' + (res.error || 'Não foi possível alterar a senha. Tente novamente.'), 'error');
+        showToast(
+          'Erro: ' + (res.error || 'Não foi possível alterar a senha. Tente novamente.'),
+          'error'
+        );
       }
     } catch (error: any) {
       logger.error('Error changing password:', error);
@@ -1646,13 +1867,15 @@ const ClientDashboard: React.FC = () => {
       return;
     }
 
-    const confirm = window.confirm("Tem certeza que deseja excluir sua conta? Esta ação não pode ser desfeita.");
+    const confirm = window.confirm(
+      'Tem certeza que deseja excluir sua conta? Esta ação não pode ser desfeita.'
+    );
     if (confirm) {
       const result = await deleteAccount(passwordToDelete); // Pass password
       if (result.success) {
         navigate('/');
       } else {
-        showToast("Erro ao excluir conta: " + result.error, 'error');
+        showToast('Erro ao excluir conta: ' + result.error, 'error');
       }
     }
   };
@@ -1670,7 +1893,10 @@ const ClientDashboard: React.FC = () => {
     const agency = selectedBooking._agency;
 
     if (!trip) {
-      showToast('Não foi possível carregar todos os dados para o voucher. Tente novamente.', 'error');
+      showToast(
+        'Não foi possível carregar todos os dados para o voucher. Tente novamente.',
+        'error'
+      );
       return;
     }
 
@@ -1721,8 +1947,13 @@ const ClientDashboard: React.FC = () => {
       logger.info('=== PASSENGER DATA ANALYSIS ===');
       logger.info(`Raw passengersData from DB: ${passengersData.length} records`);
       logger.info('Raw data:', JSON.stringify(passengersData, null, 2));
-      logger.info(`Booking passengerDetails: ${selectedBooking.passengerDetails?.length || 0} records`);
-      logger.info('Booking passengerDetails data:', JSON.stringify(selectedBooking.passengerDetails, null, 2));
+      logger.info(
+        `Booking passengerDetails: ${selectedBooking.passengerDetails?.length || 0} records`
+      );
+      logger.info(
+        'Booking passengerDetails data:',
+        JSON.stringify(selectedBooking.passengerDetails, null, 2)
+      );
 
       if (passengersData.length > 0) {
         // Convert database format to PassengerDetail format (EXACTLY as CheckoutSuccess receives from state)
@@ -1759,7 +1990,7 @@ const ClientDashboard: React.FC = () => {
               }
               return undefined; // Let pdfGenerator determine
             })(),
-            age: p.age
+            age: p.age,
           };
 
           logger.info(`Passenger ${idx + 1}:`, {
@@ -1767,13 +1998,15 @@ const ClientDashboard: React.FC = () => {
             document: passenger.document,
             type: passenger.type,
             birthDate: passenger.birthDate,
-            rawData: p
+            rawData: p,
           });
 
           return passenger;
         });
 
-        logger.info(`✅ Converted ${passengers.length} passengers from database (CheckoutSuccess format)`);
+        logger.info(
+          `✅ Converted ${passengers.length} passengers from database (CheckoutSuccess format)`
+        );
       } else if (selectedBooking.passengerDetails && selectedBooking.passengerDetails.length > 0) {
         // Use booking.passengerDetails directly (EXACT format as CheckoutSuccess receives)
         passengers = selectedBooking.passengerDetails.map((p: any, idx: number) => {
@@ -1783,7 +2016,7 @@ const ClientDashboard: React.FC = () => {
             cpf: p.cpf || p.document || undefined,
             birthDate: p.birthDate || p.birth_date || undefined,
             type: p.type || undefined,
-            age: p.age
+            age: p.age,
           };
 
           logger.info(`Passenger ${idx + 1} from booking.passengerDetails:`, passenger);
@@ -1799,7 +2032,9 @@ const ClientDashboard: React.FC = () => {
 
       logger.info(`=== FINAL PASSENGERS ARRAY: ${passengers.length} ===`);
       passengers.forEach((p, idx) => {
-        logger.info(`  [${idx + 1}] ${p.name} | Doc: ${p.document} | Type: ${p.type || 'undefined'}`);
+        logger.info(
+          `  [${idx + 1}] ${p.name} | Doc: ${p.document} | Type: ${p.type || 'undefined'}`
+        );
       });
 
       // Final validation and logging
@@ -1811,17 +2046,27 @@ const ClientDashboard: React.FC = () => {
       logger.info(`Booking passengerDetails: ${selectedBooking.passengerDetails?.length || 0}`);
       logger.info('=== FINAL PASSENGERS ARRAY TO PDF ===');
       passengers.forEach((p, idx) => {
-        logger.info(`  [${idx + 1}] Name: "${p.name}" | Document: "${p.document}" | Type: "${p.type || 'undefined'}" | BirthDate: "${p.birthDate || 'none'}"`);
+        logger.info(
+          `  [${idx + 1}] Name: "${p.name}" | Document: "${p.document}" | Type: "${p.type || 'undefined'}" | BirthDate: "${p.birthDate || 'none'}"`
+        );
       });
 
       if (passengers.length === 0) {
         logger.error('❌ CRITICAL: NO PASSENGERS FOUND FOR PDF!');
         logger.error('Raw database data:', JSON.stringify(passengersData, null, 2));
-        logger.error('Booking passengerDetails:', JSON.stringify(selectedBooking.passengerDetails, null, 2));
+        logger.error(
+          'Booking passengerDetails:',
+          JSON.stringify(selectedBooking.passengerDetails, null, 2)
+        );
         logger.error('Booking object:', JSON.stringify(selectedBooking, null, 2));
-        showToast('Atenção: Nenhum passageiro encontrado. O PDF será gerado apenas com dados básicos.', 'warning');
+        showToast(
+          'Atenção: Nenhum passageiro encontrado. O PDF será gerado apenas com dados básicos.',
+          'warning'
+        );
       } else {
-        logger.info(`✅ Generating PDF with ${passengers.length} passenger(s) - ALL SHOULD APPEAR IN PDF`);
+        logger.info(
+          `✅ Generating PDF with ${passengers.length} passenger(s) - ALL SHOULD APPEAR IN PDF`
+        );
       }
 
       // Call with EXACTLY the same parameters as CheckoutSuccess
@@ -1835,7 +2080,7 @@ const ClientDashboard: React.FC = () => {
         agency: agency || null,
         passengers, // Same format as CheckoutSuccess
         voucherCode: selectedBooking.voucherCode,
-        client: currentClient || null
+        client: currentClient || null,
       });
 
       logger.info('✅ PDF generation completed');
@@ -1870,7 +2115,7 @@ const ClientDashboard: React.FC = () => {
         bookingId: selectedBooking.id,
         rating: reviewForm.rating,
         comment: reviewForm.comment,
-        tags: reviewForm.tags
+        tags: reviewForm.tags,
       });
       setShowReviewModal(false);
       setSelectedBooking(null);
@@ -1892,7 +2137,7 @@ const ClientDashboard: React.FC = () => {
       await updateAgencyReview(editingReview.id, {
         rating: reviewForm.rating,
         comment: reviewForm.comment,
-        tags: reviewForm.tags
+        tags: reviewForm.tags,
       });
       setEditingReview(null);
       setReviewForm({ rating: 5, comment: '', tags: [] });
@@ -1919,18 +2164,27 @@ const ClientDashboard: React.FC = () => {
     // Preserve impersonate parameter if in impersonate mode
     return preserveImpersonate(baseLink);
   };
-  const getTabClass = (tab: string) => `w-full flex items-center px-6 py-4 text-left text-sm font-medium transition-colors border-l-4 ${activeTab === tab ? 'bg-slate-50 text-slate-900 border-slate-900' : 'border-transparent text-slate-600 hover:bg-slate-50'}`;
+  const getTabClass = (tab: string) =>
+    `w-full flex items-center px-6 py-4 text-left text-sm font-medium transition-colors border-l-4 ${activeTab === tab ? 'bg-slate-50 text-slate-900 border-slate-900' : 'border-transparent text-slate-600 hover:bg-slate-50'}`;
 
   // Helper for ReviewForm tags
   const toggleReviewTag = (tag: string) => {
-    setReviewForm(prev => {
-      const newTags = prev.tags.includes(tag) ? prev.tags.filter(t => t !== tag) : [...prev.tags, tag];
+    setReviewForm((prev) => {
+      const newTags = prev.tags.includes(tag)
+        ? prev.tags.filter((t) => t !== tag)
+        : [...prev.tags, tag];
       return { ...prev, tags: newTags };
     });
   };
 
-  const SUGGESTED_REVIEW_TAGS = ['Atendimento', 'Organização', 'Custo-benefício', 'Hospedagem', 'Passeios', 'Pontualidade'];
-
+  const SUGGESTED_REVIEW_TAGS = [
+    'Atendimento',
+    'Organização',
+    'Custo-benefício',
+    'Hospedagem',
+    'Passeios',
+    'Pontualidade',
+  ];
 
   return (
     <div className="max-w-[1600px] mx-auto py-6 px-4 md:px-6">
@@ -1941,7 +2195,10 @@ const ClientDashboard: React.FC = () => {
             <AlertTriangle className="text-amber-600" size={20} />
             <div>
               <p className="font-semibold text-amber-900 text-sm">Modo Admin - Visualização</p>
-              <p className="text-xs text-amber-700">Você está visualizando o painel como: <strong>{currentClient?.name || impersonatedClient?.name}</strong></p>
+              <p className="text-xs text-amber-700">
+                Você está visualizando o painel como:{' '}
+                <strong>{currentClient?.name || impersonatedClient?.name}</strong>
+              </p>
             </div>
           </div>
           <button
@@ -1958,7 +2215,6 @@ const ClientDashboard: React.FC = () => {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-
         {/* Left Sidebar - Premium Style */}
         <div className="lg:col-span-1 space-y-4">
           {/* Profile Card with Gradient */}
@@ -1980,21 +2236,37 @@ const ClientDashboard: React.FC = () => {
               <div className="relative inline-block">
                 <img
                   key={user?.avatar || currentClient?.avatar || 'avatar'}
-                  src={currentClient?.avatar || user?.avatar || `https://ui-avatars.com/api/?name=${currentClient?.name || user?.name || 'Cliente'}&background=ffffff&color=1a5d3a&bold=true`}
+                  src={
+                    currentClient?.avatar ||
+                    user?.avatar ||
+                    `https://ui-avatars.com/api/?name=${currentClient?.name || user?.name || 'Cliente'}&background=ffffff&color=1a5d3a&bold=true`
+                  }
                   alt={currentClient?.name || user?.name || 'Cliente'}
                   className="w-16 h-16 rounded-2xl object-cover ring-4 ring-white shadow-lg"
                 />
                 <label className="absolute -bottom-1 -right-1 bg-white text-primary-600 p-1.5 rounded-lg cursor-pointer hover:bg-primary-50 shadow-md transition-all hover:scale-110 border border-stone-200">
                   <Camera size={12} />
-                  <input type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} disabled={uploading} />
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handlePhotoUpload}
+                    disabled={uploading}
+                  />
                 </label>
-                {uploading && <div className="absolute inset-0 flex items-center justify-center bg-white/60 rounded-2xl"><div className="w-5 h-5 border-2 border-primary-600 border-t-transparent rounded-full animate-spin"></div></div>}
+                {uploading && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-white/60 rounded-2xl">
+                    <div className="w-5 h-5 border-2 border-primary-600 border-t-transparent rounded-full animate-spin"></div>
+                  </div>
+                )}
               </div>
             </div>
 
             {/* Name & Badge */}
             <div className="px-5 pt-3 pb-4">
-              <h2 className="font-bold text-stone-900 text-lg truncate">{currentClient?.name || user?.name || 'Cliente'}</h2>
+              <h2 className="font-bold text-stone-900 text-lg truncate">
+                {currentClient?.name || user?.name || 'Cliente'}
+              </h2>
               <div className="flex items-center gap-1.5 mt-1">
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-primary-100 text-primary-700 text-[10px] font-semibold uppercase tracking-wide rounded-full">
                   <Star size={10} className="fill-current" />
@@ -2013,7 +2285,9 @@ const ClientDashboard: React.FC = () => {
                   <Plane size={14} className="text-blue-600" />
                 </div>
                 <p className="text-lg font-bold text-stone-900">{myBookings.length}</p>
-                <p className="text-[9px] text-stone-500 uppercase font-medium tracking-wide">Viagens</p>
+                <p className="text-[9px] text-stone-500 uppercase font-medium tracking-wide">
+                  Viagens
+                </p>
               </Link>
               <Link
                 to={getNavLink('FAVORITES')}
@@ -2023,7 +2297,9 @@ const ClientDashboard: React.FC = () => {
                   <Heart size={14} className="text-rose-500" />
                 </div>
                 <p className="text-lg font-bold text-stone-900">{favoriteTrips.length}</p>
-                <p className="text-[9px] text-stone-500 uppercase font-medium tracking-wide">Favoritos</p>
+                <p className="text-[9px] text-stone-500 uppercase font-medium tracking-wide">
+                  Favoritos
+                </p>
               </Link>
               <Link
                 to={getNavLink('REVIEWS')}
@@ -2033,7 +2309,9 @@ const ClientDashboard: React.FC = () => {
                   <Star size={14} className="text-amber-500" />
                 </div>
                 <p className="text-lg font-bold text-stone-900">{myReviews.length}</p>
-                <p className="text-[9px] text-stone-500 uppercase font-medium tracking-wide">Avaliações</p>
+                <p className="text-[9px] text-stone-500 uppercase font-medium tracking-wide">
+                  Avaliações
+                </p>
               </Link>
             </div>
           </div>
@@ -2042,29 +2320,68 @@ const ClientDashboard: React.FC = () => {
           <div className="bg-white rounded-2xl border border-stone-200/80 overflow-hidden shadow-sm">
             <nav>
               {[
-                { id: 'PROFILE', icon: Home, label: 'Início', color: 'text-emerald-600 bg-emerald-50' },
-                { id: 'BOOKINGS', icon: ShoppingBag, label: 'Minhas Viagens', color: 'text-blue-600 bg-blue-50' },
-                { id: 'REVIEWS', icon: Star, label: 'Minhas Avaliações', color: 'text-amber-600 bg-amber-50' },
-                { id: 'FAVORITES', icon: Heart, label: 'Favoritos', color: 'text-rose-600 bg-rose-50' },
-                { id: 'SETTINGS', icon: Settings, label: 'Dados & Endereço', color: 'text-violet-600 bg-violet-50' },
-                { id: 'SECURITY', icon: Shield, label: 'Segurança', color: 'text-slate-600 bg-slate-50' }
+                {
+                  id: 'PROFILE',
+                  icon: Home,
+                  label: 'Início',
+                  color: 'text-emerald-600 bg-emerald-50',
+                },
+                {
+                  id: 'BOOKINGS',
+                  icon: ShoppingBag,
+                  label: 'Minhas Viagens',
+                  color: 'text-blue-600 bg-blue-50',
+                },
+                {
+                  id: 'REVIEWS',
+                  icon: Star,
+                  label: 'Minhas Avaliações',
+                  color: 'text-amber-600 bg-amber-50',
+                },
+                {
+                  id: 'FAVORITES',
+                  icon: Heart,
+                  label: 'Favoritos',
+                  color: 'text-rose-600 bg-rose-50',
+                },
+                {
+                  id: 'SETTINGS',
+                  icon: Settings,
+                  label: 'Dados & Endereço',
+                  color: 'text-violet-600 bg-violet-50',
+                },
+                {
+                  id: 'SECURITY',
+                  icon: Shield,
+                  label: 'Segurança',
+                  color: 'text-slate-600 bg-slate-50',
+                },
               ].map((item, index) => (
                 <Link
                   key={item.id}
                   to={getNavLink(item.id)}
-                  className={`flex items-center gap-3 px-4 py-3.5 transition-all group relative ${activeTab === item.id
-                    ? 'bg-primary-50'
-                    : 'hover:bg-stone-50'
-                    } ${index < 5 ? 'border-b border-stone-100' : ''}`}
+                  className={`flex items-center gap-3 px-4 py-3.5 transition-all group relative ${
+                    activeTab === item.id ? 'bg-primary-50' : 'hover:bg-stone-50'
+                  } ${index < 5 ? 'border-b border-stone-100' : ''}`}
                 >
                   {activeTab === item.id && (
                     <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary-600 rounded-r" />
                   )}
-                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-transform group-hover:scale-110 ${activeTab === item.id ? 'bg-primary-100' : item.color.split(' ')[1]
-                    }`}>
-                    <item.icon size={16} className={activeTab === item.id ? 'text-primary-600' : item.color.split(' ')[0]} />
+                  <div
+                    className={`w-8 h-8 rounded-lg flex items-center justify-center transition-transform group-hover:scale-110 ${
+                      activeTab === item.id ? 'bg-primary-100' : item.color.split(' ')[1]
+                    }`}
+                  >
+                    <item.icon
+                      size={16}
+                      className={
+                        activeTab === item.id ? 'text-primary-600' : item.color.split(' ')[0]
+                      }
+                    />
                   </div>
-                  <span className={`text-sm font-medium ${activeTab === item.id ? 'text-primary-700' : 'text-stone-700'}`}>
+                  <span
+                    className={`text-sm font-medium ${activeTab === item.id ? 'text-primary-700' : 'text-stone-700'}`}
+                  >
                     {item.label}
                   </span>
                 </Link>
@@ -2076,11 +2393,7 @@ const ClientDashboard: React.FC = () => {
           <div className="rounded-2xl overflow-hidden shadow-lg relative">
             {/* Background image */}
             <div className="absolute inset-0">
-              <img
-                src={getDailyHeroImage(trips)}
-                alt=""
-                className="w-full h-full object-cover"
-              />
+              <img src={getDailyHeroImage(trips)} alt="" className="w-full h-full object-cover" />
               {/* Gradient overlay */}
               <div className="absolute inset-0 bg-gradient-to-br from-primary-900/85 via-primary-800/75 to-primary-700/65" />
             </div>
@@ -2089,7 +2402,9 @@ const ClientDashboard: React.FC = () => {
             <div className="relative p-5 text-white">
               <Compass size={24} className="mb-3 opacity-90" />
               <h4 className="font-bold text-base mb-1 drop-shadow-sm">Explore o Mundo</h4>
-              <p className="text-xs text-white/90 mb-3 drop-shadow-sm">Descubra destinos incríveis para sua próxima aventura</p>
+              <p className="text-xs text-white/90 mb-3 drop-shadow-sm">
+                Descubra destinos incríveis para sua próxima aventura
+              </p>
               <Link
                 to="/trips"
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white text-primary-700 rounded-lg text-xs font-semibold hover:bg-white/90 transition-colors shadow-md"
@@ -2112,7 +2427,6 @@ const ClientDashboard: React.FC = () => {
 
         {/* Right Content Area */}
         <div className="lg:col-span-3">
-
           {activeTab === 'PROFILE' && (
             <TravelFeed
               bookings={myBookings}
@@ -2134,20 +2448,22 @@ const ClientDashboard: React.FC = () => {
                   <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg p-1">
                     <button
                       onClick={() => setSortBy('date')}
-                      className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-1.5 ${sortBy === 'date'
-                        ? 'bg-primary-600 text-white'
-                        : 'text-gray-700 hover:bg-gray-50'
-                        }`}
+                      className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-1.5 ${
+                        sortBy === 'date'
+                          ? 'bg-primary-600 text-white'
+                          : 'text-gray-700 hover:bg-gray-50'
+                      }`}
                     >
                       <ArrowUpDown size={14} />
                       Data
                     </button>
                     <button
                       onClick={() => setSortBy('alphabetical')}
-                      className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-1.5 ${sortBy === 'alphabetical'
-                        ? 'bg-primary-600 text-white'
-                        : 'text-gray-700 hover:bg-gray-50'
-                        }`}
+                      className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-1.5 ${
+                        sortBy === 'alphabetical'
+                          ? 'bg-primary-600 text-white'
+                          : 'text-gray-700 hover:bg-gray-50'
+                      }`}
                     >
                       <ArrowDownAZ size={14} />
                       A-Z
@@ -2158,20 +2474,22 @@ const ClientDashboard: React.FC = () => {
                   <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg p-1">
                     <button
                       onClick={() => setViewMode('card')}
-                      className={`p-2 rounded-md transition-colors ${viewMode === 'card'
-                        ? 'bg-primary-600 text-white'
-                        : 'text-gray-700 hover:bg-gray-50'
-                        }`}
+                      className={`p-2 rounded-md transition-colors ${
+                        viewMode === 'card'
+                          ? 'bg-primary-600 text-white'
+                          : 'text-gray-700 hover:bg-gray-50'
+                      }`}
                       title="Visualização em Cards"
                     >
                       <Grid3x3 size={18} />
                     </button>
                     <button
                       onClick={() => setViewMode('list')}
-                      className={`p-2 rounded-md transition-colors ${viewMode === 'list'
-                        ? 'bg-primary-600 text-white'
-                        : 'text-gray-700 hover:bg-gray-50'
-                        }`}
+                      className={`p-2 rounded-md transition-colors ${
+                        viewMode === 'list'
+                          ? 'bg-primary-600 text-white'
+                          : 'text-gray-700 hover:bg-gray-50'
+                      }`}
                       title="Visualização em Lista"
                     >
                       <List size={18} />
@@ -2188,7 +2506,7 @@ const ClientDashboard: React.FC = () => {
                     Próximas Viagens ({upcomingBookings.length})
                   </h3>
                   <div className={viewMode === 'card' ? 'space-y-4' : 'space-y-2'}>
-                    {upcomingBookings.map(booking => {
+                    {upcomingBookings.map((booking) => {
                       const trip = booking._trip || getTripById(booking.tripId);
                       const agency = booking._agency;
                       if (!trip) return null;
@@ -2196,8 +2514,13 @@ const ClientDashboard: React.FC = () => {
                       if (viewMode === 'list') {
                         // List view - compact horizontal layout
                         const agencySlugForNav = agency?.slug;
-                        const hasReviewedBooking = myReviews.some(r => r.bookingId === booking.id);
-                        const whatsappUrl = buildWhatsAppUrl(agency?.whatsapp || agency?.phone, trip.title);
+                        const hasReviewedBooking = myReviews.some(
+                          (r) => r.bookingId === booking.id
+                        );
+                        const whatsappUrl = buildWhatsAppUrl(
+                          agency?.whatsapp || agency?.phone,
+                          trip.title
+                        );
 
                         return (
                           <div
@@ -2213,7 +2536,7 @@ const ClientDashboard: React.FC = () => {
                                   tripTitle={trip.title}
                                   fetchTripImages={fetchTripImages}
                                   onImageLoaded={(tripId, images) => {
-                                    setLoadedTripImages(prev => ({ ...prev, [tripId]: images }));
+                                    setLoadedTripImages((prev) => ({ ...prev, [tripId]: images }));
                                   }}
                                 />
                               </div>
@@ -2228,7 +2551,9 @@ const ClientDashboard: React.FC = () => {
                                 <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
                                   <span className="flex items-center gap-1">
                                     <Calendar size={12} />
-                                    {trip.startDate ? new Date(trip.startDate).toLocaleDateString('pt-BR') : '---'}
+                                    {trip.startDate
+                                      ? new Date(trip.startDate).toLocaleDateString('pt-BR')
+                                      : '---'}
                                   </span>
                                   {trip.durationDays && (
                                     <span className="flex items-center gap-1">
@@ -2245,8 +2570,11 @@ const ClientDashboard: React.FC = () => {
                                   onClick={async () => {
                                     try {
                                       let pdfPassengers: any[] = [];
-                                      if (booking.booking_passengers && booking.booking_passengers.length > 0) {
-                                        pdfPassengers = booking.booking_passengers.map(p => {
+                                      if (
+                                        booking.booking_passengers &&
+                                        booking.booking_passengers.length > 0
+                                      ) {
+                                        pdfPassengers = booking.booking_passengers.map((p) => {
                                           const rawDoc = p.document?.replace(/\D/g, '') || '';
                                           let passengerType: string | undefined;
                                           if (p.birth_date) {
@@ -2255,8 +2583,13 @@ const ClientDashboard: React.FC = () => {
                                               const birth = new Date(p.birth_date);
                                               if (!isNaN(birth.getTime())) {
                                                 let age = today.getFullYear() - birth.getFullYear();
-                                                const monthDiff = today.getMonth() - birth.getMonth();
-                                                if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+                                                const monthDiff =
+                                                  today.getMonth() - birth.getMonth();
+                                                if (
+                                                  monthDiff < 0 ||
+                                                  (monthDiff === 0 &&
+                                                    today.getDate() < birth.getDate())
+                                                ) {
                                                   age--;
                                                 }
                                                 passengerType = age < 12 ? 'child' : 'adult';
@@ -2270,7 +2603,7 @@ const ClientDashboard: React.FC = () => {
                                             document: rawDoc,
                                             birthDate: p.birth_date,
                                             type: passengerType || 'adult',
-                                            age: undefined
+                                            age: undefined,
                                           };
                                         });
                                       }
@@ -2280,12 +2613,15 @@ const ClientDashboard: React.FC = () => {
                                         agency: agency || null,
                                         passengers: pdfPassengers,
                                         voucherCode: booking.voucherCode,
-                                        client: currentClient || null
+                                        client: currentClient || null,
                                       });
                                       showToast('PDF gerado com sucesso!', 'success');
                                     } catch (error: any) {
                                       logger.error('Error generating PDF:', error);
-                                      showToast(error?.message || 'Erro ao gerar o PDF. Tente novamente.', 'error');
+                                      showToast(
+                                        error?.message || 'Erro ao gerar o PDF. Tente novamente.',
+                                        'error'
+                                      );
                                     }
                                   }}
                                   className="px-3 py-1.5 bg-primary-600 text-white text-sm font-bold rounded-lg hover:bg-primary-700 transition-colors flex items-center gap-1.5 shadow-sm"
@@ -2308,13 +2644,17 @@ const ClientDashboard: React.FC = () => {
                                     if (agencySlugForNav) {
                                       navigate(`/${agencySlugForNav}?tab=REVIEWS`);
                                     } else {
-                                      showToast('Não foi possível encontrar a página da agência.', 'error');
+                                      showToast(
+                                        'Não foi possível encontrar a página da agência.',
+                                        'error'
+                                      );
                                     }
                                   }}
                                   disabled={!agencySlugForNav}
                                   className="px-3 py-1.5 bg-amber-50 text-amber-600 text-sm font-bold rounded-lg flex items-center gap-1.5 hover:bg-amber-100 transition-colors border border-amber-100 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                  <Star size={14} /> {hasReviewedBooking ? 'Ver/Editar Avaliação' : 'Avaliar Agência'}
+                                  <Star size={14} />{' '}
+                                  {hasReviewedBooking ? 'Ver/Editar Avaliação' : 'Avaliar Agência'}
                                 </button>
                                 {whatsappUrl && (
                                   <a
@@ -2323,7 +2663,8 @@ const ClientDashboard: React.FC = () => {
                                     rel="noopener noreferrer"
                                     className="px-3 py-1.5 bg-[#25D366] text-white text-sm font-bold rounded-lg flex items-center gap-1.5 hover:bg-[#128C7E] transition-colors shadow-sm"
                                   >
-                                    <MessageCircle size={14} className="fill-white/20" /> Falar com a Agência
+                                    <MessageCircle size={14} className="fill-white/20" /> Falar com
+                                    a Agência
                                   </a>
                                 )}
                               </div>
@@ -2341,7 +2682,7 @@ const ClientDashboard: React.FC = () => {
                           booking={booking}
                           trip={trip}
                           agency={agency}
-                          hasReviewed={myReviews.some(r => r.bookingId === booking.id)}
+                          hasReviewed={myReviews.some((r) => r.bookingId === booking.id)}
                           onOpenVoucher={setSelectedBooking}
                           onViewDetails={(b) => {
                             setSelectedBookingDetails(b);
@@ -2363,7 +2704,7 @@ const ClientDashboard: React.FC = () => {
                     Histórico ({pastBookings.length})
                   </h3>
                   <div className={viewMode === 'card' ? 'space-y-4' : 'space-y-2'}>
-                    {pastBookings.map(booking => {
+                    {pastBookings.map((booking) => {
                       const trip = booking._trip || getTripById(booking.tripId);
                       const agency = booking._agency;
                       if (!trip) return null;
@@ -2371,8 +2712,13 @@ const ClientDashboard: React.FC = () => {
                       if (viewMode === 'list') {
                         // List view - compact horizontal layout
                         const agencySlugForNav = agency?.slug;
-                        const hasReviewedBooking = myReviews.some(r => r.bookingId === booking.id);
-                        const whatsappUrl = buildWhatsAppUrl(agency?.whatsapp || agency?.phone, trip.title);
+                        const hasReviewedBooking = myReviews.some(
+                          (r) => r.bookingId === booking.id
+                        );
+                        const whatsappUrl = buildWhatsAppUrl(
+                          agency?.whatsapp || agency?.phone,
+                          trip.title
+                        );
 
                         return (
                           <div
@@ -2388,7 +2734,7 @@ const ClientDashboard: React.FC = () => {
                                   tripTitle={trip.title}
                                   fetchTripImages={fetchTripImages}
                                   onImageLoaded={(tripId, images) => {
-                                    setLoadedTripImages(prev => ({ ...prev, [tripId]: images }));
+                                    setLoadedTripImages((prev) => ({ ...prev, [tripId]: images }));
                                   }}
                                 />
                               </div>
@@ -2403,7 +2749,9 @@ const ClientDashboard: React.FC = () => {
                                 <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
                                   <span className="flex items-center gap-1">
                                     <Calendar size={12} />
-                                    {trip.startDate ? new Date(trip.startDate).toLocaleDateString('pt-BR') : '---'}
+                                    {trip.startDate
+                                      ? new Date(trip.startDate).toLocaleDateString('pt-BR')
+                                      : '---'}
                                   </span>
                                   {trip.durationDays && (
                                     <span className="flex items-center gap-1">
@@ -2420,8 +2768,11 @@ const ClientDashboard: React.FC = () => {
                                   onClick={async () => {
                                     try {
                                       let pdfPassengers: any[] = [];
-                                      if (booking.booking_passengers && booking.booking_passengers.length > 0) {
-                                        pdfPassengers = booking.booking_passengers.map(p => {
+                                      if (
+                                        booking.booking_passengers &&
+                                        booking.booking_passengers.length > 0
+                                      ) {
+                                        pdfPassengers = booking.booking_passengers.map((p) => {
                                           const rawDoc = p.document?.replace(/\D/g, '') || '';
                                           let passengerType: string | undefined;
                                           if (p.birth_date) {
@@ -2430,8 +2781,13 @@ const ClientDashboard: React.FC = () => {
                                               const birth = new Date(p.birth_date);
                                               if (!isNaN(birth.getTime())) {
                                                 let age = today.getFullYear() - birth.getFullYear();
-                                                const monthDiff = today.getMonth() - birth.getMonth();
-                                                if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+                                                const monthDiff =
+                                                  today.getMonth() - birth.getMonth();
+                                                if (
+                                                  monthDiff < 0 ||
+                                                  (monthDiff === 0 &&
+                                                    today.getDate() < birth.getDate())
+                                                ) {
                                                   age--;
                                                 }
                                                 passengerType = age < 12 ? 'child' : 'adult';
@@ -2445,7 +2801,7 @@ const ClientDashboard: React.FC = () => {
                                             document: rawDoc,
                                             birthDate: p.birth_date,
                                             type: passengerType || 'adult',
-                                            age: undefined
+                                            age: undefined,
                                           };
                                         });
                                       }
@@ -2455,12 +2811,15 @@ const ClientDashboard: React.FC = () => {
                                         agency: agency || null,
                                         passengers: pdfPassengers,
                                         voucherCode: booking.voucherCode,
-                                        client: currentClient || null
+                                        client: currentClient || null,
                                       });
                                       showToast('PDF gerado com sucesso!', 'success');
                                     } catch (error: any) {
                                       logger.error('Error generating PDF:', error);
-                                      showToast(error?.message || 'Erro ao gerar o PDF. Tente novamente.', 'error');
+                                      showToast(
+                                        error?.message || 'Erro ao gerar o PDF. Tente novamente.',
+                                        'error'
+                                      );
                                     }
                                   }}
                                   className="px-3 py-1.5 bg-primary-600 text-white text-sm font-bold rounded-lg hover:bg-primary-700 transition-colors flex items-center gap-1.5 shadow-sm"
@@ -2483,13 +2842,17 @@ const ClientDashboard: React.FC = () => {
                                     if (agencySlugForNav) {
                                       navigate(`/${agencySlugForNav}?tab=REVIEWS`);
                                     } else {
-                                      showToast('Não foi possível encontrar a página da agência.', 'error');
+                                      showToast(
+                                        'Não foi possível encontrar a página da agência.',
+                                        'error'
+                                      );
                                     }
                                   }}
                                   disabled={!agencySlugForNav}
                                   className="px-3 py-1.5 bg-amber-50 text-amber-600 text-sm font-bold rounded-lg flex items-center gap-1.5 hover:bg-amber-100 transition-colors border border-amber-100 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                  <Star size={14} /> {hasReviewedBooking ? 'Ver/Editar Avaliação' : 'Avaliar Agência'}
+                                  <Star size={14} />{' '}
+                                  {hasReviewedBooking ? 'Ver/Editar Avaliação' : 'Avaliar Agência'}
                                 </button>
                                 {whatsappUrl && (
                                   <a
@@ -2498,7 +2861,8 @@ const ClientDashboard: React.FC = () => {
                                     rel="noopener noreferrer"
                                     className="px-3 py-1.5 bg-[#25D366] text-white text-sm font-bold rounded-lg flex items-center gap-1.5 hover:bg-[#128C7E] transition-colors shadow-sm"
                                   >
-                                    <MessageCircle size={14} className="fill-white/20" /> Falar com a Agência
+                                    <MessageCircle size={14} className="fill-white/20" /> Falar com
+                                    a Agência
                                   </a>
                                 )}
                               </div>
@@ -2516,7 +2880,7 @@ const ClientDashboard: React.FC = () => {
                           booking={booking}
                           trip={trip}
                           agency={agency}
-                          hasReviewed={myReviews.some(r => r.bookingId === booking.id)}
+                          hasReviewed={myReviews.some((r) => r.bookingId === booking.id)}
                           onOpenVoucher={setSelectedBooking}
                           onViewDetails={(b) => {
                             setSelectedBookingDetails(b);
@@ -2534,8 +2898,13 @@ const ClientDashboard: React.FC = () => {
                 <div className="bg-white rounded-2xl p-16 text-center border border-dashed border-gray-200">
                   <Plane size={32} className="text-gray-300 mx-auto mb-4" />
                   <h3 className="text-lg font-bold text-gray-900">Nenhuma viagem encontrada</h3>
-                  <p className="text-gray-500 mt-1 mb-6">Parece que você ainda não tem nenhuma reserva ativa.</p>
-                  <Link to={isMicrositeMode ? `/${agencySlug}/trips` : '/trips'} className="bg-primary-600 text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center gap-2 w-fit mx-auto hover:bg-primary-700">
+                  <p className="text-gray-500 mt-1 mb-6">
+                    Parece que você ainda não tem nenhuma reserva ativa.
+                  </p>
+                  <Link
+                    to={isMicrositeMode ? `/${agencySlug}/trips` : '/trips'}
+                    className="bg-primary-600 text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center gap-2 w-fit mx-auto hover:bg-primary-700"
+                  >
                     <Compass size={16} /> Explorar Pacotes
                   </Link>
                 </div>
@@ -2548,20 +2917,65 @@ const ClientDashboard: React.FC = () => {
               <h2 className="text-2xl font-bold text-gray-900 mb-4">Minhas Avaliações</h2>
               {myReviews.length > 0 ? (
                 <div className="space-y-4">
-                  {myReviews.map(review => (
-                    <div key={review.id} className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+                  {myReviews.map((review) => (
+                    <div
+                      key={review.id}
+                      className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm"
+                    >
                       <div className="flex justify-between items-start mb-3">
                         <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 bg-gray-100 rounded-full overflow-hidden border border-gray-200"> {review.agencyLogo ? <img src={review.agencyLogo} className="w-full h-full object-cover" /> : <div className="w-full h-full bg-gray-200" />} </div>
-                          <div> <h4 className="font-bold text-gray-900">{review.agencyName}</h4> <div className="flex text-amber-400 text-sm"> {[...Array(5)].map((_, i) => <Star key={i} size={12} className={i < review.rating ? 'fill-current' : 'text-gray-300'} />)} </div> </div>
+                          <div className="w-12 h-12 bg-gray-100 rounded-full overflow-hidden border border-gray-200">
+                            {' '}
+                            {review.agencyLogo ? (
+                              <img src={review.agencyLogo} className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full bg-gray-200" />
+                            )}{' '}
+                          </div>
+                          <div>
+                            {' '}
+                            <h4 className="font-bold text-gray-900">{review.agencyName}</h4>{' '}
+                            <div className="flex text-amber-400 text-sm">
+                              {' '}
+                              {[...Array(5)].map((_, i) => (
+                                <Star
+                                  key={i}
+                                  size={12}
+                                  className={i < review.rating ? 'fill-current' : 'text-gray-300'}
+                                />
+                              ))}{' '}
+                            </div>{' '}
+                          </div>
                         </div>
                         <div className="flex items-center gap-2">
-                          <button onClick={() => setEditingReview(review)} className="text-gray-400 hover:text-primary-500 p-2 rounded-full hover:bg-primary-50 transition-colors" aria-label="Editar avaliação"><Edit size={16} /></button>
-                          <button onClick={() => handleDeleteReview(review.id)} className="text-gray-400 hover:text-red-500 p-2 rounded-full hover:bg-red-50 transition-colors" aria-label="Excluir avaliação"><Trash2 size={16} /></button>
+                          <button
+                            onClick={() => setEditingReview(review)}
+                            className="text-gray-400 hover:text-primary-500 p-2 rounded-full hover:bg-primary-50 transition-colors"
+                            aria-label="Editar avaliação"
+                          >
+                            <Edit size={16} />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteReview(review.id)}
+                            className="text-gray-400 hover:text-red-500 p-2 rounded-full hover:bg-red-50 transition-colors"
+                            aria-label="Excluir avaliação"
+                          >
+                            <Trash2 size={16} />
+                          </button>
                         </div>
                       </div>
-                      <p className="text-gray-600 text-sm bg-gray-50 p-3 rounded-xl italic">"{review.comment}"</p>
-                      <div className="mt-4 flex justify-end"> <Link to={`/${review.agencyName ? slugify(review.agencyName) : ''}`} className="text-xs font-bold text-primary-600 hover:underline flex items-center">Ver Página da Agência <ExternalLink size={12} className="ml-1" /></Link> </div>
+                      <p className="text-gray-600 text-sm bg-gray-50 p-3 rounded-xl italic">
+                        "{review.comment}"
+                      </p>
+                      <div className="mt-4 flex justify-end">
+                        {' '}
+                        <Link
+                          to={`/${review.agencyName ? slugify(review.agencyName) : ''}`}
+                          className="text-xs font-bold text-primary-600 hover:underline flex items-center"
+                        >
+                          Ver Página da Agência <ExternalLink size={12} className="ml-1" />
+                        </Link>{' '}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -2569,8 +2983,13 @@ const ClientDashboard: React.FC = () => {
                 <div className="bg-white rounded-2xl p-16 text-center border border-dashed border-gray-200">
                   <MessageCircle size={32} className="text-gray-300 mx-auto mb-4" />
                   <h3 className="text-lg font-bold text-gray-900">Nenhuma avaliação</h3>
-                  <p className="text-gray-500 mt-1 mb-6">Você ainda não avaliou nenhuma agência. Que tal contar sua experiência?</p>
-                  <Link to={isMicrositeMode ? `/${agencySlug}/trips` : '/trips'} className="bg-primary-600 text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center gap-2 w-fit mx-auto hover:bg-primary-700">
+                  <p className="text-gray-500 mt-1 mb-6">
+                    Você ainda não avaliou nenhuma agência. Que tal contar sua experiência?
+                  </p>
+                  <Link
+                    to={isMicrositeMode ? `/${agencySlug}/trips` : '/trips'}
+                    className="bg-primary-600 text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center gap-2 w-fit mx-auto hover:bg-primary-700"
+                  >
                     <Compass size={16} /> Encontre sua próxima viagem
                   </Link>
                 </div>
@@ -2580,13 +2999,27 @@ const ClientDashboard: React.FC = () => {
 
           {activeTab === 'FAVORITES' && (
             <div className="animate-[fadeIn_0.3s]">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Meus Favoritos ({favoriteTrips.length})</h2>
-              {favoriteTrips.length > 0 ? (<div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch"> {favoriteTrips.map((trip: any) => (trip && <TripCard key={trip.id} trip={trip} />))} </div>) : (
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">
+                Meus Favoritos ({favoriteTrips.length})
+              </h2>
+              {favoriteTrips.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
+                  {' '}
+                  {favoriteTrips.map(
+                    (trip: any) => trip && <TripCard key={trip.id} trip={trip} />
+                  )}{' '}
+                </div>
+              ) : (
                 <div className="bg-white rounded-2xl p-16 text-center border border-dashed border-gray-200">
                   <Heart size={32} className="text-gray-300 mx-auto mb-4" />
                   <h3 className="text-lg font-bold text-gray-900">Lista vazia</h3>
-                  <p className="text-gray-500 mt-2 mb-6">Você ainda não favoritou nenhuma viagem. Clique no coração para adicionar!</p>
-                  <Link to={isMicrositeMode ? `/${agencySlug}/trips` : '/trips'} className="bg-primary-600 text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center gap-2 w-fit mx-auto hover:bg-primary-700">
+                  <p className="text-gray-500 mt-2 mb-6">
+                    Você ainda não favoritou nenhuma viagem. Clique no coração para adicionar!
+                  </p>
+                  <Link
+                    to={isMicrositeMode ? `/${agencySlug}/trips` : '/trips'}
+                    className="bg-primary-600 text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center gap-2 w-fit mx-auto hover:bg-primary-700"
+                  >
                     <Compass size={16} /> Explorar Pacotes
                   </Link>
                 </div>
@@ -2599,26 +3032,161 @@ const ClientDashboard: React.FC = () => {
               <h2 className="text-2xl font-bold text-gray-900 mb-6">Dados Pessoais & Endereço</h2>
               <form onSubmit={handleSaveProfile} className="space-y-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="md:col-span-2"> <label className="block text-sm font-bold text-gray-700 mb-2">Nome Completo</label> <input value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-primary-500 outline-none" /> </div>
-                  <div> <label className="block text-sm font-bold text-gray-700 mb-2">Email</label> <input type="email" value={editForm.email} onChange={(e) => setEditForm({ ...editForm, email: e.target.value })} className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-primary-500 outline-none" /> </div>
-                  <div> <label className="block text-sm font-bold text-gray-700 mb-2">CPF</label> <input value={editForm.cpf} onChange={(e) => setEditForm({ ...editForm, cpf: e.target.value })} className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-primary-500 outline-none" placeholder="000.000.000-00" /> </div>
-                  <div> <label className="block text-sm font-bold text-gray-700 mb-2">Telefone</label> <input value={editForm.phone} onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })} className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-primary-500 outline-none" /> </div>
-                  <div> <label className="block text-sm font-bold text-gray-700 mb-2">Data de Nascimento</label> <input type="date" value={editForm.birthDate} onChange={(e) => setEditForm({ ...editForm, birthDate: e.target.value })} className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-primary-500 outline-none" /> </div>
+                  <div className="md:col-span-2">
+                    {' '}
+                    <label className="block text-sm font-bold text-gray-700 mb-2">
+                      Nome Completo
+                    </label>{' '}
+                    <input
+                      value={editForm.name}
+                      onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                      className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-primary-500 outline-none"
+                    />{' '}
+                  </div>
+                  <div>
+                    {' '}
+                    <label className="block text-sm font-bold text-gray-700 mb-2">Email</label>{' '}
+                    <input
+                      type="email"
+                      value={editForm.email}
+                      onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                      className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-primary-500 outline-none"
+                    />{' '}
+                  </div>
+                  <div>
+                    {' '}
+                    <label className="block text-sm font-bold text-gray-700 mb-2">CPF</label>{' '}
+                    <input
+                      value={editForm.cpf}
+                      onChange={(e) => setEditForm({ ...editForm, cpf: e.target.value })}
+                      className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-primary-500 outline-none"
+                      placeholder="000.000.000-00"
+                    />{' '}
+                  </div>
+                  <div>
+                    {' '}
+                    <label className="block text-sm font-bold text-gray-700 mb-2">
+                      Telefone
+                    </label>{' '}
+                    <input
+                      value={editForm.phone}
+                      onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                      className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-primary-500 outline-none"
+                    />{' '}
+                  </div>
+                  <div>
+                    {' '}
+                    <label className="block text-sm font-bold text-gray-700 mb-2">
+                      Data de Nascimento
+                    </label>{' '}
+                    <input
+                      type="date"
+                      value={editForm.birthDate}
+                      onChange={(e) => setEditForm({ ...editForm, birthDate: e.target.value })}
+                      className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-primary-500 outline-none"
+                    />{' '}
+                  </div>
                 </div>
                 <div className="border-t pt-6">
                   <h3 className="text-lg font-bold text-gray-900 mb-4">Endereço</h3>
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div className="md:col-span-1 relative"> <label className="block text-xs font-bold text-gray-500 uppercase mb-1">CEP</label> <input value={addressForm.zipCode} onChange={handleCepChange} className="w-full border border-gray-300 rounded-lg p-2" placeholder="00000-000" /> {loadingCep && <div className="absolute right-3 top-8"><Loader size={14} className="animate-spin text-primary-600" /></div>} </div>
-                    <div className="md:col-span-3"> <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Rua</label> <input value={addressForm.street} onChange={e => setAddressForm({ ...addressForm, street: e.target.value })} className="w-full border border-gray-300 rounded-lg p-2" /> </div>
-                    <div className="md:col-span-1"> <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Número</label> <input value={addressForm.number} onChange={e => setAddressForm({ ...addressForm, number: e.target.value })} className="w-full border border-gray-300 rounded-lg p-2" /> </div>
-                    <div className="md:col-span-1"> <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Comp.</label> <input value={addressForm.complement} onChange={e => setAddressForm({ ...addressForm, complement: e.target.value })} className="w-full border border-gray-300 rounded-lg p-2" /> </div>
-                    <div className="md:col-span-2"> <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Bairro</label> <input value={addressForm.district} onChange={e => setAddressForm({ ...addressForm, district: e.target.value })} className="w-full border border-gray-300 rounded-lg p-2" /> </div>
-                    <div className="md:col-span-3"> <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Cidade</label> <input value={addressForm.city} onChange={e => setAddressForm({ ...addressForm, city: e.target.value })} className="w-full border border-gray-300 rounded-lg p-2" /> </div>
-                    <div className="md:col-span-1"> <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Estado</label> <input value={addressForm.state} onChange={e => setAddressForm({ ...addressForm, state: e.target.value })} className="w-full border border-gray-300 rounded-lg p-2" placeholder="UF" /> </div>
+                    <div className="md:col-span-1 relative">
+                      {' '}
+                      <label className="block text-xs font-bold text-gray-500 uppercase mb-1">
+                        CEP
+                      </label>{' '}
+                      <input
+                        value={addressForm.zipCode}
+                        onChange={handleCepChange}
+                        className="w-full border border-gray-300 rounded-lg p-2"
+                        placeholder="00000-000"
+                      />{' '}
+                      {loadingCep && (
+                        <div className="absolute right-3 top-8">
+                          <Loader size={14} className="animate-spin text-primary-600" />
+                        </div>
+                      )}{' '}
+                    </div>
+                    <div className="md:col-span-3">
+                      {' '}
+                      <label className="block text-xs font-bold text-gray-500 uppercase mb-1">
+                        Rua
+                      </label>{' '}
+                      <input
+                        value={addressForm.street}
+                        onChange={(e) => setAddressForm({ ...addressForm, street: e.target.value })}
+                        className="w-full border border-gray-300 rounded-lg p-2"
+                      />{' '}
+                    </div>
+                    <div className="md:col-span-1">
+                      {' '}
+                      <label className="block text-xs font-bold text-gray-500 uppercase mb-1">
+                        Número
+                      </label>{' '}
+                      <input
+                        value={addressForm.number}
+                        onChange={(e) => setAddressForm({ ...addressForm, number: e.target.value })}
+                        className="w-full border border-gray-300 rounded-lg p-2"
+                      />{' '}
+                    </div>
+                    <div className="md:col-span-1">
+                      {' '}
+                      <label className="block text-xs font-bold text-gray-500 uppercase mb-1">
+                        Comp.
+                      </label>{' '}
+                      <input
+                        value={addressForm.complement}
+                        onChange={(e) =>
+                          setAddressForm({ ...addressForm, complement: e.target.value })
+                        }
+                        className="w-full border border-gray-300 rounded-lg p-2"
+                      />{' '}
+                    </div>
+                    <div className="md:col-span-2">
+                      {' '}
+                      <label className="block text-xs font-bold text-gray-500 uppercase mb-1">
+                        Bairro
+                      </label>{' '}
+                      <input
+                        value={addressForm.district}
+                        onChange={(e) =>
+                          setAddressForm({ ...addressForm, district: e.target.value })
+                        }
+                        className="w-full border border-gray-300 rounded-lg p-2"
+                      />{' '}
+                    </div>
+                    <div className="md:col-span-3">
+                      {' '}
+                      <label className="block text-xs font-bold text-gray-500 uppercase mb-1">
+                        Cidade
+                      </label>{' '}
+                      <input
+                        value={addressForm.city}
+                        onChange={(e) => setAddressForm({ ...addressForm, city: e.target.value })}
+                        className="w-full border border-gray-300 rounded-lg p-2"
+                      />{' '}
+                    </div>
+                    <div className="md:col-span-1">
+                      {' '}
+                      <label className="block text-xs font-bold text-gray-500 uppercase mb-1">
+                        Estado
+                      </label>{' '}
+                      <input
+                        value={addressForm.state}
+                        onChange={(e) => setAddressForm({ ...addressForm, state: e.target.value })}
+                        className="w-full border border-gray-300 rounded-lg p-2"
+                        placeholder="UF"
+                      />{' '}
+                    </div>
                   </div>
                 </div>
-                <button type="submit" disabled={isSaving} className="w-full bg-primary-600 text-white py-3 rounded-xl font-bold hover:bg-primary-700 flex items-center justify-center gap-2 disabled:opacity-50">
-                  {isSaving ? <Loader size={18} className="animate-spin" /> : <Save size={18} />} Salvar Alterações
+                <button
+                  type="submit"
+                  disabled={isSaving}
+                  className="w-full bg-primary-600 text-white py-3 rounded-xl font-bold hover:bg-primary-700 flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  {isSaving ? <Loader size={18} className="animate-spin" /> : <Save size={18} />}{' '}
+                  Salvar Alterações
                 </button>
               </form>
             </div>
@@ -2638,11 +3206,14 @@ const ClientDashboard: React.FC = () => {
                   <div>
                     <label className="block text-sm font-bold text-gray-700 mb-2">Nova Senha</label>
                     <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                      <Lock
+                        className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                        size={18}
+                      />
                       <input
                         type="password"
                         value={passForm.newPassword}
-                        onChange={e => setPassForm({ ...passForm, newPassword: e.target.value })}
+                        onChange={(e) => setPassForm({ ...passForm, newPassword: e.target.value })}
                         className="w-full border border-gray-300 rounded-lg p-3 pl-10 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all"
                         required
                         minLength={6}
@@ -2652,13 +3223,20 @@ const ClientDashboard: React.FC = () => {
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-2">Confirmar Nova Senha</label>
+                    <label className="block text-sm font-bold text-gray-700 mb-2">
+                      Confirmar Nova Senha
+                    </label>
                     <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                      <Lock
+                        className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                        size={18}
+                      />
                       <input
                         type="password"
                         value={passForm.confirmPassword}
-                        onChange={e => setPassForm({ ...passForm, confirmPassword: e.target.value })}
+                        onChange={(e) =>
+                          setPassForm({ ...passForm, confirmPassword: e.target.value })
+                        }
                         className="w-full border border-gray-300 rounded-lg p-3 pl-10 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all"
                         required
                         minLength={6}
@@ -2695,15 +3273,21 @@ const ClientDashboard: React.FC = () => {
                 </h3>
                 <div className="bg-red-50 border border-red-200 rounded-xl p-6">
                   <p className="text-sm text-red-800 mb-4 leading-relaxed">
-                    Ao excluir sua conta, todos os seus dados serão removidos permanentemente.
-                    Esta ação não pode ser desfeita.
+                    Ao excluir sua conta, todos os seus dados serão removidos permanentemente. Esta
+                    ação não pode ser desfeita.
                   </p>
                   <div className="mb-4">
-                    <label htmlFor="delete-password" className="block text-sm font-bold text-red-700 mb-2">
+                    <label
+                      htmlFor="delete-password"
+                      className="block text-sm font-bold text-red-700 mb-2"
+                    >
                       Digite sua senha para confirmar
                     </label>
                     <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-red-400" size={18} />
+                      <Lock
+                        className="absolute left-3 top-1/2 -translate-y-1/2 text-red-400"
+                        size={18}
+                      />
                       <input
                         id="delete-password"
                         type="password"
@@ -2730,8 +3314,14 @@ const ClientDashboard: React.FC = () => {
       </div>
 
       {selectedBooking && !showReviewModal && !showEditReviewModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-[fadeIn_0.2s]" onClick={() => setSelectedBooking(null)}>
-          <div className="bg-white rounded-3xl max-w-lg w-full max-w-[calc(100vw-2rem)] overflow-hidden shadow-2xl relative" onClick={e => e.stopPropagation()}>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-[fadeIn_0.2s]"
+          onClick={() => setSelectedBooking(null)}
+        >
+          <div
+            className="bg-white rounded-3xl max-w-lg w-full max-w-[calc(100vw-2rem)] overflow-hidden shadow-2xl relative"
+            onClick={(e) => e.stopPropagation()}
+          >
             <button
               type="button"
               onClick={() => setSelectedBooking(null)}
@@ -2756,10 +3346,18 @@ const ClientDashboard: React.FC = () => {
                 <div className="w-full h-full bg-gradient-to-br from-primary-600 to-primary-700"></div>
               )}
               <div className="absolute inset-0 flex flex-col justify-end p-6 text-white">
-                <h3 className="text-2xl font-bold mb-2 drop-shadow-2xl">{selectedBooking._trip?.title || 'Pacote de Viagem'}</h3>
+                <h3 className="text-2xl font-bold mb-2 drop-shadow-2xl">
+                  {selectedBooking._trip?.title || 'Pacote de Viagem'}
+                </h3>
                 <div className="flex items-center gap-2 text-sm text-white/95 font-medium">
                   <Calendar size={16} />
-                  <span>{new Date(selectedBooking.date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}</span>
+                  <span>
+                    {new Date(selectedBooking.date).toLocaleDateString('pt-BR', {
+                      day: '2-digit',
+                      month: 'long',
+                      year: 'numeric',
+                    })}
+                  </span>
                 </div>
                 {selectedBooking._trip?.destination && (
                   <div className="flex items-center gap-2 text-sm text-white/90 mt-1">
@@ -2774,26 +3372,37 @@ const ClientDashboard: React.FC = () => {
             <div className="p-6 bg-white">
               {/* Voucher Code - Large & Monospace */}
               <div className="text-center mb-6">
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Código da Reserva</p>
-                <p className="text-3xl font-mono font-bold text-primary-600 tracking-wider">{selectedBooking.voucherCode}</p>
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+                  Código da Reserva
+                </p>
+                <p className="text-3xl font-mono font-bold text-primary-600 tracking-wider">
+                  {selectedBooking.voucherCode}
+                </p>
               </div>
 
               {/* Grid: Data, Horário, Status */}
               <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-6 p-3 sm:p-4 bg-gray-50 rounded-xl border border-gray-100">
                 <div>
                   <p className="text-xs font-bold text-gray-400 uppercase mb-1">Data</p>
-                  <p className="text-sm font-semibold text-gray-900">{new Date(selectedBooking.date).toLocaleDateString('pt-BR')}</p>
+                  <p className="text-sm font-semibold text-gray-900">
+                    {new Date(selectedBooking.date).toLocaleDateString('pt-BR')}
+                  </p>
                 </div>
                 <div>
                   <p className="text-xs font-bold text-gray-400 uppercase mb-1">Status</p>
                   <p className="text-sm font-semibold text-green-600">
-                    {selectedBooking.status === 'CONFIRMED' ? 'Confirmada' :
-                      selectedBooking.status === 'PENDING' ? 'Pendente' : 'Cancelada'}
+                    {selectedBooking.status === 'CONFIRMED'
+                      ? 'Confirmada'
+                      : selectedBooking.status === 'PENDING'
+                        ? 'Pendente'
+                        : 'Cancelada'}
                   </p>
                 </div>
                 <div>
                   <p className="text-xs font-bold text-gray-400 uppercase mb-1">Passageiros</p>
-                  <p className="text-sm font-semibold text-gray-900">{selectedBooking.passengers || bookingPassengers.length || 1}</p>
+                  <p className="text-sm font-semibold text-gray-900">
+                    {selectedBooking.passengers || bookingPassengers.length || 1}
+                  </p>
                 </div>
               </div>
 
@@ -2816,70 +3425,104 @@ const ClientDashboard: React.FC = () => {
               </div>
 
               {/* Passengers List - Visual with Avatars */}
-              {(bookingPassengers.length > 0 || (selectedBooking.passengerDetails && selectedBooking.passengerDetails.length > 0)) && (
+              {(bookingPassengers.length > 0 ||
+                (selectedBooking.passengerDetails &&
+                  selectedBooking.passengerDetails.length > 0)) && (
                 <div className="mb-6">
                   <p className="text-xs font-bold text-gray-400 uppercase mb-4 flex items-center gap-2">
                     <Users size={16} className="text-gray-400" />
-                    Passageiros ({bookingPassengers.length > 0 ? bookingPassengers.length : selectedBooking.passengerDetails?.length || 0})
+                    Passageiros (
+                    {bookingPassengers.length > 0
+                      ? bookingPassengers.length
+                      : selectedBooking.passengerDetails?.length || 0}
+                    )
                   </p>
                   <div className="space-y-3 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
-                    {bookingPassengers.length > 0 ? (
-                      bookingPassengers.map((passenger, idx) => {
-                        const doc = passenger.document || passenger.cpf || '---';
-                        const formattedDoc = doc !== '---' && /^\d{11}$/.test(doc.replace(/\D/g, ''))
-                          ? doc.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4')
-                          : doc;
-                        const isChild = passenger.birth_date ? (() => {
-                          const age = new Date().getFullYear() - new Date(passenger.birth_date).getFullYear();
-                          return age < 12;
-                        })() : false;
+                    {bookingPassengers.length > 0
+                      ? bookingPassengers.map((passenger, idx) => {
+                          const doc = passenger.document || passenger.cpf || '---';
+                          const formattedDoc =
+                            doc !== '---' && /^\d{11}$/.test(doc.replace(/\D/g, ''))
+                              ? doc.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4')
+                              : doc;
+                          const isChild = passenger.birth_date
+                            ? (() => {
+                                const age =
+                                  new Date().getFullYear() -
+                                  new Date(passenger.birth_date).getFullYear();
+                                return age < 12;
+                              })()
+                            : false;
 
-                        return (
-                          <div key={passenger.id || idx} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100 hover:bg-gray-100 transition-colors">
-                            <div className="w-10 h-10 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center font-bold text-sm flex-shrink-0">
-                              {idx + 1}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2">
-                                <span className="font-semibold text-gray-900 truncate">{passenger.full_name || passenger.name || 'Passageiro'}</span>
-                                {isChild && (
-                                  <span className="text-[10px] bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-semibold">Criança</span>
-                                )}
+                          return (
+                            <div
+                              key={passenger.id || idx}
+                              className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100 hover:bg-gray-100 transition-colors"
+                            >
+                              <div className="w-10 h-10 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center font-bold text-sm flex-shrink-0">
+                                {idx + 1}
                               </div>
-                              <p className="text-xs text-gray-500 font-mono mt-0.5">{formattedDoc}</p>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-semibold text-gray-900 truncate">
+                                    {passenger.full_name || passenger.name || 'Passageiro'}
+                                  </span>
+                                  {isChild && (
+                                    <span className="text-[10px] bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-semibold">
+                                      Criança
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="text-xs text-gray-500 font-mono mt-0.5">
+                                  {formattedDoc}
+                                </p>
+                              </div>
                             </div>
-                          </div>
-                        );
-                      })
-                    ) : selectedBooking.passengerDetails && selectedBooking.passengerDetails.length > 0 ? (
-                      selectedBooking.passengerDetails.map((p: any, idx: number) => {
-                        const doc = p.document || p.cpf || '---';
-                        const formattedDoc = doc !== '---' && /^\d{11}$/.test(doc.replace(/\D/g, ''))
-                          ? doc.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4')
-                          : doc;
-                        const isChild = p.birthDate ? (() => {
-                          const age = new Date().getFullYear() - new Date(p.birthDate).getFullYear();
-                          return age < 12;
-                        })() : false;
+                          );
+                        })
+                      : selectedBooking.passengerDetails &&
+                          selectedBooking.passengerDetails.length > 0
+                        ? selectedBooking.passengerDetails.map((p: any, idx: number) => {
+                            const doc = p.document || p.cpf || '---';
+                            const formattedDoc =
+                              doc !== '---' && /^\d{11}$/.test(doc.replace(/\D/g, ''))
+                                ? doc.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4')
+                                : doc;
+                            const isChild = p.birthDate
+                              ? (() => {
+                                  const age =
+                                    new Date().getFullYear() - new Date(p.birthDate).getFullYear();
+                                  return age < 12;
+                                })()
+                              : false;
 
-                        return (
-                          <div key={idx} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100 hover:bg-gray-100 transition-colors">
-                            <div className="w-10 h-10 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center font-bold text-sm flex-shrink-0">
-                              {idx + 1}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2">
-                                <span className="font-semibold text-gray-900 truncate">{p.name || 'Passageiro'}</span>
-                                {isChild && (
-                                  <span className="text-[10px] bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-semibold">Criança</span>
-                                )}
+                            return (
+                              <div
+                                key={idx}
+                                className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100 hover:bg-gray-100 transition-colors"
+                              >
+                                <div className="w-10 h-10 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center font-bold text-sm flex-shrink-0">
+                                  {idx + 1}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-semibold text-gray-900 truncate">
+                                      {p.name || 'Passageiro'}
+                                    </span>
+                                    {isChild && (
+                                      <span className="text-[10px] bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-semibold">
+                                        Criança
+                                      </span>
+                                    )}
+                                  </div>
+                                  <p className="text-xs text-gray-500 font-mono mt-0.5">
+                                    {formattedDoc}
+                                  </p>
+                                </div>
                               </div>
-                              <p className="text-xs text-gray-500 font-mono mt-0.5">{formattedDoc}</p>
-                            </div>
-                          </div>
-                        );
-                      })
-                    ) : null}
+                            );
+                          })
+                        : null}
                   </div>
                 </div>
               )}
@@ -2893,15 +3536,16 @@ const ClientDashboard: React.FC = () => {
                   <Download size={20} />
                   Baixar PDF Oficial
                 </button>
-                {selectedBooking._agency && (selectedBooking._agency.whatsapp || selectedBooking._agency.phone) && (
-                  <button
-                    onClick={openWhatsApp}
-                    className="w-full bg-white text-green-600 border-2 border-green-600 py-4 rounded-xl font-bold flex justify-center items-center gap-2 hover:bg-green-50 transition-all shadow-sm hover:shadow-md active:scale-[0.98]"
-                  >
-                    <MessageCircle size={20} />
-                    WhatsApp da Agência
-                  </button>
-                )}
+                {selectedBooking._agency &&
+                  (selectedBooking._agency.whatsapp || selectedBooking._agency.phone) && (
+                    <button
+                      onClick={openWhatsApp}
+                      className="w-full bg-white text-green-600 border-2 border-green-600 py-4 rounded-xl font-bold flex justify-center items-center gap-2 hover:bg-green-50 transition-all shadow-sm hover:shadow-md active:scale-[0.98]"
+                    >
+                      <MessageCircle size={20} />
+                      WhatsApp da Agência
+                    </button>
+                  )}
               </div>
             </div>
           </div>
@@ -2909,65 +3553,133 @@ const ClientDashboard: React.FC = () => {
       )}
 
       {/* Booking Details Modal */}
-      {showDetailsModal && selectedBookingDetails && (() => {
-        const trip = selectedBookingDetails._trip || getTripById(selectedBookingDetails.tripId);
-        const agency = selectedBookingDetails._agency;
-        const bookingPassengers = selectedBookingDetails.booking_passengers || selectedBookingDetails.passengerDetails || [];
+      {showDetailsModal &&
+        selectedBookingDetails &&
+        (() => {
+          const trip = selectedBookingDetails._trip || getTripById(selectedBookingDetails.tripId);
+          const agency = selectedBookingDetails._agency;
+          const bookingPassengers =
+            selectedBookingDetails.booking_passengers ||
+            selectedBookingDetails.passengerDetails ||
+            [];
 
-        if (!trip) return null;
+          if (!trip) return null;
 
-        return (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-[fadeIn_0.2s]" onClick={() => setShowDetailsModal(false)}>
-            <div className="bg-white rounded-2xl max-w-5xl w-full max-w-[calc(100vw-2rem)] max-h-[92vh] overflow-hidden shadow-[0_20px_60px_-12px_rgba(0,0,0,0.25)] relative flex flex-col animate-[scaleIn_0.2s]" onClick={e => e.stopPropagation()}>
-              {/* Close Button - Premium Style */}
-              <button
-                type="button"
-                onClick={() => setShowDetailsModal(false)}
-                className="absolute top-5 right-5 z-20 w-9 h-9 flex items-center justify-center rounded-full bg-white/95 backdrop-blur-sm text-gray-500 hover:text-gray-700 hover:bg-white border border-gray-200/80 transition-all duration-200 hover:scale-110 active:scale-95 shadow-lg"
-                aria-label="Fechar"
+          return (
+            <div
+              className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-[fadeIn_0.2s]"
+              onClick={() => setShowDetailsModal(false)}
+            >
+              <div
+                className="bg-white rounded-2xl max-w-5xl w-full max-w-[calc(100vw-2rem)] max-h-[92vh] overflow-hidden shadow-[0_20px_60px_-12px_rgba(0,0,0,0.25)] relative flex flex-col animate-[scaleIn_0.2s]"
+                onClick={(e) => e.stopPropagation()}
               >
-                <X size={18} />
-              </button>
+                {/* Close Button - Premium Style */}
+                <button
+                  type="button"
+                  onClick={() => setShowDetailsModal(false)}
+                  className="absolute top-5 right-5 z-20 w-9 h-9 flex items-center justify-center rounded-full bg-white/95 backdrop-blur-sm text-gray-500 hover:text-gray-700 hover:bg-white border border-gray-200/80 transition-all duration-200 hover:scale-110 active:scale-95 shadow-lg"
+                  aria-label="Fechar"
+                >
+                  <X size={18} />
+                </button>
 
-              <BookingDetailsModalContent
-                booking={selectedBookingDetails}
-                trip={trip}
-                agency={agency}
-                bookingPassengers={bookingPassengers}
-                currentClient={currentClient || null}
-                fetchTripImages={fetchTripImages}
-                getTripById={getTripById}
-                onClose={() => setShowDetailsModal(false)}
-                showToast={showToast}
-              />
+                <BookingDetailsModalContent
+                  booking={selectedBookingDetails}
+                  trip={trip}
+                  agency={agency}
+                  bookingPassengers={bookingPassengers}
+                  currentClient={currentClient || null}
+                  fetchTripImages={fetchTripImages}
+                  getTripById={getTripById}
+                  onClose={() => setShowDetailsModal(false)}
+                  showToast={showToast}
+                />
+              </div>
             </div>
-          </div>
-        );
-      })()}
+          );
+        })()}
 
       {(showReviewModal && selectedBooking) || (showEditReviewModal && editingReview) ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-[fadeIn_0.2s]" onClick={() => { setShowReviewModal(false); setShowEditReviewModal(false); setSelectedBooking(null); setEditingReview(null); }}>
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl relative" onClick={e => e.stopPropagation()}>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-[fadeIn_0.2s]"
+          onClick={() => {
+            setShowReviewModal(false);
+            setShowEditReviewModal(false);
+            setSelectedBooking(null);
+            setEditingReview(null);
+          }}
+        >
+          <div
+            className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl relative"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-bold text-gray-900">{showEditReviewModal ? "Editar Avaliação" : "Avaliar Agência"}</h3>
-              <button onClick={() => { setShowReviewModal(false); setShowEditReviewModal(false); setSelectedBooking(null); setEditingReview(null); }} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
+              <h3 className="text-xl font-bold text-gray-900">
+                {showEditReviewModal ? 'Editar Avaliação' : 'Avaliar Agência'}
+              </h3>
+              <button
+                onClick={() => {
+                  setShowReviewModal(false);
+                  setShowEditReviewModal(false);
+                  setSelectedBooking(null);
+                  setEditingReview(null);
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X size={20} />
+              </button>
             </div>
             <div className="flex items-center gap-4 mb-6 p-4 bg-gray-50 rounded-xl border border-gray-100">
-              {(selectedBooking?._agency?.logo || editingReview?.agencyLogo) && (<img src={selectedBooking?._agency?.logo || editingReview?.agencyLogo} alt="" className="w-12 h-12 rounded-full object-cover border border-gray-200" />)}
+              {(selectedBooking?._agency?.logo || editingReview?.agencyLogo) && (
+                <img
+                  src={selectedBooking?._agency?.logo || editingReview?.agencyLogo}
+                  alt=""
+                  className="w-12 h-12 rounded-full object-cover border border-gray-200"
+                />
+              )}
               <div>
                 <p className="text-xs text-gray-500 uppercase font-bold">Agência</p>
-                <p className="font-bold text-gray-900">{selectedBooking?._agency?.name || editingReview?.agencyName || 'Parceiro SouNativo'}</p>
+                <p className="font-bold text-gray-900">
+                  {selectedBooking?._agency?.name ||
+                    editingReview?.agencyName ||
+                    'Parceiro SouNativo'}
+                </p>
               </div>
             </div>
             <form onSubmit={showEditReviewModal ? handleEditReviewSubmit : handleReviewSubmit}>
               <div className="mb-6 text-center">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Sua Experiência</label>
-                <div className="flex justify-center gap-2"> {[1, 2, 3, 4, 5].map((star) => (<button type="button" key={star} onClick={() => setReviewForm({ ...reviewForm, rating: star })} className="focus:outline-none transition-transform hover:scale-110"> <Star size={32} className={star <= reviewForm.rating ? "fill-amber-400 text-amber-400" : "text-gray-300"} /> </button>))} </div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Sua Experiência
+                </label>
+                <div className="flex justify-center gap-2">
+                  {' '}
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      type="button"
+                      key={star}
+                      onClick={() => setReviewForm({ ...reviewForm, rating: star })}
+                      className="focus:outline-none transition-transform hover:scale-110"
+                    >
+                      {' '}
+                      <Star
+                        size={32}
+                        className={
+                          star <= reviewForm.rating
+                            ? 'fill-amber-400 text-amber-400'
+                            : 'text-gray-300'
+                        }
+                      />{' '}
+                    </button>
+                  ))}{' '}
+                </div>
               </div>
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Tags (Opcional)</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Tags (Opcional)
+                </label>
                 <div className="flex flex-wrap gap-2">
-                  {SUGGESTED_REVIEW_TAGS.map(tag => (
+                  {SUGGESTED_REVIEW_TAGS.map((tag) => (
                     <button
                       type="button"
                       key={tag}
@@ -2981,9 +3693,27 @@ const ClientDashboard: React.FC = () => {
               </div>
               <div className="mb-6">
                 <label className="block text-sm font-medium text-gray-700 mb-2">Comentário</label>
-                <textarea className="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-primary-500 outline-none h-24 resize-none" placeholder="Conte como foi sua experiência com a agência..." value={reviewForm.comment} onChange={e => setReviewForm({ ...reviewForm, comment: e.target.value })} required />
+                <textarea
+                  className="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-primary-500 outline-none h-24 resize-none"
+                  placeholder="Conte como foi sua experiência com a agência..."
+                  value={reviewForm.comment}
+                  onChange={(e) => setReviewForm({ ...reviewForm, comment: e.target.value })}
+                  required
+                />
               </div>
-              <button type="submit" disabled={isSubmitting} className="w-full bg-primary-600 text-white py-3 rounded-xl font-bold hover:bg-primary-700 transition-colors flex justify-center items-center gap-2 disabled:opacity-50"> {isSubmitting ? <Loader size={18} className="animate-spin" /> : <Send size={18} />} {showEditReviewModal ? "Salvar Alterações" : "Enviar Avaliação"}</button>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full bg-primary-600 text-white py-3 rounded-xl font-bold hover:bg-primary-700 transition-colors flex justify-center items-center gap-2 disabled:opacity-50"
+              >
+                {' '}
+                {isSubmitting ? (
+                  <Loader size={18} className="animate-spin" />
+                ) : (
+                  <Send size={18} />
+                )}{' '}
+                {showEditReviewModal ? 'Salvar Alterações' : 'Enviar Avaliação'}
+              </button>
             </form>
           </div>
         </div>

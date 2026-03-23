@@ -10,7 +10,7 @@ import { logger } from '../utils/logger';
 interface RegisterResult {
   success: boolean;
   message?: string; // For info messages, e.g., email verification
-  error?: string;   // For actual errors
+  error?: string; // For actual errors
   role?: UserRole;
   userId?: string;
   email?: string;
@@ -26,7 +26,10 @@ interface AuthContextType {
   updateUser: (userData: Partial<Client | Agency>) => Promise<{ success: boolean; error?: string }>;
   updatePassword: (password: string) => Promise<{ success: boolean; error?: string }>;
   deleteAccount: (password: string) => Promise<{ success: boolean; error?: string }>;
-  uploadImage: (file: File, bucket: 'avatars' | 'agency-logos' | 'trip-images') => Promise<string | null>;
+  uploadImage: (
+    file: File,
+    bucket: 'avatars' | 'agency-logos' | 'trip-images'
+  ) => Promise<string | null>;
   // FIX: Updated `reloadUser` signature to accept `User`
   reloadUser: (currentUser: User | Client | Agency | Admin | null) => Promise<void>;
   // Admin Impersonate Mode
@@ -47,29 +50,37 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const fetchUserData = async (authId: string, email: string) => {
     // CRITICAL FIX: Add guard to prevent redundant re-fetches if user is already in state
     // This stops the infinite loop from DataContext's useEffect triggering reloadUser repeatedly
-    if (user && user.id === authId && user.email === email && !localStorage.getItem('sounativo_pending_role')) {
-      logger.log("[AuthContext] fetchUserData: User data already in state, skipping re-fetch for ID:", authId);
-      return; 
+    if (
+      user &&
+      user.id === authId &&
+      user.email === email &&
+      !localStorage.getItem('sounativo_pending_role')
+    ) {
+      logger.log(
+        '[AuthContext] fetchUserData: User data already in state, skipping re-fetch for ID:',
+        authId
+      );
+      return;
     }
 
-    logger.log("[AuthContext] fetchUserData START for ID:", authId, "Email:", email);
+    logger.log('[AuthContext] fetchUserData START for ID:', authId, 'Email:', email);
     if (!supabase) return;
     try {
       // P0: SECURITY - Check if Master Admin via Environment Variable (not hardcoded)
       const masterAdminEmail = import.meta.env.VITE_MASTER_ADMIN_EMAIL || 'juannicolas1@gmail.com';
       if (email === masterAdminEmail) {
-          logger.log("[AuthContext] fetchUserData: User identified as Master Admin");
-          const masterUser: Admin = {
-             id: authId,
-             name: 'Master Admin',
-             email: email,
-             role: UserRole.ADMIN,
-             avatar: `https://ui-avatars.com/api/?name=MA&background=000&color=fff`,
-             createdAt: new Date().toISOString()
-          };
-          setUser(masterUser);
-          logger.log("[AuthContext] fetchUserData: Master Admin data set for:", email);
-          return;
+        logger.log('[AuthContext] fetchUserData: User identified as Master Admin');
+        const masterUser: Admin = {
+          id: authId,
+          name: 'Master Admin',
+          email: email,
+          role: UserRole.ADMIN,
+          avatar: `https://ui-avatars.com/api/?name=MA&background=000&color=fff`,
+          createdAt: new Date().toISOString(),
+        };
+        setUser(masterUser);
+        logger.log('[AuthContext] fetchUserData: Master Admin data set for:', email);
+        return;
       }
 
       // 1. Check profiles table first to determine role
@@ -78,16 +89,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         .select('*')
         .eq('id', authId)
         .maybeSingle();
-      
+
       if (profileError) {
-          logger.error("[AuthContext] Error fetching profile:", profileError);
+        logger.error('[AuthContext] Error fetching profile:', profileError);
       }
 
       if (profileData) {
-        logger.log("[AuthContext] Profile Found:", profileData);
+        logger.log('[AuthContext] Profile Found:', profileData);
         // Fix: Ensure AGENCY role check is case-insensitive for robustness
         if (profileData.role && profileData.role.toUpperCase() === UserRole.AGENCY) {
-          logger.log("[AuthContext] User is Agency, fetching agency data...");
+          logger.log('[AuthContext] User is Agency, fetching agency data...');
           const { data: agencyData, error: agencyError } = await supabase
             .from('agencies')
             .select('*')
@@ -95,10 +106,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             .single();
 
           if (agencyError || !agencyData) {
-            logger.warn("[AuthContext] Profile is AGENCY but no record in agencies table (or fetch failed).", agencyError);
-            
+            logger.warn(
+              '[AuthContext] Profile is AGENCY but no record in agencies table (or fetch failed).',
+              agencyError
+            );
+
             // Fallback: Create a temporary agency object so the user isn't locked out
-             const tempAgency: Agency = {
+            const tempAgency: Agency = {
               id: profileData.id,
               agencyId: '', // Missing ID
               name: profileData.full_name || 'Nova Agência',
@@ -115,11 +129,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               subscriptionExpiresAt: new Date().toISOString(),
             };
             setUser(tempAgency);
-            logger.log("[AuthContext] fetchUserData: Temporary Agency data set for:", email);
+            logger.log('[AuthContext] fetchUserData: Temporary Agency data set for:', email);
             return;
           }
 
-          logger.log("[AuthContext] Agency Data Found:", agencyData);
+          logger.log('[AuthContext] Agency Data Found:', agencyData);
 
           const agencyUser: Agency = {
             id: agencyData.user_id, // User ID (from auth)
@@ -138,16 +152,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             heroTitle: agencyData.hero_title,
             heroSubtitle: agencyData.hero_subtitle,
             customSettings: agencyData.custom_settings || {},
-            subscriptionStatus: agencyData.subscription_status || (agencyData.is_active ? 'ACTIVE' : 'INACTIVE'),
+            subscriptionStatus:
+              agencyData.subscription_status || (agencyData.is_active ? 'ACTIVE' : 'INACTIVE'),
             subscriptionPlan: agencyData.subscription_plan || 'STARTER',
-            subscriptionExpiresAt: agencyData.subscription_expires_at || new Date().toISOString(), 
+            subscriptionExpiresAt: agencyData.subscription_expires_at || new Date().toISOString(),
             website: agencyData.website,
             phone: agencyData.phone,
             address: agencyData.address || {},
-            bankInfo: agencyData.bank_info || {}
+            bankInfo: agencyData.bank_info || {},
           };
           setUser(agencyUser);
-          logger.log("[AuthContext] fetchUserData: Agency data set for:", email);
+          logger.log('[AuthContext] fetchUserData: Agency data set for:', email);
           return;
         }
 
@@ -158,36 +173,35 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         } else {
           mappedRole = UserRole.CLIENT;
         }
-        
-        logger.log("[AuthContext] User mapped as:", mappedRole);
+
+        logger.log('[AuthContext] User mapped as:', mappedRole);
 
         const genericUser: Client | Admin = {
           id: profileData.id,
           name: profileData.full_name || 'Usuário',
           email: email,
           role: mappedRole,
-          avatar: profileData.avatar_url, 
+          avatar: profileData.avatar_url,
           cpf: profileData.cpf || null,
           phone: profileData.phone || null,
           birthDate: profileData.birth_date || null,
           favorites: profileData.favorites || [], // Ensure favorites are loaded here
           createdAt: profileData.created_at,
           address: profileData.address || {},
-          status: profileData.status || 'ACTIVE'
+          status: profileData.status || 'ACTIVE',
         } as Client;
 
         setUser(genericUser);
-        logger.log("[AuthContext] fetchUserData: Client/Admin data set for:", email);
+        logger.log('[AuthContext] fetchUserData: Client/Admin data set for:', email);
         return;
       } else {
-          logger.warn("[AuthContext] No profile found for user:", authId);
+        logger.warn('[AuthContext] No profile found for user:', authId);
       }
-      
-      setUser(null); 
-      logger.log("[AuthContext] fetchUserData: No user data found, setting user to null.");
 
+      setUser(null);
+      logger.log('[AuthContext] fetchUserData: No user data found, setting user to null.');
     } catch (error) {
-      logger.error("[AuthContext] Exception in fetchUserData:", error);
+      logger.error('[AuthContext] Exception in fetchUserData:', error);
       setUser(null);
     }
   };
@@ -195,70 +209,81 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   // FIX: Updated `reloadUser` to accept `currentUser` object
   const reloadUser = async (currentUser: User | Client | Agency | Admin | null) => {
     if (currentUser && currentUser.email) {
-        logger.log("[AuthContext] reloadUser: Initiating re-fetch for current user:", currentUser.email);
-        await fetchUserData(currentUser.id, currentUser.email);
+      logger.log(
+        '[AuthContext] reloadUser: Initiating re-fetch for current user:',
+        currentUser.email
+      );
+      await fetchUserData(currentUser.id, currentUser.email);
     } else {
-        logger.log("[AuthContext] reloadUser: No current user to reload or email missing.");
+      logger.log('[AuthContext] reloadUser: No current user to reload or email missing.');
     }
   };
 
   // Helper to ensure the record exists after Google Login
   const ensureUserRecord = async (authUser: any, role: string) => {
-      if (!supabase) return false;
-      const userId = authUser.id;
-      const userEmail = authUser.email;
-      const userName = authUser.user_metadata?.full_name || authUser.user_metadata?.name || userEmail.split('@')[0];
-      const userAvatar = authUser.user_metadata?.avatar_url || authUser.user_metadata?.picture;
-      // Get phone from authUser if available, otherwise null
-      const userPhone = authUser.user_metadata?.phone_number || null;
+    if (!supabase) return false;
+    const userId = authUser.id;
+    const userEmail = authUser.email;
+    const userName =
+      authUser.user_metadata?.full_name || authUser.user_metadata?.name || userEmail.split('@')[0];
+    const userAvatar = authUser.user_metadata?.avatar_url || authUser.user_metadata?.picture;
+    // Get phone from authUser if available, otherwise null
+    const userPhone = authUser.user_metadata?.phone_number || null;
 
-      logger.log("[AuthContext] ensureUserRecord: Ensuring DB record for:", userEmail, "Role:", role);
+    logger.log('[AuthContext] ensureUserRecord: Ensuring DB record for:', userEmail, 'Role:', role);
 
-      try {
-          // ALWAYS create a profile record first
-          const { error: profileError } = await supabase.from('profiles').upsert({
-              id: userId,
-              full_name: userName,
-              email: userEmail,
-              role: role,
-              avatar_url: userAvatar,
-              phone: userPhone, // Pass phone if available
-          }, { onConflict: 'id' });
+    try {
+      // ALWAYS create a profile record first
+      const { error: profileError } = await supabase.from('profiles').upsert(
+        {
+          id: userId,
+          full_name: userName,
+          email: userEmail,
+          role: role,
+          avatar_url: userAvatar,
+          phone: userPhone, // Pass phone if available
+        },
+        { onConflict: 'id' }
+      );
 
-          if (profileError) throw profileError;
+      if (profileError) throw profileError;
 
-          if (role === UserRole.AGENCY) {
-              // Generate unique slug based on agency name (without random numbers)
-              const baseSlug = generateSlugFromName(userName);
-              const uniqueSlug = await generateUniqueSlug(baseSlug, 'agencies');
-              
-              // Use RPC for safe creation even in ensureUserRecord
-              const { error: agencyError } = await supabase.rpc('create_agency', {
-                  p_user_id: userId,
-                  p_name: userName,
-                  p_email: userEmail,
-                  p_phone: userPhone,    // Pass phone to RPC
-                  p_whatsapp: userPhone, // Pass phone as whatsapp to RPC
-                  p_slug: uniqueSlug
-              });
+      if (role === UserRole.AGENCY) {
+        // Generate unique slug based on agency name (without random numbers)
+        const baseSlug = generateSlugFromName(userName);
+        const uniqueSlug = await generateUniqueSlug(baseSlug, 'agencies');
 
-              if (agencyError) {
-                  // Fallback: Check if agency already exists, if so, ignore error
-                  // Removed 'id' from select, as it's not needed for just checking existence and can sometimes cause issues.
-                  const { data: existing } = await supabase.from('agencies').select('user_id').eq('user_id', userId).maybeSingle();
-                  if (!existing) {
-                      logger.error("[AuthContext] RPC ensureUserRecord failed:", agencyError);
-                      throw agencyError;
-                  }
-                  logger.log("[AuthContext] ensureUserRecord: Agency already exists, ignoring RPC error.");
-              }
+        // Use RPC for safe creation even in ensureUserRecord
+        const { error: agencyError } = await supabase.rpc('create_agency', {
+          p_user_id: userId,
+          p_name: userName,
+          p_email: userEmail,
+          p_phone: userPhone, // Pass phone to RPC
+          p_whatsapp: userPhone, // Pass phone as whatsapp to RPC
+          p_slug: uniqueSlug,
+        });
+
+        if (agencyError) {
+          // Fallback: Check if agency already exists, if so, ignore error
+          // Removed 'id' from select, as it's not needed for just checking existence and can sometimes cause issues.
+          const { data: existing } = await supabase
+            .from('agencies')
+            .select('user_id')
+            .eq('user_id', userId)
+            .maybeSingle();
+          if (!existing) {
+            logger.error('[AuthContext] RPC ensureUserRecord failed:', agencyError);
+            throw agencyError;
           }
-          logger.log("[AuthContext] ensureUserRecord: DB record ensured successfully.");
-          return true;
-      } catch (err: any) {
-          logger.error("[AuthContext] Error ensuring user record:", err.message);
-          return false;
+          logger.log('[AuthContext] ensureUserRecord: Agency already exists, ignoring RPC error.');
+        }
       }
+      logger.log('[AuthContext] ensureUserRecord: DB record ensured successfully.');
+      return true;
+    } catch (err: any) {
+      logger.error('[AuthContext] Error ensuring user record:', err.message);
+      return false;
+    }
   };
 
   useEffect(() => {
@@ -271,7 +296,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // Safety timeout: Force loading to false after 5 seconds
       timeoutId = setTimeout(() => {
         if (!isInitialized) {
-          logger.warn("[AuthContext] Initialization timeout - forcing loading to false after 5s");
+          logger.warn('[AuthContext] Initialization timeout - forcing loading to false after 5s');
           setLoading(false);
           // Don't set user to null here - let the initialization complete naturally
           // This prevents clearing a valid session that's just taking time to load
@@ -280,58 +305,63 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }, 5000);
 
       setLoading(true);
-      logger.log("[AuthContext] Initializing Auth...");
+      logger.log('[AuthContext] Initializing Auth...');
 
       try {
         if (!supabase) {
-          logger.warn("[AuthContext] Supabase client not initialized.");
+          logger.warn('[AuthContext] Supabase client not initialized.');
           setUser(null);
           return;
         }
-        
+
         // Set up auth state change listener FIRST (before getSession)
         // This prevents race conditions where the listener fires before we're ready
         if (!subscription) {
-          const { data: { subscription: sub } } = (supabase.auth as any).onAuthStateChange(async (event: string, newSession: any) => {
+          const {
+            data: { subscription: sub },
+          } = (supabase.auth as any).onAuthStateChange(async (event: string, newSession: any) => {
             // Ignore the first event (it's the current session from getSession)
             if (ignoreFirstAuthEvent) {
               ignoreFirstAuthEvent = false;
-              logger.log("[AuthContext] Ignoring first auth event (current session):", event);
+              logger.log('[AuthContext] Ignoring first auth event (current session):', event);
               return;
             }
 
             // Only process events after initialization is complete
             if (isInitialized) {
-              logger.log("[AuthContext] Auth State Change:", event, newSession?.user?.email);
+              logger.log('[AuthContext] Auth State Change:', event, newSession?.user?.email);
               if (newSession?.user) {
                 if (event === 'SIGNED_IN') {
-                   logger.log("[AuthContext] Event: SIGNED_IN");
-                   const pendingRole = localStorage.getItem('sounativo_pending_role');
-                   if (pendingRole) {
-                       try {
-                         const success = await ensureUserRecord(newSession.user, pendingRole);
-                         if (success) {
-                            localStorage.removeItem('sounativo_pending_role');
-                         }
-                       } catch (ensureError) {
-                         logger.error("[AuthContext] Error ensuring user record in listener:", ensureError);
-                       }
-                   }
-                   try {
-                     await fetchUserData(newSession.user.id, newSession.user.email!);
-                   } catch (fetchError) {
-                     logger.error("[AuthContext] Error fetching user data in listener:", fetchError);
-                   }
+                  logger.log('[AuthContext] Event: SIGNED_IN');
+                  const pendingRole = localStorage.getItem('sounativo_pending_role');
+                  if (pendingRole) {
+                    try {
+                      const success = await ensureUserRecord(newSession.user, pendingRole);
+                      if (success) {
+                        localStorage.removeItem('sounativo_pending_role');
+                      }
+                    } catch (ensureError) {
+                      logger.error(
+                        '[AuthContext] Error ensuring user record in listener:',
+                        ensureError
+                      );
+                    }
+                  }
+                  try {
+                    await fetchUserData(newSession.user.id, newSession.user.email!);
+                  } catch (fetchError) {
+                    logger.error('[AuthContext] Error fetching user data in listener:', fetchError);
+                  }
                 } else if (event === 'USER_UPDATED') {
-                   logger.log("[AuthContext] Event: USER_UPDATED");
-                   try {
-                     await fetchUserData(newSession.user.id, newSession.user.email!);
-                   } catch (fetchError) {
-                     logger.error("[AuthContext] Error fetching user data on update:", fetchError);
-                   }
+                  logger.log('[AuthContext] Event: USER_UPDATED');
+                  try {
+                    await fetchUserData(newSession.user.id, newSession.user.email!);
+                  } catch (fetchError) {
+                    logger.error('[AuthContext] Error fetching user data on update:', fetchError);
+                  }
                 }
               } else if (event === 'SIGNED_OUT') {
-                logger.log("[AuthContext] Event: SIGNED_OUT, clearing user state.");
+                logger.log('[AuthContext] Event: SIGNED_OUT, clearing user state.');
                 setUser(null);
                 localStorage.removeItem('sounativo_pending_role'); // Clear pending role on sign out
               }
@@ -344,47 +374,46 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         let session: any = null;
         try {
           const sessionPromise = (supabase.auth as any).getSession();
-          const timeoutPromise = new Promise((_, reject) => 
+          const timeoutPromise = new Promise((_, reject) =>
             setTimeout(() => reject(new Error('Session timeout')), 4000)
           );
-          const { data } = await Promise.race([sessionPromise, timeoutPromise]) as any;
+          const { data } = (await Promise.race([sessionPromise, timeoutPromise])) as any;
           session = data?.session;
         } catch (sessionError: any) {
-          logger.error("[AuthContext] Error getting session:", sessionError.message);
+          logger.error('[AuthContext] Error getting session:', sessionError.message);
           // Continue with null session - user is not logged in
           session = null;
         }
-        
+
         if (session?.user) {
-          logger.log("[AuthContext] Session found on init", session.user.email);
+          logger.log('[AuthContext] Session found on init', session.user.email);
           const pendingRole = localStorage.getItem('sounativo_pending_role');
           if (pendingRole) {
-              logger.log("[AuthContext] Pending role found:", pendingRole);
-              try {
-                await ensureUserRecord(session.user, pendingRole);
-                localStorage.removeItem('sounativo_pending_role');
-              } catch (ensureError) {
-                logger.error("[AuthContext] Error ensuring user record:", ensureError);
-                // Continue anyway - don't block initialization
-              }
+            logger.log('[AuthContext] Pending role found:', pendingRole);
+            try {
+              await ensureUserRecord(session.user, pendingRole);
+              localStorage.removeItem('sounativo_pending_role');
+            } catch (ensureError) {
+              logger.error('[AuthContext] Error ensuring user record:', ensureError);
+              // Continue anyway - don't block initialization
+            }
           }
           try {
             await fetchUserData(session.user.id, session.user.email!);
           } catch (fetchError) {
-            logger.error("[AuthContext] Error fetching user data:", fetchError);
+            logger.error('[AuthContext] Error fetching user data:', fetchError);
             // Set user to null if fetch fails
             setUser(null);
           }
         } else {
-          logger.log("[AuthContext] No session found on init");
+          logger.log('[AuthContext] No session found on init');
           setUser(null);
         }
 
         isInitialized = true;
-        logger.log("[AuthContext] Auth initialization finished. User:", user ? user.email : "none");
-
+        logger.log('[AuthContext] Auth initialization finished. User:', user ? user.email : 'none');
       } catch (error: any) {
-        logger.error("[AuthContext] Error during initialization:", error);
+        logger.error('[AuthContext] Error during initialization:', error);
         setUser(null);
       } finally {
         // CRITICAL: Always set loading to false, even on errors or timeouts
@@ -410,39 +439,48 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         subscription.unsubscribe();
       }
     };
-  }, []); 
-  
-  const login = async (email: string, password?: string): Promise<{ success: boolean; error?: string }> => {
+  }, []);
+
+  const login = async (
+    email: string,
+    password?: string
+  ): Promise<{ success: boolean; error?: string }> => {
     if (!supabase) return { success: false, error: 'Backend não configurado.' };
     if (!password) return { success: false, error: 'Senha obrigatória' };
-    
+
     setLoading(true); // Ensure loading is set at the start of login
-    logger.log("[AuthContext] Attempting login for:", email);
-    
+    logger.log('[AuthContext] Attempting login for:', email);
+
     try {
       // Timeout protection: if login takes more than 10 seconds, fail
       const loginPromise = (supabase.auth as any).signInWithPassword({
         email,
         password,
       });
-      
-      const timeoutPromise = new Promise<{ error: { message: string } }>((_, reject) => 
-        setTimeout(() => reject(new Error('O servidor demorou muito para responder. Tente novamente.')), 10000)
+
+      const timeoutPromise = new Promise<{ error: { message: string } }>((_, reject) =>
+        setTimeout(
+          () => reject(new Error('O servidor demorou muito para responder. Tente novamente.')),
+          10000
+        )
       );
 
       const { error } = await Promise.race([loginPromise, timeoutPromise]);
 
       if (error) {
-        const msg = error.message === 'Invalid login credentials' ? 'Email ou senha incorretos.' : error.message;
-        logger.error("[AuthContext] Login failed:", error.message);
+        const msg =
+          error.message === 'Invalid login credentials'
+            ? 'Email ou senha incorretos.'
+            : error.message;
+        logger.error('[AuthContext] Login failed:', error.message);
         return { success: false, error: msg };
       }
-      
-      logger.log("[AuthContext] Login successful for:", email);
+
+      logger.log('[AuthContext] Login successful for:', email);
       return { success: true };
     } catch (networkError: any) {
-      logger.error("[AuthContext] Network or unexpected error during login:", networkError);
-      const errorMsg = networkError.message || "Erro de conexão. Verifique sua internet.";
+      logger.error('[AuthContext] Network or unexpected error during login:', networkError);
+      const errorMsg = networkError.message || 'Erro de conexão. Verifique sua internet.';
       return { success: false, error: errorMsg };
     } finally {
       // CRITICAL: Always reset loading state
@@ -452,64 +490,64 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const loginWithGoogle = async (role?: UserRole, redirectPath?: string) => {
     if (!supabase) return;
-    const redirectTo = redirectPath 
-        ? `${window.location.origin}/#${redirectPath}` 
-        : `${window.location.origin}/`;
+    const redirectTo = redirectPath
+      ? `${window.location.origin}/#${redirectPath}`
+      : `${window.location.origin}/`;
 
     if (role) {
-        localStorage.setItem('sounativo_pending_role', role);
-        logger.log("[AuthContext] Setting pending role for Google login:", role);
+      localStorage.setItem('sounativo_pending_role', role);
+      logger.log('[AuthContext] Setting pending role for Google login:', role);
     } else {
-        localStorage.removeItem('sounativo_pending_role');
+      localStorage.removeItem('sounativo_pending_role');
     }
 
     const { error } = await (supabase.auth as any).signInWithOAuth({
       provider: 'google',
       options: {
         redirectTo: redirectTo,
-        queryParams: { access_type: 'offline', prompt: 'consent' }
-      }
+        queryParams: { access_type: 'offline', prompt: 'consent' },
+      },
     });
-    if (error) logger.error("[AuthContext] Google login error:", error);
+    if (error) logger.error('[AuthContext] Google login error:', error);
   };
 
   const logout = async () => {
-    logger.log("[AuthContext] Logout triggered. Clearing all local storage and user state.");
-    
+    logger.log('[AuthContext] Logout triggered. Clearing all local storage and user state.');
+
     // CRITICAL: Always clear state and localStorage FIRST, regardless of network
     localStorage.clear();
     setUser(null);
     setLoading(false); // Ensure loading is reset
-    
+
     // Attempt to sign out with Supabase, but don't block on errors
     if (supabase) {
       try {
         // Timeout protection: if signOut takes more than 3 seconds, give up
         const signOutPromise = (supabase.auth as any).signOut();
-        const timeoutPromise = new Promise((_, reject) => 
+        const timeoutPromise = new Promise((_, reject) =>
           setTimeout(() => reject(new Error('Logout timeout')), 3000)
         );
-        
+
         await Promise.race([signOutPromise, timeoutPromise]);
       } catch (e: any) {
         // Silently fail - user is already logged out locally
-        logger.error("[AuthContext] Silent Supabase signout failed:", e);
+        logger.error('[AuthContext] Silent Supabase signout failed:', e);
       }
     }
-    
+
     // Force redirect to home (user wants to leave, not see errors)
     try {
       window.location.href = '/';
     } catch (err) {
       // Fallback if window.location fails
-      logger.error("[AuthContext] Redirect failed:", err);
+      logger.error('[AuthContext] Redirect failed:', err);
     }
   };
 
   const register = async (data: any, role: UserRole): Promise<RegisterResult> => {
     if (!supabase) return { success: false, error: 'Backend não configurado.' };
-    
-    logger.log("[AuthContext] Attempting registration for:", data.email, "Role:", role);
+
+    logger.log('[AuthContext] Attempting registration for:', data.email, 'Role:', role);
 
     // 1. Create Auth User
     const { data: authData, error: authError } = await (supabase.auth as any).signUp({
@@ -518,26 +556,36 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       options: {
         data: {
           full_name: data.name,
-        }
-      }
+        },
+      },
     });
 
     if (authError) {
-        if (authError.message.includes('already registered') || authError.message.includes('User already registered')) {
-            logger.warn("[AuthContext] Registration failed: Email already registered.");
-             return { success: false, error: 'Este e-mail já está cadastrado. Por favor, faça login.' };
-        }
-        logger.error("[AuthContext] Auth registration failed:", authError.message);
-        return { success: false, error: authError.message };
+      if (
+        authError.message.includes('already registered') ||
+        authError.message.includes('User already registered')
+      ) {
+        logger.warn('[AuthContext] Registration failed: Email already registered.');
+        return { success: false, error: 'Este e-mail já está cadastrado. Por favor, faça login.' };
+      }
+      logger.error('[AuthContext] Auth registration failed:', authError.message);
+      return { success: false, error: authError.message };
     }
-    
+
     const userId = authData.user?.id;
     const hasSession = Boolean(authData?.session?.access_token);
 
     // If user is created in auth but not immediately signed in (e.g., email confirmation)
     if (!userId) {
-        logger.log("[AuthContext] Auth user created, but not signed in (email confirmation likely needed).");
-        return { success: true, message: 'Verifique seu email para confirmar o cadastro.', role: role, email: data.email };
+      logger.log(
+        '[AuthContext] Auth user created, but not signed in (email confirmation likely needed).'
+      );
+      return {
+        success: true,
+        message: 'Verifique seu email para confirmar o cadastro.',
+        role: role,
+        email: data.email,
+      };
     }
 
     // IMPORTANT: If Supabase did not return a session (common when email confirmation is enabled),
@@ -549,99 +597,109 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       } catch {
         // ignore - non-fatal
       }
-      logger.log("[AuthContext] Registration created Auth user but no session was returned. Skipping DB writes until user confirms email and signs in.");
+      logger.log(
+        '[AuthContext] Registration created Auth user but no session was returned. Skipping DB writes until user confirms email and signs in.'
+      );
       return {
         success: true,
         message: 'Conta criada! Verifique seu email para confirmar o cadastro e depois faça login.',
         role,
-        email: data.email
+        email: data.email,
       };
     }
 
-    // 2. Create corresponding DB records. 
+    // 2. Create corresponding DB records.
     try {
       // 2a. Upsert Profile
-      const { error: profileError } = await supabase.from('profiles').upsert({
+      const { error: profileError } = await supabase.from('profiles').upsert(
+        {
           id: userId,
           full_name: data.name,
           email: data.email,
           cpf: role === UserRole.CLIENT ? data.cpf : null,
           phone: data.phone,
-          role: role.toString(), 
-          avatar_url: `https://ui-avatars.com/api/?name=${encodeURIComponent(data.name)}`
-      }, { onConflict: 'id' });
+          role: role.toString(),
+          avatar_url: `https://ui-avatars.com/api/?name=${encodeURIComponent(data.name)}`,
+        },
+        { onConflict: 'id' }
+      );
 
       if (profileError) {
-          logger.error("[AuthContext] Profile Upsert Error:", profileError);
-          // If RLS blocks profile upsert, the Auth user may still exist. Treat as "pending provisioning"
-          // so the next SIGNED_IN event can run ensureUserRecord().
-          if (
-            profileError.code === '42501' ||
-            String(profileError.message || '').toLowerCase().includes('row-level security') ||
-            String(profileError.message || '').toLowerCase().includes('violates row-level security')
-          ) {
-            try {
-              localStorage.setItem('sounativo_pending_role', role.toString());
-            } catch {
-              // ignore
-            }
-            return {
-              success: true,
-              role,
-              userId,
-              email: data.email,
-              message: 'Conta criada, mas a criação do perfil no banco foi adiada por segurança (RLS). Faça login (ou confirme seu email) para finalizar.'
-            };
+        logger.error('[AuthContext] Profile Upsert Error:', profileError);
+        // If RLS blocks profile upsert, the Auth user may still exist. Treat as "pending provisioning"
+        // so the next SIGNED_IN event can run ensureUserRecord().
+        if (
+          profileError.code === '42501' ||
+          String(profileError.message || '')
+            .toLowerCase()
+            .includes('row-level security') ||
+          String(profileError.message || '')
+            .toLowerCase()
+            .includes('violates row-level security')
+        ) {
+          try {
+            localStorage.setItem('sounativo_pending_role', role.toString());
+          } catch {
+            // ignore
           }
-          throw profileError;
+          return {
+            success: true,
+            role,
+            userId,
+            email: data.email,
+            message:
+              'Conta criada, mas a criação do perfil no banco foi adiada por segurança (RLS). Faça login (ou confirme seu email) para finalizar.',
+          };
+        }
+        throw profileError;
       }
 
       // 2b. Insert Agency Record (If applicable)
       if (role === UserRole.AGENCY) {
         // Generate unique slug based on agency name (without random numbers)
         let baseSlug = generateSlugFromName(data.name);
-        
+
         // FIX: Fallback se slug estiver vazio (nome com caracteres especiais)
         if (!baseSlug || baseSlug.trim() === '') {
-          logger.warn("[AuthContext] Generated slug is empty, using fallback");
+          logger.warn('[AuthContext] Generated slug is empty, using fallback');
           baseSlug = `agencia-${Date.now()}`;
         }
-        
+
         const uniqueSlug = await generateUniqueSlug(baseSlug, 'agencies');
-        
+
         // FIX: Validação final do slug antes de enviar
         if (!uniqueSlug || uniqueSlug.trim() === '') {
-          logger.error("[AuthContext] Unique slug generation failed, using timestamp fallback");
+          logger.error('[AuthContext] Unique slug generation failed, using timestamp fallback');
           const fallbackSlug = `agencia-${Date.now()}`;
-          
+
           // Use RPC to bypass potential REST Schema Cache issues
           const { error: agencyError } = await supabase.rpc('create_agency', {
-              p_user_id: userId,
-              p_name: data.name,
-              p_email: data.email,
-              p_phone: data.phone,
-              p_whatsapp: data.phone,
-              p_slug: fallbackSlug
+            p_user_id: userId,
+            p_name: data.name,
+            p_email: data.email,
+            p_phone: data.phone,
+            p_whatsapp: data.phone,
+            p_slug: fallbackSlug,
           });
-          
+
           if (agencyError) {
-              logger.error("[AuthContext] Supabase Agency RPC Insert Error:", agencyError);
-              throw agencyError;
+            logger.error('[AuthContext] Supabase Agency RPC Insert Error:', agencyError);
+            throw agencyError;
           }
         } else {
           // Use RPC to bypass potential REST Schema Cache issues
           const { error: agencyError } = await supabase.rpc('create_agency', {
-              p_user_id: userId,
-              p_name: data.name,
-              p_email: data.email,
-              p_phone: data.phone,
-              p_whatsapp: data.phone,
-              p_slug: uniqueSlug
+            p_user_id: userId,
+            p_name: data.name,
+            p_email: data.email,
+            p_phone: data.phone,
+            p_whatsapp: data.phone,
+            p_slug: uniqueSlug,
           });
-          
+
           if (agencyError) {
-              logger.error("[AuthContext] Supabase Agency RPC Insert Error:", agencyError);
-              throw agencyError;
+            logger.error('[AuthContext] Supabase Agency RPC Insert Error:', agencyError);
+            throw agencyError;
           }
         }
 
@@ -664,12 +722,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
             const currentSettings = currentAgency?.custom_settings || {};
             const currentTags = currentSettings.tags || [];
-            
+
             // Add 'GUIA' tag if not already present
             if (!currentTags.includes('GUIA')) {
               const updatedSettings = {
                 ...currentSettings,
-                tags: [...currentTags, 'GUIA']
+                tags: [...currentTags, 'GUIA'],
               };
 
               const { error: updateError } = await supabase
@@ -678,7 +736,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 .eq('id', agencyData.id);
 
               if (updateError) {
-                logger.warn("[AuthContext] Failed to update guide tag:", updateError);
+                logger.warn('[AuthContext] Failed to update guide tag:', updateError);
                 // Don't throw - guide creation succeeded, tag update is optional
               }
             }
@@ -688,160 +746,189 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       // If we reach here, DB operations succeeded
       // FIX: Wait for database propagation before fetching user data
-      logger.log("[AuthContext] Waiting for database propagation (1s)...");
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
+      logger.log('[AuthContext] Waiting for database propagation (1s)...');
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
       // FIX: Force fetch the user data immediately with retry logic to avoid loading loop
       const fetchWithRetry = async (attempt: number = 1): Promise<void> => {
         const maxAttempts = 3;
-        
+
         try {
-          logger.log(`[AuthContext] Fetching user data after registration (attempt ${attempt}/${maxAttempts})...`);
+          logger.log(
+            `[AuthContext] Fetching user data after registration (attempt ${attempt}/${maxAttempts})...`
+          );
           await fetchUserData(userId, data.email);
-          
+
           // Verify user was loaded by checking if user state was updated
           // Use a small delay to allow state update to propagate
-          await new Promise(resolve => setTimeout(resolve, 200));
-          
+          await new Promise((resolve) => setTimeout(resolve, 200));
+
           // FIX: For agencies, verify slug is present before redirecting
           if (role === UserRole.AGENCY && user) {
             const agencyUser = user as Agency;
             if (!agencyUser.slug || agencyUser.slug.trim() === '') {
-              logger.error("[AuthContext] Agency created but slug is missing!");
+              logger.error('[AuthContext] Agency created but slug is missing!');
               if (attempt < maxAttempts) {
-                logger.log(`[AuthContext] Retrying fetch to get slug (attempt ${attempt + 1}/${maxAttempts})...`);
-                await new Promise(resolve => setTimeout(resolve, 1000));
+                logger.log(
+                  `[AuthContext] Retrying fetch to get slug (attempt ${attempt + 1}/${maxAttempts})...`
+                );
+                await new Promise((resolve) => setTimeout(resolve, 1000));
                 return fetchWithRetry(attempt + 1);
               } else {
-                logger.error("[AuthContext] Failed to get agency slug after all retries");
+                logger.error('[AuthContext] Failed to get agency slug after all retries');
                 // Don't redirect if slug is missing - let user see error
                 return;
               }
             }
           }
-          
+
           // Check if user was set by verifying against current user state
           // If still null and we haven't exceeded max attempts, retry
           if (attempt < maxAttempts && !user) {
             // Give it one more try after a delay
             logger.log(`[AuthContext] Waiting before verification (attempt ${attempt})...`);
-            await new Promise(resolve => setTimeout(resolve, 500));
-            
+            await new Promise((resolve) => setTimeout(resolve, 500));
+
             // Try fetching again
             return fetchWithRetry(attempt + 1);
           }
-          
-          logger.log("[AuthContext] User data fetch completed after registration.");
+
+          logger.log('[AuthContext] User data fetch completed after registration.');
         } catch (fetchError) {
-          logger.error("[AuthContext] Error fetching user data after registration:", fetchError);
-          
+          logger.error('[AuthContext] Error fetching user data after registration:', fetchError);
+
           // Retry on error if we haven't exceeded max attempts
           if (attempt < maxAttempts) {
-            logger.log(`[AuthContext] Retrying fetch after error (attempt ${attempt + 1}/${maxAttempts})...`);
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            logger.log(
+              `[AuthContext] Retrying fetch after error (attempt ${attempt + 1}/${maxAttempts})...`
+            );
+            await new Promise((resolve) => setTimeout(resolve, 1000));
             return fetchWithRetry(attempt + 1);
           }
-          
+
           // Don't fail registration if fetch fails after all retries - user can refresh
-          logger.warn("[AuthContext] Failed to fetch user data after all retries. User may need to refresh.");
+          logger.warn(
+            '[AuthContext] Failed to fetch user data after all retries. User may need to refresh.'
+          );
         }
       };
-      
+
       // Start fetch immediately (don't use setTimeout to avoid race conditions)
       await fetchWithRetry();
-      
-      logger.log("[AuthContext] Registration successful, DB records created.");
-      
+
+      logger.log('[AuthContext] Registration successful, DB records created.');
+
       // FIX: Don't redirect here - let AuthModal handle navigation
       // The AuthModal will handle the redirect after showing success message
       // This prevents double redirects and allows proper state management
-      
-      return { success: true, message: 'Conta criada com sucesso!', role: role, userId: userId, email: data.email };
 
+      return {
+        success: true,
+        message: 'Conta criada com sucesso!',
+        role: role,
+        userId: userId,
+        email: data.email,
+      };
     } catch (dbError: any) {
-      logger.error("[AuthContext] DB Registration Process Failed:", dbError);
-      
+      logger.error('[AuthContext] DB Registration Process Failed:', dbError);
+
       // SPECIAL HANDLING: If error is Schema Cache (PGRST204) BUT the user was created in Auth
-      if (dbError.code === "PGRST204" || dbError.message?.includes('schema cache') || dbError.message?.includes('user_id')) {
-        logger.warn("[AuthContext] Recovering from Schema Cache error - treating as success to allow login.");
-        
+      if (
+        dbError.code === 'PGRST204' ||
+        dbError.message?.includes('schema cache') ||
+        dbError.message?.includes('user_id')
+      ) {
+        logger.warn(
+          '[AuthContext] Recovering from Schema Cache error - treating as success to allow login.'
+        );
+
         // Generate slug without random numbers (fallback mode - will be corrected on next login)
         const baseSlug = generateSlugFromName(data.name);
-        
+
         // Force state locally so user isn't stuck
         if (role === UserRole.AGENCY) {
-            const fallbackAgency: Agency = {
-                id: userId,
-                agencyId: 'pending-' + userId,
-                name: data.name,
-                email: data.email,
-                role: UserRole.AGENCY,
-                is_active: false,
-                slug: baseSlug, // Will be corrected to unique slug on next login
-                phone: data.phone,
-                whatsapp: data.phone,
-                cnpj: '',
-                description: '',
-                logo: '',
-                heroMode: 'TRIPS',
-                subscriptionStatus: 'ACTIVE',
-                subscriptionPlan: 'STARTER',
-                subscriptionExpiresAt: new Date().toISOString(),
-            };
-            setUser(fallbackAgency);
+          const fallbackAgency: Agency = {
+            id: userId,
+            agencyId: 'pending-' + userId,
+            name: data.name,
+            email: data.email,
+            role: UserRole.AGENCY,
+            is_active: false,
+            slug: baseSlug, // Will be corrected to unique slug on next login
+            phone: data.phone,
+            whatsapp: data.phone,
+            cnpj: '',
+            description: '',
+            logo: '',
+            heroMode: 'TRIPS',
+            subscriptionStatus: 'ACTIVE',
+            subscriptionPlan: 'STARTER',
+            subscriptionExpiresAt: new Date().toISOString(),
+          };
+          setUser(fallbackAgency);
         } else {
-            setUser({
-                id: userId,
-                name: data.name,
-                email: data.email,
-                role: UserRole.CLIENT,
-                favorites: [],
-            } as Client);
+          setUser({
+            id: userId,
+            name: data.name,
+            email: data.email,
+            role: UserRole.CLIENT,
+            favorites: [],
+          } as Client);
         }
 
-        return { 
-            success: true, 
-            role: role, 
-            userId: userId, 
-            email: data.email,
-            message: "Conta criada! Se houver erro ao carregar o painel, recarregue a página."
+        return {
+          success: true,
+          role: role,
+          userId: userId,
+          email: data.email,
+          message: 'Conta criada! Se houver erro ao carregar o painel, recarregue a página.',
         };
       }
 
-      return { success: false, error: `Falha ao salvar dados: ${dbError.message || dbError.details || 'Erro desconhecido'}. Tente novamente.` };
+      return {
+        success: false,
+        error: `Falha ao salvar dados: ${dbError.message || dbError.details || 'Erro desconhecido'}. Tente novamente.`,
+      };
     }
   };
 
-  const updateUser = async (userData: Partial<Client | Agency>): Promise<{ success: boolean; error?: string }> => {
+  const updateUser = async (
+    userData: Partial<Client | Agency>
+  ): Promise<{ success: boolean; error?: string }> => {
     if (!supabase) return { success: false, error: 'Backend não configurado.' };
     if (!user) return { success: false, error: 'Usuário não logado' };
-    
-    logger.log("[AuthContext] updateUser: Attempting to update user data for:", user.email, "Updates:", userData);
+
+    logger.log(
+      '[AuthContext] updateUser: Attempting to update user data for:',
+      user.email,
+      'Updates:',
+      userData
+    );
 
     try {
       // Fix: Normalize emails to avoid unnecessary Auth API calls and 429 errors.
       let shouldUpdateAuthEmail = false;
       if (userData.email && user.email) {
-          const newEmail = userData.email.trim().toLowerCase();
-          const currentEmail = user.email.trim().toLowerCase();
-          // Only flag for update if they are genuinely different
-          if (newEmail !== currentEmail) {
-              shouldUpdateAuthEmail = true;
-              logger.log("[AuthContext] updateUser: Email change detected, will update Auth email.");
-          }
+        const newEmail = userData.email.trim().toLowerCase();
+        const currentEmail = user.email.trim().toLowerCase();
+        // Only flag for update if they are genuinely different
+        if (newEmail !== currentEmail) {
+          shouldUpdateAuthEmail = true;
+          logger.log('[AuthContext] updateUser: Email change detected, will update Auth email.');
+        }
       }
 
       // 2. Only call Auth API if necessary
       if (shouldUpdateAuthEmail && userData.email) {
-          const { error } = await (supabase.auth as any).updateUser({ email: userData.email });
-          if (error) throw error;
-          logger.log("[AuthContext] updateUser: Auth email updated successfully.");
+        const { error } = await (supabase.auth as any).updateUser({ email: userData.email });
+        if (error) throw error;
+        logger.log('[AuthContext] updateUser: Auth email updated successfully.');
       }
 
       if (user.role === UserRole.AGENCY) {
         const updates: any = {};
         if (userData.name) updates.name = userData.name;
-        
+
         // --- SLUG LOGIC FOR AGENCY PROFILE UPDATE ---
         // Allow slug update if:
         // 1. Slug is currently empty (first time setting)
@@ -874,7 +961,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           }
         }
 
-        if ((userData as Agency).description !== undefined) updates.description = (userData as Agency).description; 
+        if ((userData as Agency).description !== undefined)
+          updates.description = (userData as Agency).description;
         if ((userData as Agency).cnpj !== undefined) updates.cnpj = (userData as Agency).cnpj;
         if ((userData as Agency).phone) updates.phone = (userData as Agency).phone;
         // FIX: Ensure logo is mapped to logo_url (database column name)
@@ -886,29 +974,32 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if ((userData as Agency).address) updates.address = (userData as Agency).address;
         if ((userData as Agency).bankInfo) updates.bank_info = (userData as Agency).bankInfo;
         if ((userData as Agency).whatsapp) updates.whatsapp = (userData as Agency).whatsapp;
-        
-        if ((userData as Agency).heroMode) updates.hero_mode = (userData as Agency).heroMode;
-        if ((userData as Agency).heroBannerUrl) updates.hero_banner_url = (userData as Agency).heroBannerUrl;
-        if ((userData as Agency).heroTitle) updates.hero_title = (userData as Agency).heroTitle;
-        if ((userData as Agency).heroSubtitle) updates.hero_subtitle = (userData as Agency).heroSubtitle;
 
-        if ((userData as Agency).customSettings) updates.custom_settings = (userData as Agency).customSettings;
-        if ((userData as Agency).subscriptionExpiresAt) updates.subscription_expires_at = (userData as Agency).subscriptionExpiresAt;
+        if ((userData as Agency).heroMode) updates.hero_mode = (userData as Agency).heroMode;
+        if ((userData as Agency).heroBannerUrl)
+          updates.hero_banner_url = (userData as Agency).heroBannerUrl;
+        if ((userData as Agency).heroTitle) updates.hero_title = (userData as Agency).heroTitle;
+        if ((userData as Agency).heroSubtitle)
+          updates.hero_subtitle = (userData as Agency).heroSubtitle;
+
+        if ((userData as Agency).customSettings)
+          updates.custom_settings = (userData as Agency).customSettings;
+        if ((userData as Agency).subscriptionExpiresAt)
+          updates.subscription_expires_at = (userData as Agency).subscriptionExpiresAt;
 
         // FIX: Ensure no 'logo' field exists in updates object (only logo_url should be present)
         delete (updates as any).logo;
 
-        const { error } = await supabase.from('agencies').update(updates).eq('user_id', user.id); 
+        const { error } = await supabase.from('agencies').update(updates).eq('user_id', user.id);
         if (error) {
-             // Fallback: If update fails, maybe the record was never created (rare). Try Upsert.
-             logger.warn("[AuthContext] Agency update failed, trying upsert...", error);
-             // FIX: Ensure logo_url is used and logo is not included in upsert
-             const upsertData: any = { user_id: user.id, ...updates };
-             delete upsertData.logo; // Remove logo if it exists
-             await supabase.from('agencies').upsert(upsertData, { onConflict: 'user_id' });
+          // Fallback: If update fails, maybe the record was never created (rare). Try Upsert.
+          logger.warn('[AuthContext] Agency update failed, trying upsert...', error);
+          // FIX: Ensure logo_url is used and logo is not included in upsert
+          const upsertData: any = { user_id: user.id, ...updates };
+          delete upsertData.logo; // Remove logo if it exists
+          await supabase.from('agencies').upsert(upsertData, { onConflict: 'user_id' });
         }
-        logger.log("[AuthContext] Agency DB profile updated.");
-        
+        logger.log('[AuthContext] Agency DB profile updated.');
       } else {
         const updates: any = {};
         if (userData.name) updates.full_name = userData.name;
@@ -921,162 +1012,177 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (userData.address) updates.address = (userData as Client).address;
         if ((userData as Client).favorites) updates.favorites = (userData as Client).favorites;
 
-
         const { error } = await supabase.from('profiles').update(updates).eq('id', user.id);
         if (error) throw error;
-        logger.log("[AuthContext] Client DB profile updated.");
+        logger.log('[AuthContext] Client DB profile updated.');
       }
 
       // After successful DB update, update the local AuthContext user state
       setUser({ ...user, ...userData } as any);
-      logger.log("[AuthContext] Local user state updated after DB save.");
+      logger.log('[AuthContext] Local user state updated after DB save.');
       return { success: true };
-
     } catch (error: any) {
-        logger.error("[AuthContext] Error updating user:", error);
-        return { success: false, error: error.message };
+      logger.error('[AuthContext] Error updating user:', error);
+      return { success: false, error: error.message };
     }
   };
 
   const updatePassword = async (password: string) => {
-      if (!supabase) return { success: false, error: 'Backend não configurado.' };
-      logger.log("[AuthContext] Attempting to update password.");
-      const { error } = await (supabase.auth as any).updateUser({ password });
-      if (error) {
-        logger.error("[AuthContext] Password update failed:", error.message);
-        return { success: false, error: error.message };
-      }
-      logger.log("[AuthContext] Password updated successfully.");
-      return { success: true };
+    if (!supabase) return { success: false, error: 'Backend não configurado.' };
+    logger.log('[AuthContext] Attempting to update password.');
+    const { error } = await (supabase.auth as any).updateUser({ password });
+    if (error) {
+      logger.error('[AuthContext] Password update failed:', error.message);
+      return { success: false, error: error.message };
+    }
+    logger.log('[AuthContext] Password updated successfully.');
+    return { success: true };
   };
 
-  const uploadImage = async (file: File, bucket: 'avatars' | 'agency-logos' | 'trip-images'): Promise<string | null> => {
-      if (!supabase) {
-        logger.warn("[AuthContext] Cannot upload image: Supabase not configured.");
-        throw new Error('Backend não configurado');
-      }
-      if (!user) {
-        logger.warn("[AuthContext] Cannot upload image: No user logged in.");
-        throw new Error('Usuário não autenticado');
-      }
-      
-      // P0: SECURITY - Validate file type (MIME type)
-      const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
-      if (!ALLOWED_MIME_TYPES.includes(file.type)) {
-        throw new Error(`Tipo de arquivo não permitido. Use: JPEG, PNG, WebP ou GIF`);
-      }
-      
-      // P0: SECURITY - Validate file extension
-      const fileExt = file.name.split('.').pop()?.toLowerCase();
-      const ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
-      if (!fileExt || !ALLOWED_EXTENSIONS.includes(fileExt)) {
-        throw new Error(`Extensão de arquivo não permitida. Use: .jpg, .jpeg, .png, .webp ou .gif`);
-      }
-      
-      // P0: SECURITY - Validate file size (max 5MB for better performance)
-      const MAX_SIZE_MB = 5;
-      const fileSizeMB = file.size / (1024 * 1024);
-      if (fileSizeMB > MAX_SIZE_MB) {
-        throw new Error(`Arquivo muito grande (${fileSizeMB.toFixed(1)}MB). Tamanho máximo: ${MAX_SIZE_MB}MB`);
-      }
-      
-      logger.log("[AuthContext] Attempting to upload image to bucket:", bucket, `Size: ${fileSizeMB.toFixed(2)}MB, Type: ${file.type}`);
-      
-      try {
-          const fileName = `${user?.id}-${Date.now()}.${fileExt}`;
-          
-          // Upload with progress tracking (Supabase doesn't provide progress, but we can at least log)
-          const { error: uploadError } = await supabase.storage
-              .from(bucket)
-              .upload(fileName, file, { 
-                upsert: true,
-                cacheControl: '3600',
-                contentType: file.type // Use validated MIME type
-              });
+  const uploadImage = async (
+    file: File,
+    bucket: 'avatars' | 'agency-logos' | 'trip-images'
+  ): Promise<string | null> => {
+    if (!supabase) {
+      logger.warn('[AuthContext] Cannot upload image: Supabase not configured.');
+      throw new Error('Backend não configurado');
+    }
+    if (!user) {
+      logger.warn('[AuthContext] Cannot upload image: No user logged in.');
+      throw new Error('Usuário não autenticado');
+    }
 
-          if (uploadError) {
-            logger.error("[AuthContext] Upload error from Supabase:", uploadError);
-            throw new Error(uploadError.message || 'Erro ao fazer upload da imagem');
-          }
+    // P0: SECURITY - Validate file type (MIME type)
+    const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
+    if (!ALLOWED_MIME_TYPES.includes(file.type)) {
+      throw new Error(`Tipo de arquivo não permitido. Use: JPEG, PNG, WebP ou GIF`);
+    }
 
-          const { data } = supabase.storage.from(bucket).getPublicUrl(fileName);
-          logger.log("[AuthContext] Image uploaded successfully. URL:", data.publicUrl);
-          return data.publicUrl;
-      } catch (error: any) {
-          logger.error("[AuthContext] Upload error:", error);
-          // Re-throw to allow CreateTripWizard to handle it properly
-          throw error;
+    // P0: SECURITY - Validate file extension
+    const fileExt = file.name.split('.').pop()?.toLowerCase();
+    const ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
+    if (!fileExt || !ALLOWED_EXTENSIONS.includes(fileExt)) {
+      throw new Error(`Extensão de arquivo não permitida. Use: .jpg, .jpeg, .png, .webp ou .gif`);
+    }
+
+    // P0: SECURITY - Validate file size (max 5MB for better performance)
+    const MAX_SIZE_MB = 5;
+    const fileSizeMB = file.size / (1024 * 1024);
+    if (fileSizeMB > MAX_SIZE_MB) {
+      throw new Error(
+        `Arquivo muito grande (${fileSizeMB.toFixed(1)}MB). Tamanho máximo: ${MAX_SIZE_MB}MB`
+      );
+    }
+
+    logger.log(
+      '[AuthContext] Attempting to upload image to bucket:',
+      bucket,
+      `Size: ${fileSizeMB.toFixed(2)}MB, Type: ${file.type}`
+    );
+
+    try {
+      const fileName = `${user?.id}-${Date.now()}.${fileExt}`;
+
+      // Upload with progress tracking (Supabase doesn't provide progress, but we can at least log)
+      const { error: uploadError } = await supabase.storage.from(bucket).upload(fileName, file, {
+        upsert: true,
+        cacheControl: '3600',
+        contentType: file.type, // Use validated MIME type
+      });
+
+      if (uploadError) {
+        logger.error('[AuthContext] Upload error from Supabase:', uploadError);
+        throw new Error(uploadError.message || 'Erro ao fazer upload da imagem');
       }
+
+      const { data } = supabase.storage.from(bucket).getPublicUrl(fileName);
+      logger.log('[AuthContext] Image uploaded successfully. URL:', data.publicUrl);
+      return data.publicUrl;
+    } catch (error: any) {
+      logger.error('[AuthContext] Upload error:', error);
+      // Re-throw to allow CreateTripWizard to handle it properly
+      throw error;
+    }
   };
 
   const deleteAccount = async (password: string): Promise<{ success: boolean; error?: string }> => {
-    if (!supabase) return { success: false, error: "Backend não configurado." };
-    if (!user) return { success: false, error: "Usuário não autenticado" };
+    if (!supabase) return { success: false, error: 'Backend não configurado.' };
+    if (!user) return { success: false, error: 'Usuário não autenticado' };
 
-    logger.log("[AuthContext] Attempting to delete account for:", user.email);
+    logger.log('[AuthContext] Attempting to delete account for:', user.email);
 
     try {
       // First, re-authenticate the user if password is provided (for security)
       // Supabase's deleteUser doesn't take password, but we can do a dummy login to verify.
       if (password) {
-        logger.log("[AuthContext] Re-authenticating user for deletion verification.");
+        logger.log('[AuthContext] Re-authenticating user for deletion verification.');
         const { error: signInError } = await supabase.auth.signInWithPassword({
           email: user.email,
           password: password,
         });
         if (signInError) {
-          logger.error("[AuthContext] Re-authentication failed:", signInError.message);
-          throw new Error('Credenciais inválidas. Não foi possível verificar a senha para exclusão.');
+          logger.error('[AuthContext] Re-authentication failed:', signInError.message);
+          throw new Error(
+            'Credenciais inválidas. Não foi possível verificar a senha para exclusão.'
+          );
         }
       }
 
       // Delete associated DB records (profiles, agencies, client-specific data)
-      logger.log("[AuthContext] Deleting associated DB records...");
+      logger.log('[AuthContext] Deleting associated DB records...');
       if (user.role === UserRole.CLIENT) {
         await supabase.from('bookings').delete().eq('client_id', user.id);
         await supabase.from('agency_reviews').delete().eq('client_id', user.id);
         await supabase.from('profiles').delete().eq('id', user.id);
-        logger.log("[AuthContext] Client DB records deleted.");
+        logger.log('[AuthContext] Client DB records deleted.');
       } else if (user.role === UserRole.AGENCY) {
         // More complex deletion for agency: trips, reviews, then agency, then profile
-        const { data: agencyData } = await supabase.from('agencies').select('id').eq('user_id', user.id).single();
+        const { data: agencyData } = await supabase
+          .from('agencies')
+          .select('id')
+          .eq('user_id', user.id)
+          .single();
         if (agencyData) {
           await supabase.from('trips').delete().eq('agency_id', agencyData.id);
           await supabase.from('agency_reviews').delete().eq('agency_id', agencyData.id);
           await supabase.from('agencies').delete().eq('id', agencyData.id);
         }
         await supabase.from('profiles').delete().eq('id', user.id);
-        logger.log("[AuthContext] Agency DB records deleted.");
+        logger.log('[AuthContext] Agency DB records deleted.');
       } else if (user.role === UserRole.ADMIN) {
-         // Admin deletion should be handled via admin dashboard or a separate protected function.
-         // For a client-side delete, we assume an admin wouldn't self-delete this way.
-         logger.warn("[AuthContext] Attempted to delete Admin account via client-side function.");
-         throw new Error("Admin accounts cannot be deleted via client dashboard.");
+        // Admin deletion should be handled via admin dashboard or a separate protected function.
+        // For a client-side delete, we assume an admin wouldn't self-delete this way.
+        logger.warn('[AuthContext] Attempted to delete Admin account via client-side function.');
+        throw new Error('Admin accounts cannot be deleted via client dashboard.');
       }
 
       // Finally, delete the Auth user (this requires admin privileges or RLS setup correctly for current user)
-      logger.log("[AuthContext] Attempting to delete Auth user.");
+      logger.log('[AuthContext] Attempting to delete Auth user.');
       const { error: authDeleteError } = await (supabase.auth as any).admin.deleteUser(user.id);
       if (authDeleteError) {
-        logger.warn(`[AuthContext] Could not delete Auth user ${user.id} using admin API: ${authDeleteError.message}. Attempting self-delete.`);
+        logger.warn(
+          `[AuthContext] Could not delete Auth user ${user.id} using admin API: ${authDeleteError.message}. Attempting self-delete.`
+        );
         // If admin.deleteUser fails (e.g., not service_role key), try client-side self-delete
         const { error: selfDeleteError } = await supabase.auth.signOut(); // Ensure sign out first
-        if (selfDeleteError) logger.warn("[AuthContext] Error signing out user before self-delete:", selfDeleteError);
+        if (selfDeleteError)
+          logger.warn('[AuthContext] Error signing out user before self-delete:', selfDeleteError);
         const { error: finalAuthError } = await (supabase.auth as any).deleteUser(); // This is for the logged-in user
         if (finalAuthError) throw finalAuthError;
-        logger.log("[AuthContext] Auth user self-deleted successfully.");
+        logger.log('[AuthContext] Auth user self-deleted successfully.');
       } else {
-        logger.log("[AuthContext] Auth user deleted successfully via admin API.");
+        logger.log('[AuthContext] Auth user deleted successfully via admin API.');
       }
-      
+
       setUser(null);
       localStorage.clear(); // Ensure all local session data is gone
-      logger.log("[AuthContext] Account deleted successfully. User state and local storage cleared.");
+      logger.log(
+        '[AuthContext] Account deleted successfully. User state and local storage cleared.'
+      );
       return { success: true };
-
     } catch (error: any) {
-      logger.error("[AuthContext] Erro ao excluir conta:", error);
-      return { success: false, error: error.message || "Erro ao excluir conta" };
+      logger.error('[AuthContext] Erro ao excluir conta:', error);
+      return { success: false, error: error.message || 'Erro ao excluir conta' };
     }
   };
 
@@ -1097,7 +1203,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         avatar: user.avatar,
       };
       sessionStorage.setItem('admin_impersonate_session', JSON.stringify(adminSession));
-      
+
       // Fetch target user data
       if (!supabase) {
         showToast('Erro de conexão.', 'error');
@@ -1112,7 +1218,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           .select('*')
           .eq('id', targetUserId)
           .single();
-        
+
         if (profileData) {
           targetUserData = {
             id: profileData.id,
@@ -1129,9 +1235,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           .select('*, profiles(*)')
           .eq('user_id', targetUserId)
           .single();
-        
+
         if (agencyData && agencyData.profiles) {
-          const profile = Array.isArray(agencyData.profiles) ? agencyData.profiles[0] : agencyData.profiles;
+          const profile = Array.isArray(agencyData.profiles)
+            ? agencyData.profiles[0]
+            : agencyData.profiles;
           targetUserData = {
             id: profile.id,
             agencyId: agencyData.id,
@@ -1158,11 +1266,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // Set impersonating state and target user
       setIsImpersonating(true);
       setUser(targetUserData);
-      
-      logger.log("[AuthContext] Admin impersonating user:", targetUserId, "Role:", targetRole);
+
+      logger.log('[AuthContext] Admin impersonating user:', targetUserId, 'Role:', targetRole);
       // Toast removed - banner is shown in ClientDashboard instead
     } catch (error: any) {
-      logger.error("[AuthContext] Error impersonating user:", error);
+      logger.error('[AuthContext] Error impersonating user:', error);
       showToast(`Erro ao ativar modo Gerenciar: ${error.message}`, 'error');
     }
   };
@@ -1174,7 +1282,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         showToast('Sessão de administrador não encontrada.', 'error');
         // Even if session not found, try to restore from current auth session
         if (supabase) {
-          const { data: { session } } = await supabase.auth.getSession();
+          const {
+            data: { session },
+          } = await supabase.auth.getSession();
           if (session?.user) {
             await fetchUserData(session.user.id, session.user.email || '');
           }
@@ -1184,14 +1294,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
 
       const adminSession = JSON.parse(adminSessionStr);
-      
+
       // Check if it's Master Admin
       const masterAdminEmail = import.meta.env.VITE_MASTER_ADMIN_EMAIL || 'juannicolas1@gmail.com';
       const isMasterAdmin = adminSession.email === masterAdminEmail;
-      
+
       if (isMasterAdmin && supabase) {
         // For Master Admin, get current auth session and restore
-        const { data: { session } } = await supabase.auth.getSession();
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
         if (session?.user) {
           const masterUser: Admin = {
             id: session.user.id,
@@ -1199,17 +1311,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             email: adminSession.email,
             role: UserRole.ADMIN,
             avatar: `https://ui-avatars.com/api/?name=MA&background=000&color=fff`,
-            createdAt: new Date().toISOString()
+            createdAt: new Date().toISOString(),
           };
           setIsImpersonating(false);
           setUser(masterUser);
           sessionStorage.removeItem('admin_impersonate_session');
-          logger.log("[AuthContext] Exited impersonate mode, restored Master Admin session");
+          logger.log('[AuthContext] Exited impersonate mode, restored Master Admin session');
           showToast('Modo Gerenciar desativado. Sessão de administrador restaurada.', 'success');
           return;
         }
       }
-      
+
       // For regular admin, restore from saved session
       const adminUser: Admin = {
         id: adminSession.userId,
@@ -1222,18 +1334,21 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setIsImpersonating(false);
       setUser(adminUser);
       sessionStorage.removeItem('admin_impersonate_session');
-      
-      logger.log("[AuthContext] Exited impersonate mode, restored admin session");
+
+      logger.log('[AuthContext] Exited impersonate mode, restored admin session');
       showToast('Modo Gerenciar desativado. Sessão de administrador restaurada.', 'success');
     } catch (error: any) {
-      logger.error("[AuthContext] Error exiting impersonate mode:", error);
+      logger.error('[AuthContext] Error exiting impersonate mode:', error);
       showToast(`Erro ao sair do modo Gerenciar: ${error.message}`, 'error');
       // Try to restore anyway - get session and restore admin
       setIsImpersonating(false);
       if (supabase) {
-        const { data: { session } } = await supabase.auth.getSession();
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
         if (session?.user) {
-          const masterAdminEmail = import.meta.env.VITE_MASTER_ADMIN_EMAIL || 'juannicolas1@gmail.com';
+          const masterAdminEmail =
+            import.meta.env.VITE_MASTER_ADMIN_EMAIL || 'juannicolas1@gmail.com';
           if (session.user.email === masterAdminEmail) {
             const masterUser: Admin = {
               id: session.user.id,
@@ -1241,7 +1356,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               email: session.user.email || '',
               role: UserRole.ADMIN,
               avatar: `https://ui-avatars.com/api/?name=MA&background=000&color=fff`,
-              createdAt: new Date().toISOString()
+              createdAt: new Date().toISOString(),
             };
             setUser(masterUser);
           } else {
@@ -1262,7 +1377,24 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, [user]);
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, loginWithGoogle, logout, register, updateUser, updatePassword, deleteAccount, uploadImage, reloadUser, adminImpersonate, exitImpersonate, isImpersonating }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        login,
+        loginWithGoogle,
+        logout,
+        register,
+        updateUser,
+        updatePassword,
+        deleteAccount,
+        uploadImage,
+        reloadUser,
+        adminImpersonate,
+        exitImpersonate,
+        isImpersonating,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

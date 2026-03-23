@@ -1,7 +1,15 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { Trip } from '../types';
-import { MapPin, Star, Heart, Clock, MessageCircle, ArrowRight, Check, TrendingUp } from 'lucide-react';
+import {
+  MapPin,
+  Star,
+  Heart,
+  Clock,
+  MessageCircle,
+  ArrowRight,
+  Check,
+  TrendingUp,
+} from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
@@ -90,7 +98,10 @@ const TripCardComponent: React.FC<TripCardProps> = ({ trip }) => {
       // Same trip but images were updated - check if arrays are different
       const currentImages = tripWithImages.images || [];
       const newImages = trip.images || [];
-      if (newImages.length > 0 && (currentImages.length === 0 || currentImages[0] !== newImages[0])) {
+      if (
+        newImages.length > 0 &&
+        (currentImages.length === 0 || currentImages[0] !== newImages[0])
+      ) {
         setTripWithImages(trip);
         setImgError(false);
       }
@@ -98,26 +109,26 @@ const TripCardComponent: React.FC<TripCardProps> = ({ trip }) => {
   }, [trip, tripWithImages.id]);
 
   // Memoize computed values to prevent recalculation
-  const linkTarget = useMemo(() =>
-    agencySlug ? `/${agencySlug}/viagem/${trip.slug}` : `/viagem/${trip.slug}`,
+  const linkTarget = useMemo(
+    () => (agencySlug ? `/${agencySlug}/viagem/${trip.slug}` : `/viagem/${trip.slug}`),
     [agencySlug, trip.slug]
   );
 
   // Memoize favorite check
   const isFavorite = useMemo(() => {
     if (!user || user.role !== 'CLIENT') return false;
-    const currentUserData = clients.find(c => c.id === user.id);
+    const currentUserData = clients.find((c) => c.id === user.id);
     return currentUserData?.favorites.includes(trip.id) || false;
   }, [user, clients, trip.id]);
 
   // Memoize agency and WhatsApp link - use tripWithImages for agencyId
   const { agency, whatsappLink } = useMemo(() => {
     const tripToUse = tripWithImages;
-    const foundAgency = agencies.find(a => a.agencyId === tripToUse.agencyId);
+    const foundAgency = agencies.find((a) => a.agencyId === tripToUse.agencyId);
     const contactNumber = foundAgency?.whatsapp || foundAgency?.phone;
     return {
       agency: foundAgency,
-      whatsappLink: contactNumber ? buildWhatsAppLink(contactNumber, tripToUse) : null
+      whatsappLink: contactNumber ? buildWhatsAppLink(contactNumber, tripToUse) : null,
     };
   }, [agencies, tripWithImages.agencyId, tripWithImages]);
 
@@ -146,7 +157,11 @@ const TripCardComponent: React.FC<TripCardProps> = ({ trip }) => {
   };
 
   // FIX: Rigorously check if trip has valid images
-  const hasValidImages = tripWithImages.images && Array.isArray(tripWithImages.images) && tripWithImages.images.length > 0 && tripWithImages.images[0];
+  const hasValidImages =
+    tripWithImages.images &&
+    Array.isArray(tripWithImages.images) &&
+    tripWithImages.images.length > 0 &&
+    tripWithImages.images[0];
   const shouldShowPlaceholder = !hasValidImages || imgError;
 
   // Get rating value
@@ -155,14 +170,16 @@ const TripCardComponent: React.FC<TripCardProps> = ({ trip }) => {
 
   // Check for popular features
   const includedItems = tripWithImages.included || [];
-  const hasBreakfast = includedItems.some(item =>
-    item.toLowerCase().includes('café') ||
-    item.toLowerCase().includes('cafe') ||
-    item.toLowerCase().includes('café da manhã')
+  const hasBreakfast = includedItems.some(
+    (item) =>
+      item.toLowerCase().includes('café') ||
+      item.toLowerCase().includes('cafe') ||
+      item.toLowerCase().includes('café da manhã')
   );
-  const hasFreeCancellation = includedItems.some(item =>
-    item.toLowerCase().includes('cancelamento') ||
-    item.toLowerCase().includes('cancelamento grátis')
+  const hasFreeCancellation = includedItems.some(
+    (item) =>
+      item.toLowerCase().includes('cancelamento') ||
+      item.toLowerCase().includes('cancelamento grátis')
   );
 
   // Check if popular/featured
@@ -175,7 +192,10 @@ const TripCardComponent: React.FC<TripCardProps> = ({ trip }) => {
 
   return (
     <div className="h-full">
-      <Link to={linkTarget} className="group block bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-500 h-full flex flex-col relative z-0 border border-gray-100 hover:border-primary-200">
+      <Link
+        to={linkTarget}
+        className="group block bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-500 h-full flex flex-col relative z-0 border border-gray-100 hover:border-primary-200"
+      >
         {/* Image Section - Full Bleed, Tall Format */}
         <div className="relative h-64 md:aspect-[4/5] w-full overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 flex-shrink-0">
           {shouldShowPlaceholder ? (
@@ -221,7 +241,11 @@ const TripCardComponent: React.FC<TripCardProps> = ({ trip }) => {
               onClick={handleFavorite}
               className={`p-2.5 rounded-full backdrop-blur-md shadow-xl transition-all duration-200 active:scale-90 ${isFavorite ? 'bg-white text-red-500 shadow-red-200/50' : 'bg-white/95 text-gray-600 hover:bg-white hover:text-red-500'}`}
             >
-              <Heart size={18} fill={isFavorite ? "currentColor" : "none"} className={isFavorite ? "animate-[pulse_0.3s]" : ""} />
+              <Heart
+                size={18}
+                fill={isFavorite ? 'currentColor' : 'none'}
+                className={isFavorite ? 'animate-[pulse_0.3s]' : ''}
+              />
             </button>
           </div>
 
@@ -263,7 +287,9 @@ const TripCardComponent: React.FC<TripCardProps> = ({ trip }) => {
           {/* Duration - Subtle */}
           <div className="flex items-center text-xs text-gray-500 mb-4">
             <Clock size={12} className="mr-1.5 flex-shrink-0 text-gray-400" />
-            <span className="font-medium">{tripWithImages.durationDays} {tripWithImages.durationDays === 1 ? 'dia' : 'dias'}</span>
+            <span className="font-medium">
+              {tripWithImages.durationDays} {tripWithImages.durationDays === 1 ? 'dia' : 'dias'}
+            </span>
           </div>
 
           {/* Features highlights - Compact */}
@@ -287,10 +313,14 @@ const TripCardComponent: React.FC<TripCardProps> = ({ trip }) => {
           {/* Price & CTA - Bottom Section */}
           <div className="mt-auto pt-4 border-t border-gray-100 flex items-end justify-between gap-3">
             <div className="flex flex-col min-w-0 flex-1">
-              <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-0.5">A partir de</span>
+              <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-0.5">
+                A partir de
+              </span>
               <div className="flex items-baseline gap-1">
                 <span className="text-xs text-gray-500 font-semibold">R$</span>
-                <span className="text-2xl font-extrabold text-primary-800 group-hover:text-primary-900 transition-colors">{tripWithImages.price.toLocaleString('pt-BR')}</span>
+                <span className="text-2xl font-extrabold text-primary-800 group-hover:text-primary-900 transition-colors">
+                  {tripWithImages.price.toLocaleString('pt-BR')}
+                </span>
               </div>
               <span className="text-[10px] text-gray-400 mt-0.5">por pessoa</span>
             </div>

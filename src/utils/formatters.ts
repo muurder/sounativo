@@ -50,4 +50,3 @@ export const formatCPF = (cpf: string | undefined | null): string => {
   }
   return cpf;
 };
-

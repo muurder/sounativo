@@ -1,6 +1,6 @@
 declare module 'jspdf-autotable' {
   import { jsPDF } from 'jspdf';
-  
+
   interface UserOptions {
     head?: any[][];
     body?: any[][];
@@ -22,11 +22,10 @@ declare module 'jspdf-autotable' {
     columnStyles?: any;
     theme?: 'striped' | 'grid' | 'plain';
   }
-  
+
   interface jsPDFWithAutoTable extends jsPDF {
     autoTable: (options: UserOptions) => jsPDF;
   }
-  
+
   export default function autoTable(doc: jsPDF, options: UserOptions): jsPDF;
 }
-

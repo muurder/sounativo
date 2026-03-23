@@ -1,12 +1,44 @@
-
-
 import React, { useEffect, useState, useMemo } from 'react';
-import { Link, Outlet, useNavigate, useLocation, useSearchParams, useMatch } from 'react-router-dom';
+import {
+  Link,
+  Outlet,
+  useNavigate,
+  useLocation,
+  useSearchParams,
+  useMatch,
+} from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
 import { useTheme } from '../context/ThemeContext';
 import { useToast } from '../context/ToastContext';
-import { LogOut, Instagram, Facebook, Twitter, User, ShieldCheck, Home as HomeIcon, Map, ShoppingBag, Globe, ChevronRight, LogIn, UserPlus, LayoutDashboard, Palette, Compass, Zap, Building, Shield, Briefcase, BarChart2, Plane, Heart, Menu, X, ArrowRight } from 'lucide-react';
+import {
+  LogOut,
+  Instagram,
+  Facebook,
+  Twitter,
+  User,
+  ShieldCheck,
+  Home as HomeIcon,
+  Map,
+  ShoppingBag,
+  Globe,
+  ChevronRight,
+  LogIn,
+  UserPlus,
+  LayoutDashboard,
+  Palette,
+  Compass,
+  Zap,
+  Building,
+  Shield,
+  Briefcase,
+  BarChart2,
+  Plane,
+  Heart,
+  Menu,
+  X,
+  ArrowRight,
+} from 'lucide-react';
 import { Logo } from './ui/Logo';
 import AuthModal from './AuthModal';
 import BottomNav from './BottomNav';
@@ -15,9 +47,41 @@ import HeroSearch from './HeroSearch';
 import FeaturedSection from './FeaturedSection';
 
 
+
+// Helper component for agency logo with fast native fallback
+const HeaderAgencyLogo = ({ agency }: { agency: any }) => {
+  const [isLoaded, setIsLoaded] = React.useState(false);
+  const getInitials = (name: string) => {
+    if (!name) return 'A';
+    return name.split(' ').map((n) => n[0]).join('').substring(0, 2).toUpperCase();
+  };
+
+  return (
+    <div className="relative w-10 h-10 rounded-full overflow-hidden border border-gray-200 mr-3 flex-shrink-0 bg-primary-100 flex items-center justify-center font-bold text-primary-700">
+      {!isLoaded && <span className="text-sm">{getInitials(agency.name)}</span>}
+      {agency.logo && (
+        <img
+          src={agency.logo}
+          alt={agency.name}
+          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 text-transparent ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
+          onLoad={() => setIsLoaded(true)}
+          onError={() => setIsLoaded(false)}
+        />
+      )}
+    </div>
+  );
+};
+
 const Layout: React.FC = () => {
   const { user, logout, login, reloadUser, exitImpersonate, isImpersonating } = useAuth();
-  const { getAgencyBySlug, getAgencyTheme, loading: dataLoading, platformSettings, searchTrips, fetchTripImages } = useData();
+  const {
+    getAgencyBySlug,
+    getAgencyTheme,
+    loading: dataLoading,
+    platformSettings,
+    searchTrips,
+    fetchTripImages,
+  } = useData();
   const { setAgencyTheme, resetAgencyTheme } = useTheme();
   const { showToast } = useToast();
   const navigate = useNavigate();
@@ -37,7 +101,7 @@ const Layout: React.FC = () => {
     window.scrollTo({
       top: 0,
       left: 0,
-      behavior: 'auto'
+      behavior: 'auto',
     });
   }, [location.pathname]);
 
@@ -45,10 +109,27 @@ const Layout: React.FC = () => {
   const potentialSlug = pathSegments[0];
 
   const reservedRoutes = [
-    'trips', 'viagem', 'agencies', 'agency', 'about', 'contact', 'terms',
-    'privacy', 'help', 'blog', 'careers', 'press', 'checkout', 'unauthorized',
-    'forgot-password', 'login', 'signup', 'admin', 'client',
-    'guides', 'guias' // FIX: Added to prevent routes from being interpreted as agency slugs
+    'trips',
+    'viagem',
+    'agencies',
+    'agency',
+    'about',
+    'contact',
+    'terms',
+    'privacy',
+    'help',
+    'blog',
+    'careers',
+    'press',
+    'checkout',
+    'unauthorized',
+    'forgot-password',
+    'login',
+    'signup',
+    'admin',
+    'client',
+    'guides',
+    'guias', // FIX: Added to prevent routes from being interpreted as agency slugs
   ];
 
   const isReserved = reservedRoutes.includes(potentialSlug);
@@ -71,11 +152,17 @@ const Layout: React.FC = () => {
   // Check if currently in any dashboard
   const isInDashboard = location.pathname.includes('/dashboard');
 
+  // Check if it's a dashboard with its own Sidebar
+  const hasSidebar = location.pathname.includes('/admin/dashboard') || 
+                     location.pathname.includes('/agency/dashboard') || 
+                     location.pathname.includes('/guide/dashboard');
+
   if (isMicrositeClientArea) {
     isAgencyMode = true; // Force agency mode for client dashboard context
   }
 
-  const activeSlug = matchMicrositeClient?.params.agencySlug || (isAgencyMode ? potentialSlug : null);
+  const activeSlug =
+    matchMicrositeClient?.params.agencySlug || (isAgencyMode ? potentialSlug : null);
 
   // Resolve the agency to display in the header
   let currentAgency: Agency | undefined = undefined;
@@ -90,7 +177,8 @@ const Layout: React.FC = () => {
   // 1. We have an activeSlug (not a reserved route)
   // 2. AND we're either in agency mode OR agency dashboard
   // 3. AND we're not in a reserved route (double check)
-  const showAgencyHeader = !!activeSlug &&
+  const showAgencyHeader =
+    !!activeSlug &&
     (isAgencyMode || isAgencyDashboard) &&
     !isReserved &&
     !location.pathname.startsWith('/client') &&
@@ -101,7 +189,8 @@ const Layout: React.FC = () => {
   // --- THEME APPLICATION LOGIC ---
   useEffect(() => {
     const applyTheme = async () => {
-      if (currentAgency && currentAgency.agencyId) { // Check agencyId exists before fetching theme
+      if (currentAgency && currentAgency.agencyId) {
+        // Check agencyId exists before fetching theme
         const theme = await getAgencyTheme(currentAgency.agencyId);
         if (theme) {
           setAgencyTheme(theme.colors);
@@ -139,13 +228,19 @@ const Layout: React.FC = () => {
 
   const getLinkClasses = (path: string) => {
     const isActive = location.pathname === path;
-    return `inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200 ${isActive ? 'border-primary-500 text-primary-600' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
-      }`;
+    return `inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200 ${
+      isActive
+        ? 'border-primary-500 text-primary-600'
+        : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+    }`;
   };
 
   // FIX: Only use agency slug if agency is actually loaded
   // This prevents navigation to non-existent agency pages
-  const homeLink = (isAgencyMode || isAgencyDashboard) && currentAgency?.slug && currentAgency?.agencyId ? `/${currentAgency.slug}` : '/';
+  const homeLink =
+    (isAgencyMode || isAgencyDashboard) && currentAgency?.slug && currentAgency?.agencyId
+      ? `/${currentAgency.slug}`
+      : '/';
 
   // Logic for the "User Pill" link in header
   const getUserProfileLink = () => {
@@ -179,11 +274,44 @@ const Layout: React.FC = () => {
   }
 
   const TEST_ACCOUNTS: QuickAccount[] = [
-    { name: 'Admin Teste', email: 'admin@teste.com', password: 'admin123', role: 'ADMIN', icon: ShieldCheck },
-    { name: 'Cliente Teste', email: 'cliente@teste.com', password: 'cliente123', role: 'CLIENT', icon: User },
-    { name: 'Admin (admin@sounativo.com)', email: 'admin@sounativo.com', password: '', role: 'ADMIN', icon: ShieldCheck, requiresPassword: true },
-    { name: 'Agência (pedro@gmail.com)', email: 'pedro@gmail.com', password: '', role: 'AGENCY', icon: Building, requiresPassword: true },
-    { name: 'Cliente (4agencia@gmail.com)', email: '4agencia@gmail.com', password: '', role: 'CLIENT', icon: User, requiresPassword: true },
+    {
+      name: 'Admin Teste',
+      email: 'admin@teste.com',
+      password: 'admin123',
+      role: 'ADMIN',
+      icon: ShieldCheck,
+    },
+    {
+      name: 'Cliente Teste',
+      email: 'cliente@teste.com',
+      password: 'cliente123',
+      role: 'CLIENT',
+      icon: User,
+    },
+    {
+      name: 'Admin (admin@sounativo.com)',
+      email: 'admin@sounativo.com',
+      password: '',
+      role: 'ADMIN',
+      icon: ShieldCheck,
+      requiresPassword: true,
+    },
+    {
+      name: 'Agência (pedro@gmail.com)',
+      email: 'pedro@gmail.com',
+      password: '',
+      role: 'AGENCY',
+      icon: Building,
+      requiresPassword: true,
+    },
+    {
+      name: 'Cliente (4agencia@gmail.com)',
+      email: '4agencia@gmail.com',
+      password: '',
+      role: 'CLIENT',
+      icon: User,
+      requiresPassword: true,
+    },
   ];
 
   const handleQuickLogin = async (email: string, password: string, requiresPassword?: boolean) => {
@@ -208,7 +336,7 @@ const Layout: React.FC = () => {
 
         // Calculate dashboard route based on the account we're logging into (not current user state)
         let dashboardRoute = '/';
-        const accountToLogin = TEST_ACCOUNTS.find(acc => acc.email === email);
+        const accountToLogin = TEST_ACCOUNTS.find((acc) => acc.email === email);
         if (accountToLogin) {
           if (accountToLogin.role === 'ADMIN') {
             dashboardRoute = '/admin/dashboard';
@@ -222,7 +350,7 @@ const Layout: React.FC = () => {
         // Reload user data and then navigate
         if (reloadUser) {
           // Fix: reloadUser requires a user object, but here we are logging in as a NEW user.
-          // Since we don't have the new user object easily available here without fetching, 
+          // Since we don't have the new user object easily available here without fetching,
           // and reloadUser is likely used to refresh the CURRENT user,
           // we might just want to let the context update itself on navigation or fetch profile.
           // However, to satisfy typescript if it demands an arg:
@@ -245,7 +373,10 @@ const Layout: React.FC = () => {
         }
       }
     } catch (error: any) {
-      showToast('Erro inesperado ao fazer login: ' + (error.message || 'Erro desconhecido'), 'error');
+      showToast(
+        'Erro inesperado ao fazer login: ' + (error.message || 'Erro desconhecido'),
+        'error'
+      );
     }
   };
 
@@ -255,8 +386,12 @@ const Layout: React.FC = () => {
       if (!user) return '/#login';
 
       // Check if user is a test admin account (for quick switching)
-      const isTestAdmin = TEST_ACCOUNTS.some(acc => acc.email === user.email && acc.role === 'ADMIN');
-      const isTestAgency = TEST_ACCOUNTS.some(acc => acc.email === user.email && acc.role === 'AGENCY');
+      const isTestAdmin = TEST_ACCOUNTS.some(
+        (acc) => acc.email === user.email && acc.role === 'ADMIN'
+      );
+      const isTestAgency = TEST_ACCOUNTS.some(
+        (acc) => acc.email === user.email && acc.role === 'AGENCY'
+      );
 
       switch (user.role) {
         case 'AGENCY':
@@ -280,9 +415,9 @@ const Layout: React.FC = () => {
     }
   }, [user, isAgencyMode, activeSlug]);
 
-
-  // Hero banner state - only for home page
-  const isHomePage = location.pathname === '/' || location.pathname === '';
+  // Hero banner state - only for home page (use hash for HashRouter)
+  const isInDashboardRoute = location.pathname.includes('/dashboard') || location.pathname.includes('/admin');
+  const isHomePage = location.pathname === '/' && (location.hash === '' || location.hash === '#/') && !isInDashboardRoute;
   const [heroTrips, setHeroTrips] = useState<Trip[]>([]);
   const [currentSlide, setCurrentSlide] = useState(0);
 
@@ -295,7 +430,11 @@ const Layout: React.FC = () => {
     const loadHero = async () => {
       try {
         let tripsData: Trip[] = [];
-        const { data: featuredData } = await searchTrips({ limit: 20, featured: true, sort: 'DATE_ASC' });
+        const { data: featuredData } = await searchTrips({
+          limit: 20,
+          featured: true,
+          sort: 'DATE_ASC',
+        });
         if (featuredData && featuredData.length > 0) {
           tripsData = featuredData;
         } else {
@@ -331,7 +470,7 @@ const Layout: React.FC = () => {
   useEffect(() => {
     if (!heroTrips.length || !isHomePage) return;
     const id = setInterval(() => {
-      setCurrentSlide(prev => (prev + 1) % heroTrips.length);
+      setCurrentSlide((prev) => (prev + 1) % heroTrips.length);
     }, 8000);
     return () => clearInterval(id);
   }, [heroTrips.length, isHomePage]);
@@ -344,7 +483,9 @@ const Layout: React.FC = () => {
     'Experiências autênticas, memórias eternas.',
     'Descubra o extraordinário.',
   ];
-  const [heroPhrase] = useState(() => HERO_PHRASES[Math.floor(Math.random() * HERO_PHRASES.length)]);
+  const [heroPhrase] = useState(
+    () => HERO_PHRASES[Math.floor(Math.random() * HERO_PHRASES.length)]
+  );
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 font-sans transition-colors duration-300 pb-16 md:pb-0">
@@ -359,10 +500,13 @@ const Layout: React.FC = () => {
 
       {/* 🎨 PREMIUM HERO BANNER - Split-Screen Modern Design */}
       {isHomePage && (
-        <div className="relative w-full h-[85vh] min-h-[600px] md:min-h-[650px] flex items-center bg-stone-900 overflow-hidden">
+        <div className="relative w-full h-[60vh] sm:h-[70vh] md:h-[75vh] lg:h-[80vh] min-h-[350px] sm:min-h-[450px] lg:min-h-[550px] flex items-center bg-stone-900 overflow-hidden z-0">
           {/* 🖼️ Background Image - The Protagonist */}
           <div className="absolute inset-0 w-full h-full">
-            {featuredTrip && featuredTrip.images && featuredTrip.images.length > 0 && featuredTrip.images[0] ? (
+            {featuredTrip &&
+            featuredTrip.images &&
+            featuredTrip.images.length > 0 &&
+            featuredTrip.images[0] ? (
               <img
                 src={featuredTrip.images[0]}
                 alt={featuredTrip.title}
@@ -392,7 +536,8 @@ const Layout: React.FC = () => {
 
               {/* Headline - Impactante */}
               <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white leading-tight tracking-tight animate-[fadeInUp_0.8s_ease-out]">
-                Sua próxima grande<br />
+                Sua próxima grande
+                <br />
                 <span className="text-primary-400">aventura</span> começa aqui
               </h1>
 
@@ -402,7 +547,10 @@ const Layout: React.FC = () => {
               </p>
 
               {/* 🔍 Search Bar Premium - Destaque no Hero */}
-              <div className="relative z-50 mt-10 w-full max-w-4xl animate-[fadeInUp_1.4s_ease-out]" data-hero-search>
+              <div
+                className="relative z-50 mt-10 w-full max-w-4xl animate-[fadeInUp_1.4s_ease-out]"
+                data-hero-search
+              >
                 <HeroSearch />
               </div>
             </div>
@@ -415,12 +563,13 @@ const Layout: React.FC = () => {
 
       {/* Navbar */}
       <nav
-        className={`${isHomePage ? 'absolute top-0 left-0 right-0' : 'sticky top-0'} z-[60] bg-white/95 backdrop-blur-sm shadow-sm`}
+        id="global-top-nav"
+        className={`${isHomePage ? 'absolute top-0 left-0 right-0' : 'sticky top-0'} z-50 bg-white/95 backdrop-blur-sm shadow-sm pt-[env(safe-area-inset-top)]`}
         style={{
           backgroundColor: platformSettings?.background_color || '#ffffff',
           opacity: platformSettings?.background_transparency || 1.0,
           backdropFilter: platformSettings?.background_blur ? 'blur(10px)' : 'none',
-          WebkitBackdropFilter: platformSettings?.background_blur ? 'blur(10px)' : 'none'
+          WebkitBackdropFilter: platformSettings?.background_blur ? 'blur(10px)' : 'none',
         }}
       >
         <div className="w-full px-4 sm:px-6 lg:px-8">
@@ -429,15 +578,36 @@ const Layout: React.FC = () => {
             <div className="flex justify-between h-16">
               <div className="flex items-center">
                 <Link to={`/${currentAgency.slug}`} className="flex items-center gap-3 group">
-                  <img src={currentAgency.logo} alt={currentAgency.name} className="w-10 h-10 rounded-full object-cover border-2 border-gray-100 group-hover:scale-105 transition-transform" />
-                  <span className="font-bold text-gray-800 group-hover:text-primary-600 transition-colors truncate max-w-[150px] md:max-w-none">{currentAgency.name}</span>
+                  <img
+                    src={currentAgency.logo}
+                    alt={currentAgency.name}
+                    className="w-10 h-10 rounded-full object-cover border-2 border-gray-100 group-hover:scale-105 transition-transform"
+                  />
+                  <span className="font-bold text-gray-800 group-hover:text-primary-600 transition-colors truncate max-w-[150px] md:max-w-none">
+                    {currentAgency.name}
+                  </span>
                 </Link>
               </div>
               <div className="flex items-center gap-4">
                 <div className="hidden md:flex items-center gap-4">
-                  <Link to={`/${currentAgency.slug}/client/PROFILE`} className="text-sm font-medium text-gray-600 hover:text-primary-600 flex items-center gap-1.5"><User size={14} /> Meu Perfil</Link>
-                  <Link to={`/${currentAgency.slug}/client/BOOKINGS`} className="text-sm font-medium text-gray-600 hover:text-primary-600 flex items-center gap-1.5"><ShoppingBag size={14} /> Minhas Viagens</Link>
-                  <button onClick={handleLogout} className="text-sm font-bold text-red-500 bg-red-50 hover:bg-red-100 px-4 py-2 rounded-lg flex items-center gap-1.5 transition-colors"><LogOut size={14} /> Sair</button>
+                  <Link
+                    to={`/${currentAgency.slug}/client/PROFILE`}
+                    className="text-sm font-medium text-gray-600 hover:text-primary-600 flex items-center gap-1.5"
+                  >
+                    <User size={14} /> Meu Perfil
+                  </Link>
+                  <Link
+                    to={`/${currentAgency.slug}/client/BOOKINGS`}
+                    className="text-sm font-medium text-gray-600 hover:text-primary-600 flex items-center gap-1.5"
+                  >
+                    <ShoppingBag size={14} /> Minhas Viagens
+                  </Link>
+                  <button
+                    onClick={handleLogout}
+                    className="text-sm font-bold text-red-500 bg-red-50 hover:bg-red-100 px-4 py-2 rounded-lg flex items-center gap-1.5 transition-colors"
+                  >
+                    <LogOut size={14} /> Sair
+                  </button>
                 </div>
               </div>
             </div>
@@ -456,59 +626,66 @@ const Layout: React.FC = () => {
                   </button>
                 )}
 
-                <Link to={homeLink} className="flex-shrink-0 flex items-center group z-10 relative">
-                  {!showAgencyHeader ? (
-                    // Show SouNativo logo immediately for global pages
-                    <>
-                      {platformSettings?.platform_logo_url ? (
-                        <>
-                          <img src={platformSettings.platform_logo_url} alt={platformSettings?.platform_name || 'SouNativo'} className="h-8 w-auto mr-2" />
-                          <span className="font-bold text-xl tracking-tight text-primary-800 hidden md:inline">
-                            {platformSettings?.platform_name || 'SouNativo'}
-                          </span>
-                        </>
-                      ) : (
-                        <Logo
-                          className="h-8"
-                          showText={true}
-                          variant="default"
-                        />
-                      )}
-                    </>
-                  ) : (
-                    // FIX: Only show skeleton if we're actually in agency mode AND loading
-                    <div className="flex items-center animate-[fadeIn_0.3s]">
-                      {currentAgency ? (
-                        <>
-                          {currentAgency.logo && (
-                            <img src={currentAgency.logo} alt={currentAgency.name} className="w-10 h-10 rounded-full object-cover mr-3 border border-gray-200" />
-                          )}
-                          <div className="flex flex-col">
-                            <span className="font-bold text-gray-900 text-lg leading-tight line-clamp-1 break-all max-w-[180px] md:max-w-[200px]">{currentAgency.name}</span>
-                            <span className="text-[10px] text-gray-500 uppercase tracking-wider flex items-center">
-                              {isAgencyDashboard ? 'Painel Gerencial' : 'Parceiro Verificado'} <ShieldCheck size={10} className="ml-1 text-green-500" />
+                {!hasSidebar && (
+                  <Link to={homeLink} className="flex-shrink-0 flex items-center group z-10 relative">
+                    {!showAgencyHeader ? (
+                      // Show SouNativo logo immediately for global pages
+                      <>
+                        {platformSettings?.platform_logo_url ? (
+                          <>
+                            <img
+                              src={platformSettings.platform_logo_url}
+                              alt={platformSettings?.platform_name || 'SouNativo'}
+                              className="h-8 w-auto mr-2"
+                            />
+                            <span className="font-bold text-xl tracking-tight text-primary-800 hidden md:inline">
+                              {platformSettings?.platform_name || 'SouNativo'}
                             </span>
+                          </>
+                        ) : (
+                          <Logo className="h-8" showText={true} variant="default" />
+                        )}
+                      </>
+                    ) : (
+                      // FIX: Only show skeleton if we're actually in agency mode AND loading
+                      <div className="flex items-center animate-[fadeIn_0.3s]">
+                        {currentAgency ? (
+                          <>
+                            <HeaderAgencyLogo agency={currentAgency} />
+                            <div className="flex flex-col">
+                              <span className="font-bold text-gray-900 text-lg leading-tight line-clamp-1 break-all max-w-[180px] md:max-w-[200px]">
+                                {currentAgency.name}
+                              </span>
+                              <span className="text-[10px] text-gray-500 uppercase tracking-wider flex items-center">
+                                {isAgencyDashboard ? 'Painel Gerencial' : 'Parceiro Verificado'}{' '}
+                                <ShieldCheck size={10} className="ml-1 text-green-500" />
+                              </span>
+                            </div>
+                          </>
+                        ) : dataLoading ? (
+                          // FIX: Only show skeleton if actually loading agency data
+                          <div className="flex items-center">
+                            <div className="w-10 h-10 rounded-full bg-gray-200 animate-pulse mr-3"></div>
+                            <div className="h-4 w-32 bg-gray-200 rounded animate-pulse"></div>
                           </div>
-                        </>
-                      ) : dataLoading ? (
-                        // FIX: Only show skeleton if actually loading agency data
-                        <div className="flex items-center">
-                          <div className="w-10 h-10 rounded-full bg-gray-200 animate-pulse mr-3"></div>
-                          <div className="h-4 w-32 bg-gray-200 rounded animate-pulse"></div>
-                        </div>
-                      ) : (
-                        // Fallback to SouNativo logo if agency not found
-                        <>
-                          {platformSettings?.platform_logo_url ? (
-                            <img src={platformSettings.platform_logo_url} alt={platformSettings.platform_name} className="h-8 w-auto mr-2" />
-                          ) : (
-                            <Logo className="h-8" showText={true} />
-                          )}
-                        </>
-                      )}
-                    </div>
-                  )}
-                </Link>
+                        ) : (
+                          // Fallback to SouNativo logo if agency not found
+                          <>
+                            {platformSettings?.platform_logo_url ? (
+                              <img
+                                src={platformSettings.platform_logo_url}
+                                alt={platformSettings.platform_name}
+                                className="h-8 w-auto mr-2"
+                              />
+                            ) : (
+                              <Logo className="h-8" showText={true} />
+                            )}
+                          </>
+                        )}
+                      </div>
+                    )}
+                  </Link>
+                )}
 
                 <div className="hidden md:ml-8 md:flex md:space-x-8">
                   {!showAgencyHeader ? (
@@ -527,18 +704,29 @@ const Layout: React.FC = () => {
                         Sobre
                       </Link>
                     </>
-                  ) : currentAgency && (
-                    <>
-                      <Link to={`/${currentAgency.slug}`} className={getLinkClasses(`/${currentAgency.slug}`)}>
-                        <HomeIcon size={16} className="mr-1" /> Início
-                      </Link>
-                      <Link to={`/${currentAgency.slug}/trips`} className={getLinkClasses(`/${currentAgency.slug}/trips`)}>
-                        <Map size={16} className="mr-1" /> Pacotes
-                      </Link>
-                      <Link to={`/${currentAgency.slug}/guides`} className={getLinkClasses(`/${currentAgency.slug}/guides`)}>
-                        <Compass size={16} className="mr-1" /> Guias
-                      </Link>
-                    </>
+                  ) : (
+                    currentAgency && (
+                      <>
+                        <Link
+                          to={`/${currentAgency.slug}`}
+                          className={getLinkClasses(`/${currentAgency.slug}`)}
+                        >
+                          <HomeIcon size={16} className="mr-1" /> Início
+                        </Link>
+                        <Link
+                          to={`/${currentAgency.slug}/trips`}
+                          className={getLinkClasses(`/${currentAgency.slug}/trips`)}
+                        >
+                          <Map size={16} className="mr-1" /> Pacotes
+                        </Link>
+                        <Link
+                          to={`/${currentAgency.slug}/guides`}
+                          className={getLinkClasses(`/${currentAgency.slug}/guides`)}
+                        >
+                          <Compass size={16} className="mr-1" /> Guias
+                        </Link>
+                      </>
+                    )
                   )}
                 </div>
               </div>
@@ -552,7 +740,10 @@ const Layout: React.FC = () => {
                       to={dashboardRoute}
                       className="flex items-center gap-2 text-sm font-medium px-3 py-1.5 rounded-lg transition-colors text-slate-600 hover:text-primary-600 hover:bg-gray-50"
                       title={
-                        user.role === 'ADMIN' || TEST_ACCOUNTS.some(acc => acc.email === user.email && acc.role === 'ADMIN')
+                        user.role === 'ADMIN' ||
+                        TEST_ACCOUNTS.some(
+                          (acc) => acc.email === user.email && acc.role === 'ADMIN'
+                        )
                           ? 'Painel Master'
                           : isGuide
                             ? 'Meu Painel de Guia'
@@ -561,7 +752,10 @@ const Layout: React.FC = () => {
                     >
                       <LayoutDashboard size={16} />
                       <span>
-                        {user.role === 'ADMIN' || TEST_ACCOUNTS.some(acc => acc.email === user.email && acc.role === 'ADMIN')
+                        {user.role === 'ADMIN' ||
+                        TEST_ACCOUNTS.some(
+                          (acc) => acc.email === user.email && acc.role === 'ADMIN'
+                        )
                           ? 'Painel Master'
                           : isGuide
                             ? 'Meu Painel de Guia'
@@ -588,9 +782,8 @@ const Layout: React.FC = () => {
                     >
                       {(() => {
                         // Para Agency, usar logo; para outros (Client, Admin), usar avatar
-                        const avatarUrl = user.role === 'AGENCY'
-                          ? (user as Agency).logo
-                          : user.avatar;
+                        const avatarUrl =
+                          user.role === 'AGENCY' ? (user as Agency).logo : user.avatar;
 
                         if (avatarUrl) {
                           return (
@@ -635,132 +828,175 @@ const Layout: React.FC = () => {
       </nav>
 
       {/* Mobile Drawer */}
-      {
-        isMobileMenuOpen && (
-          <>
-            <div
-              className="fixed inset-0 bg-black/50 z-[100] backdrop-blur-sm animate-[fadeIn_0.3s]"
-              onClick={() => setIsMobileMenuOpen(false)}
-            />
-            <div className="fixed inset-y-0 left-0 w-[280px] bg-white z-[101] shadow-2xl transform transition-transform duration-300 animate-[slideInLeft_0.3s] flex flex-col">
-              <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
-                <span className="font-bold text-lg text-primary-600">Menu</span>
-                <button
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                >
-                  <X size={20} />
-                </button>
-              </div>
+      {isMobileMenuOpen && (
+        <>
+          <div
+            className="fixed inset-0 bg-black/50 z-50 backdrop-blur-sm animate-[fadeIn_0.3s]"
+            onClick={() => setIsMobileMenuOpen(false)}
+          />
+          <div className="fixed inset-y-0 left-0 w-[280px] bg-white z-50 shadow-2xl transform transition-transform duration-300 animate-[slideInLeft_0.3s] flex flex-col">
+            <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+              <span className="font-bold text-lg text-primary-600">Menu</span>
+              <button
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
 
-              <div className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
-                {!showAgencyHeader ? (
+            <div className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
+              {!showAgencyHeader ? (
+                <>
+                  <Link
+                    to="/trips"
+                    className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-xl transition-colors font-medium"
+                  >
+                    <Map size={20} className="text-gray-400" /> Explorar Viagens
+                  </Link>
+                  <Link
+                    to="/agencies"
+                    className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-xl transition-colors font-medium"
+                  >
+                    <Building size={20} className="text-gray-400" /> Agências
+                  </Link>
+                  <Link
+                    to="/guides"
+                    className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-xl transition-colors font-medium"
+                  >
+                    <Compass size={20} className="text-gray-400" /> Guias de Turismo
+                  </Link>
+                  <Link
+                    to="/about"
+                    className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-xl transition-colors font-medium"
+                  >
+                    <Globe size={20} className="text-gray-400" /> Sobre
+                  </Link>
+                </>
+              ) : (
+                currentAgency && (
                   <>
-                    <Link to="/trips" className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-xl transition-colors font-medium">
-                      <Map size={20} className="text-gray-400" /> Explorar Viagens
-                    </Link>
-                    <Link to="/agencies" className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-xl transition-colors font-medium">
-                      <Building size={20} className="text-gray-400" /> Agências
-                    </Link>
-                    <Link to="/guides" className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-xl transition-colors font-medium">
-                      <Compass size={20} className="text-gray-400" /> Guias de Turismo
-                    </Link>
-                    <Link to="/about" className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-xl transition-colors font-medium">
-                      <Globe size={20} className="text-gray-400" /> Sobre
-                    </Link>
-                  </>
-                ) : currentAgency && (
-                  <>
-                    <Link to={`/${currentAgency.slug}`} className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-xl transition-colors font-medium">
+                    <Link
+                      to={`/${currentAgency.slug}`}
+                      className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-xl transition-colors font-medium"
+                    >
                       <HomeIcon size={20} className="text-gray-400" /> Início
                     </Link>
-                    <Link to={`/${currentAgency.slug}/trips`} className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-xl transition-colors font-medium">
+                    <Link
+                      to={`/${currentAgency.slug}/trips`}
+                      className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-xl transition-colors font-medium"
+                    >
                       <Map size={20} className="text-gray-400" /> Pacotes
                     </Link>
-                    <Link to={`/${currentAgency.slug}/guides`} className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-xl transition-colors font-medium">
+                    <Link
+                      to={`/${currentAgency.slug}/guides`}
+                      className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-xl transition-colors font-medium"
+                    >
                       <Compass size={20} className="text-gray-400" /> Guias
                     </Link>
                   </>
-                )}
+                )
+              )}
 
-                <div className="my-4 border-t border-gray-100"></div>
+              <div className="my-4 border-t border-gray-100"></div>
 
-                {user ? (
-                  <>
-                    <div className="px-4 py-2">
-                      <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Minha Conta</p>
-                      <div className="flex items-center gap-3 mb-4">
-                        {(() => {
-                          // Para Agency, usar logo; para outros (Client, Admin), usar avatar
-                          const avatarUrl = user.role === 'AGENCY'
-                            ? (user as Agency).logo
-                            : user.avatar;
+              {user ? (
+                <>
+                  <div className="px-4 py-2">
+                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+                      Minha Conta
+                    </p>
+                    <div className="flex items-center gap-3 mb-4">
+                      {(() => {
+                        // Para Agency, usar logo; para outros (Client, Admin), usar avatar
+                        const avatarUrl =
+                          user.role === 'AGENCY' ? (user as Agency).logo : user.avatar;
 
-                          return avatarUrl ? (
-                            <img src={avatarUrl} alt={user.name} className="w-10 h-10 rounded-full object-cover border border-gray-200" />
-                          ) : (
-                            <div className="w-10 h-10 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center font-bold">
-                              {user.name.charAt(0)}
-                            </div>
-                          );
-                        })()}
-                        <div className="flex-1 min-w-0">
-                          <p className="font-bold text-gray-900 truncate">{user.name}</p>
-                          <p className="text-xs text-gray-500 truncate">{user.email}</p>
-                        </div>
+                        return avatarUrl ? (
+                          <img
+                            src={avatarUrl}
+                            alt={user.name}
+                            className="w-10 h-10 rounded-full object-cover border border-gray-200"
+                          />
+                        ) : (
+                          <div className="w-10 h-10 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center font-bold">
+                            {user.name.charAt(0)}
+                          </div>
+                        );
+                      })()}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-gray-900 truncate">{user.name}</p>
+                        <p className="text-xs text-gray-500 truncate">{user.email}</p>
                       </div>
                     </div>
-
-                    <Link to={userProfileLink} className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-xl transition-colors font-medium">
-                      <User size={20} className="text-gray-400" /> Meu Perfil
-                    </Link>
-
-                    <Link to={dashboardRoute} className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-xl transition-colors font-medium">
-                      <LayoutDashboard size={20} className="text-gray-400" />
-                      {user.role === 'ADMIN' || TEST_ACCOUNTS.some(acc => acc.email === user.email && acc.role === 'ADMIN')
-                        ? 'Painel Master'
-                        : isGuide
-                          ? 'Meu Painel de Guia'
-                          : 'Meu Painel'}
-                    </Link>
-
-                    <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 rounded-xl transition-colors font-medium mt-2">
-                      <LogOut size={20} /> Sair
-                    </button>
-                  </>
-                ) : (
-                  <div className="p-4 space-y-3">
-                    <Link
-                      to={{ pathname: location.pathname, hash: '#login' }}
-                      className="w-full flex items-center justify-center py-3 px-4 bg-primary-600 text-white font-bold rounded-xl shadow-lg shadow-primary-500/30 active:scale-[0.98] transition-all"
-                    >
-                      Entrar
-                    </Link>
-                    <Link
-                      to={{ pathname: location.pathname, hash: '#signup' }}
-                      className="w-full flex items-center justify-center py-3 px-4 bg-white border border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-50 active:scale-[0.98] transition-all"
-                    >
-                      Criar Conta
-                    </Link>
                   </div>
-                )}
-              </div>
+
+                  <Link
+                    to={userProfileLink}
+                    className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-xl transition-colors font-medium"
+                  >
+                    <User size={20} className="text-gray-400" /> Meu Perfil
+                  </Link>
+
+                  <Link
+                    to={dashboardRoute}
+                    className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-xl transition-colors font-medium"
+                  >
+                    <LayoutDashboard size={20} className="text-gray-400" />
+                    {user.role === 'ADMIN' ||
+                    TEST_ACCOUNTS.some((acc) => acc.email === user.email && acc.role === 'ADMIN')
+                      ? 'Painel Master'
+                      : isGuide
+                        ? 'Meu Painel de Guia'
+                        : 'Meu Painel'}
+                  </Link>
+
+                  <button
+                    onClick={handleLogout}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 rounded-xl transition-colors font-medium mt-2"
+                  >
+                    <LogOut size={20} /> Sair
+                  </button>
+                </>
+              ) : (
+                <div className="p-4 space-y-3">
+                  <Link
+                    to={{ pathname: location.pathname, hash: '#login' }}
+                    className="w-full flex items-center justify-center py-3 px-4 bg-primary-600 text-white font-bold rounded-xl shadow-lg shadow-primary-500/30 active:scale-[0.98] transition-all"
+                  >
+                    Entrar
+                  </Link>
+                  <Link
+                    to={{ pathname: location.pathname, hash: '#signup' }}
+                    className="w-full flex items-center justify-center py-3 px-4 bg-white border border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-50 active:scale-[0.98] transition-all"
+                  >
+                    Criar Conta
+                  </Link>
+                </div>
+              )}
             </div>
-          </>
-        )
-      }
+          </div>
+        </>
+      )}
 
       {/* Main Content */}
-      <main className="flex-grow w-full px-0 py-0">
+      <main className="flex-grow w-full px-4 sm:px-6 lg:px-8 py-4">
         <Outlet />
       </main>
 
-      {/* Footer */}
-      <footer className={`${isMicrositeClientArea ? 'bg-gray-100' : 'bg-white border-t border-gray-200'} pt-12 pb-8 mt-auto`}>
+      {/* Footer - Hide for dashboard routes */}
+      {!isInDashboardRoute && (
+      <footer
+        className={`${isMicrositeClientArea ? 'bg-gray-100' : 'bg-white border-t border-gray-200'} pt-12 pb-8 mt-auto`}
+      >
         {isMicrositeClientArea ? (
           <div className="w-full px-4 sm:px-6 lg:px-8 text-center">
-            <Link to="/" className="inline-flex items-center text-gray-400 hover:text-primary-600 font-bold uppercase tracking-wider transition-colors">
-              <Globe size={12} className="mr-2" /> Voltar para o Marketplace {platformSettings?.platform_name || 'SouNativo'}
+            <Link
+              to="/"
+              className="inline-flex items-center text-gray-400 hover:text-primary-600 font-bold uppercase tracking-wider transition-colors"
+            >
+              <Globe size={12} className="mr-2" /> Voltar para o Marketplace{' '}
+              {platformSettings?.platform_name || 'SouNativo'}
             </Link>
           </div>
         ) : (
@@ -770,86 +1006,160 @@ const Layout: React.FC = () => {
                 {currentAgency ? (
                   <div className="mb-4">
                     <span className="text-xl font-bold text-gray-900">{currentAgency.name}</span>
-                    <p className="text-gray-500 text-sm mt-2 max-w-sm">{currentAgency.description}</p>
+                    <p className="text-gray-500 text-sm mt-2 max-w-sm">
+                      {currentAgency.description}
+                    </p>
                   </div>
                 ) : (
                   <div className="mb-4">
-                    <span className="text-xl font-bold text-gray-900">{platformSettings?.platform_name || 'SouNativo'}</span>
-                    <p className="text-gray-500 text-sm mt-2 max-w-sm">Conectando você às melhores experiências de viagem do Brasil.</p>
+                    <span className="text-xl font-bold text-gray-900">
+                      {platformSettings?.platform_name || 'SouNativo'}
+                    </span>
+                    <p className="text-gray-500 text-sm mt-2 max-w-sm">
+                      Conectando você às melhores experiências de viagem do Brasil.
+                    </p>
                   </div>
                 )}
                 <div className="flex space-x-4">
-                  <a href="#" className="text-gray-400 hover:text-primary-600 transition-colors"><Instagram size={20} /></a>
-                  <a href="#" className="text-gray-400 hover:text-primary-600 transition-colors"><Facebook size={20} /></a>
-                  <a href="#" className="text-400 hover:text-primary-600 transition-colors"><Twitter size={20} /></a>
+                  <a href="#" className="text-gray-400 hover:text-primary-600 transition-colors">
+                    <Instagram size={20} />
+                  </a>
+                  <a href="#" className="text-gray-400 hover:text-primary-600 transition-colors">
+                    <Facebook size={20} />
+                  </a>
+                  <a href="#" className="text-400 hover:text-primary-600 transition-colors">
+                    <Twitter size={20} />
+                  </a>
                 </div>
               </div>
 
               <div>
-                <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4">Navegação</h3>
+                <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4">
+                  Navegação
+                </h3>
                 <ul className="space-y-2">
-                  <li><Link to="/trips" className="text-gray-500 hover:text-primary-600 text-sm transition-colors">Viagens</Link></li>
-                  <li><Link to="/agencies" className="text-gray-500 hover:text-primary-600 text-sm transition-colors">Agências</Link></li>
-                  <li><Link to="/guides" className="text-gray-500 hover:text-primary-600 text-sm transition-colors">Guias</Link></li>
-                  <li><Link to="/blog" className="text-gray-500 hover:text-primary-600 text-sm transition-colors">Blog</Link></li>
+                  <li>
+                    <Link
+                      to="/trips"
+                      className="text-gray-500 hover:text-primary-600 text-sm transition-colors"
+                    >
+                      Viagens
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      to="/agencies"
+                      className="text-gray-500 hover:text-primary-600 text-sm transition-colors"
+                    >
+                      Agências
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      to="/guides"
+                      className="text-gray-500 hover:text-primary-600 text-sm transition-colors"
+                    >
+                      Guias
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      to="/blog"
+                      className="text-gray-500 hover:text-primary-600 text-sm transition-colors"
+                    >
+                      Blog
+                    </Link>
+                  </li>
                 </ul>
               </div>
 
               <div>
-                <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4">Institucional</h3>
+                <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4">
+                  Institucional
+                </h3>
                 <ul className="space-y-2">
-                  <li><Link to="/about" className="text-gray-500 hover:text-primary-600 text-sm transition-colors">Sobre Nós</Link></li>
-                  <li><Link to="/contact" className="text-gray-500 hover:text-primary-600 text-sm transition-colors">Contato</Link></li>
-                  <li><Link to="/terms" className="text-gray-500 hover:text-primary-600 text-sm transition-colors">Termos de Uso</Link></li>
-                  <li><Link to="/privacy" className="text-gray-500 hover:text-primary-600 text-sm transition-colors">Privacidade</Link></li>
+                  <li>
+                    <Link
+                      to="/about"
+                      className="text-gray-500 hover:text-primary-600 text-sm transition-colors"
+                    >
+                      Sobre Nós
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      to="/contact"
+                      className="text-gray-500 hover:text-primary-600 text-sm transition-colors"
+                    >
+                      Contato
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      to="/terms"
+                      className="text-gray-500 hover:text-primary-600 text-sm transition-colors"
+                    >
+                      Termos de Uso
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      to="/privacy"
+                      className="text-gray-500 hover:text-primary-600 text-sm transition-colors"
+                    >
+                      Privacidade
+                    </Link>
+                  </li>
                 </ul>
               </div>
             </div>
             <div className="border-t border-gray-200 pt-8 flex flex-col md:flex-row justify-between items-center">
               <p className="text-sm text-gray-400">
-                &copy; {new Date().getFullYear()} {platformSettings?.platform_name || 'SouNativo'}. Todos os direitos reservados.
+                &copy; {new Date().getFullYear()} {platformSettings?.platform_name || 'SouNativo'}.
+                Todos os direitos reservados.
               </p>
               <div className="flex items-center gap-2 mt-4 md:mt-0">
                 <span className="text-[10px] text-gray-400 uppercase font-bold">Powered by</span>
                 <Logo className="h-4" showText={false} />
-                <span className="text-xs font-extrabold text-gray-600">{platformSettings?.platform_name || 'SouNativo'}</span>
+                <span className="text-xs font-extrabold text-gray-600">
+                  {platformSettings?.platform_name || 'SouNativo'}
+                </span>
               </div>
             </div>
           </div>
         )}
       </footer>
+      )}
 
       {/* RENDER THE NEW BOTTOM NAV */}
       <BottomNav />
 
       {/* Impersonate Mode Floating Button */}
-      {
-        isImpersonating && (
-          <div className="fixed bottom-6 right-6 z-[9999] animate-[fadeIn_0.3s]">
-            <button
-              onClick={async () => {
-                try {
-                  await exitImpersonate();
-                  // Wait a bit for state to update
-                  setTimeout(() => {
-                    navigate('/admin/dashboard');
-                  }, 100);
-                } catch (error) {
-                  // Error handled in exitImpersonate
-                  // Navigate anyway
+      {isImpersonating && (
+        <div className="fixed bottom-6 right-6 z-[9999] animate-[fadeIn_0.3s]">
+          <button
+            onClick={async () => {
+              try {
+                await exitImpersonate();
+                // Wait a bit for state to update
+                setTimeout(() => {
                   navigate('/admin/dashboard');
-                }
-              }}
-              className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-full shadow-2xl font-bold flex items-center gap-2 transition-all hover:scale-105"
-              title="Sair do Modo Gerenciar"
-            >
-              <LogOut size={20} />
-              Sair do Modo Gerenciar
-            </button>
-          </div>
-        )
-      }
-    </div >
+                }, 100);
+              } catch (error) {
+                // Error handled in exitImpersonate
+                // Navigate anyway
+                navigate('/admin/dashboard');
+              }
+            }}
+            className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-full shadow-2xl font-bold flex items-center gap-2 transition-all hover:scale-105"
+            title="Sair do Modo Gerenciar"
+          >
+            <LogOut size={20} />
+            Sair do Modo Gerenciar
+          </button>
+        </div>
+      )}
+    </div>
   );
 };
 

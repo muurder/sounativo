@@ -30,7 +30,7 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   // It receives two parameters: error (the error that was thrown) and errorInfo (an object with a componentStack property).
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     // You can also log the error to an error reporting service
-    logger.error("Uncaught error caught by ErrorBoundary:", error, errorInfo);
+    logger.error('Uncaught error caught by ErrorBoundary:', error, errorInfo);
     this.setState({ errorInfo });
   }
 
@@ -50,7 +50,7 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
           >
             <RefreshCw size={20} /> Tentar recarregar a página
           </button>
-          
+
           {this.state.error && (
             <div className="mt-10 p-6 bg-red-100 border border-red-200 rounded-xl text-left max-w-2xl w-full text-sm">
               <h2 className="font-bold mb-2">Detalhes do Erro:</h2>
@@ -63,7 +63,9 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
                   </pre>
                 </div>
               )}
-              <p className="mt-4 text-xs italic">Por favor, se o problema persistir, envie estas informações para o suporte.</p>
+              <p className="mt-4 text-xs italic">
+                Por favor, se o problema persistir, envie estas informações para o suporte.
+              </p>
             </div>
           )}
         </div>

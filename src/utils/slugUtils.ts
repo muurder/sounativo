@@ -9,27 +9,27 @@ export function validateSlug(slug: string): { valid: boolean; error?: string } {
   if (!slug || slug.trim() === '') {
     return { valid: false, error: 'Slug não pode estar vazio' };
   }
-  
+
   // Slug deve conter apenas letras minúsculas, números e hífens
   // Não pode começar ou terminar com hífen
   // Não pode ter hífens duplicados
   const slugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
-  
+
   if (!slugPattern.test(slug)) {
-    return { 
-      valid: false, 
-      error: 'Slug deve conter apenas letras minúsculas, números e hífens' 
+    return {
+      valid: false,
+      error: 'Slug deve conter apenas letras minúsculas, números e hífens',
     };
   }
-  
+
   if (slug.length < 3) {
     return { valid: false, error: 'Slug deve ter pelo menos 3 caracteres' };
   }
-  
+
   if (slug.length > 100) {
     return { valid: false, error: 'Slug deve ter no máximo 100 caracteres' };
   }
-  
+
   return { valid: true };
 }
 
@@ -38,8 +38,8 @@ export function validateSlug(slug: string): { valid: boolean; error?: string } {
  * Verifica se já existe no banco e adiciona sufixo numérico se necessário
  */
 export async function generateUniqueSlug(
-  baseSlug: string, 
-  table: 'agencies' | 'trips', 
+  baseSlug: string,
+  table: 'agencies' | 'trips',
   excludeId?: string
 ): Promise<string> {
   if (!supabase) {
@@ -50,33 +50,31 @@ export async function generateUniqueSlug(
   let slug = baseSlug;
   let counter = 1;
   const maxAttempts = 100; // Prevenir loop infinito
-  
+
   while (counter <= maxAttempts) {
     try {
       // Verificar se slug já existe
-      const query = supabase
-        .from(table)
-        .select('id')
-        .eq('slug', slug);
-      
+      const query = supabase.from(table).select('id').eq('slug', slug);
+
       // Se estamos editando, excluir o próprio registro
       if (excludeId) {
         query.neq('id', excludeId);
       }
-      
+
       const { data, error } = await query.maybeSingle();
-      
-      if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned (é o que queremos)
+
+      if (error && error.code !== 'PGRST116') {
+        // PGRST116 = no rows returned (é o que queremos)
         logger.error(`[slugUtils] Erro ao verificar slug único:`, error);
         // Em caso de erro, retornar slug com contador para evitar duplicatas
         return counter > 1 ? `${baseSlug}-${counter}` : baseSlug;
       }
-      
+
       // Se não encontrou nenhum registro, o slug é único
       if (!data) {
         return slug;
       }
-      
+
       // Slug existe, tentar com sufixo numérico
       slug = `${baseSlug}-${counter}`;
       counter++;
@@ -86,7 +84,7 @@ export async function generateUniqueSlug(
       return counter > 1 ? `${baseSlug}-${counter}` : baseSlug;
     }
   }
-  
+
   // Se chegou aqui, não conseguiu gerar slug único após muitas tentativas
   logger.warn(`[slugUtils] Não foi possível gerar slug único após ${maxAttempts} tentativas`);
   return `${baseSlug}-${Date.now()}`;
@@ -114,8 +112,7 @@ export function normalizeSlug(slug: string | undefined, fallbackName: string): s
       return slug.trim();
     }
   }
-  
+
   // Caso contrário, gerar do nome
   return generateSlugFromName(fallbackName);
 }
-

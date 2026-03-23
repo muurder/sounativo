@@ -12,7 +12,7 @@ export const Logo: React.FC<LogoProps> = ({
   className = '',
   showText = true,
   iconSize,
-  variant = 'default'
+  variant = 'default',
 }) => {
   // Calculate icon size based on className or use default - Increased sizes
   const getIconSize = () => {
@@ -42,10 +42,11 @@ export const Logo: React.FC<LogoProps> = ({
         </div>
         <MapPin
           size={size}
-          className={`relative z-0 ${variant === 'white'
-            ? 'text-white fill-white/20'
-            : 'text-secondary-500 fill-secondary-500/10'
-            }`}
+          className={`relative z-0 ${
+            variant === 'white'
+              ? 'text-white fill-white/20'
+              : 'text-secondary-500 fill-secondary-500/10'
+          }`}
           strokeWidth={2.5}
         />
       </div>

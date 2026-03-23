@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
 import { CheckCircle, XCircle, AlertCircle, Info, X } from 'lucide-react';
 
@@ -24,20 +23,23 @@ export const ToastProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     setToasts((prev) => prev.filter((toast) => toast.id !== id));
   }, []);
 
-  const showToast = useCallback((message: string, type: ToastType = 'success') => {
-    const id = Math.random().toString(36).substring(2, 9);
-    setToasts((prev) => [...prev, { id, message, type }]);
+  const showToast = useCallback(
+    (message: string, type: ToastType = 'success') => {
+      const id = Math.random().toString(36).substring(2, 9);
+      setToasts((prev) => [...prev, { id, message, type }]);
 
-    // Auto remove after 4 seconds
-    setTimeout(() => {
-      removeToast(id);
-    }, 4000);
-  }, [removeToast]);
+      // Auto remove after 4 seconds
+      setTimeout(() => {
+        removeToast(id);
+      }, 4000);
+    },
+    [removeToast]
+  );
 
   return (
     <ToastContext.Provider value={{ showToast, removeToast }}>
       {children}
-      
+
       {/* Toast Container */}
       <div className="fixed bottom-5 right-5 z-[9999] flex flex-col gap-3 pointer-events-none">
         {toasts.map((toast) => (
@@ -59,8 +61,8 @@ export const ToastProvider: React.FC<{ children: ReactNode }> = ({ children }) =
               {toast.type === 'info' && <Info size={20} />}
             </div>
             <p className="text-sm font-medium flex-1 leading-snug">{toast.message}</p>
-            <button 
-              onClick={() => removeToast(toast.id)} 
+            <button
+              onClick={() => removeToast(toast.id)}
               className="opacity-70 hover:opacity-100 transition-opacity p-1"
             >
               <X size={16} />

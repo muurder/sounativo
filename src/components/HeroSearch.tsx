@@ -14,11 +14,7 @@ interface Guests {
 }
 
 interface HeroSearchProps {
-  onSearch?: (params: {
-    destination: string;
-    dateRange: DateRange;
-    guests: Guests;
-  }) => void;
+  onSearch?: (params: { destination: string; dateRange: DateRange; guests: Guests }) => void;
   initialDestination?: string;
   initialDateRange?: DateRange;
   initialGuests?: Guests;
@@ -28,7 +24,7 @@ const HeroSearch: React.FC<HeroSearchProps> = ({
   onSearch,
   initialDestination = '',
   initialDateRange = { start: null, end: null },
-  initialGuests = { adults: 1, children: 0 }
+  initialGuests = { adults: 1, children: 0 },
 }) => {
   const navigate = useNavigate();
   const [destination, setDestination] = useState(initialDestination);
@@ -38,8 +34,14 @@ const HeroSearch: React.FC<HeroSearchProps> = ({
   const [showGuestsPicker, setShowGuestsPicker] = useState(false);
   const [hoveredDate, setHoveredDate] = useState<Date | null>(null);
   const clickInsideRef = useRef<boolean>(false);
-  const [datePickerPosition, setDatePickerPosition] = useState<{ top: number; left: number } | null>(null);
-  const [guestsPickerPosition, setGuestsPickerPosition] = useState<{ top: number; right: number } | null>(null);
+  const [datePickerPosition, setDatePickerPosition] = useState<{
+    top: number;
+    left: number;
+  } | null>(null);
+  const [guestsPickerPosition, setGuestsPickerPosition] = useState<{
+    top: number;
+    right: number;
+  } | null>(null);
 
   const datePickerRef = useRef<HTMLDivElement>(null);
   const datePickerButtonRef = useRef<HTMLButtonElement>(null);
@@ -52,7 +54,7 @@ const HeroSearch: React.FC<HeroSearchProps> = ({
       const rect = datePickerButtonRef.current.getBoundingClientRect();
       setDatePickerPosition({
         top: rect.bottom + 8,
-        left: rect.left
+        left: rect.left,
       });
     }
   }, []);
@@ -90,15 +92,21 @@ const HeroSearch: React.FC<HeroSearchProps> = ({
 
       // Use passive listeners for better performance
       window.addEventListener('scroll', handleScroll, { passive: true, capture: true });
-      window.addEventListener('resize', () => {
-        updateDatePickerPosition();
-      }, { passive: true });
+      window.addEventListener(
+        'resize',
+        () => {
+          updateDatePickerPosition();
+        },
+        { passive: true }
+      );
 
       return () => {
         if (scrollTimeout) {
           clearTimeout(scrollTimeout);
         }
-        window.removeEventListener('scroll', handleScroll, { capture: true } as EventListenerOptions);
+        window.removeEventListener('scroll', handleScroll, {
+          capture: true,
+        } as EventListenerOptions);
         window.removeEventListener('resize', () => {
           updateDatePickerPosition();
         });
@@ -114,7 +122,7 @@ const HeroSearch: React.FC<HeroSearchProps> = ({
       const rect = guestsPickerButtonRef.current.getBoundingClientRect();
       setGuestsPickerPosition({
         top: rect.bottom + 8,
-        right: window.innerWidth - rect.right
+        right: window.innerWidth - rect.right,
       });
     }
   }, []);
@@ -152,15 +160,21 @@ const HeroSearch: React.FC<HeroSearchProps> = ({
 
       // Use passive listeners for better performance
       window.addEventListener('scroll', handleScroll, { passive: true, capture: true });
-      window.addEventListener('resize', () => {
-        updateGuestsPickerPosition();
-      }, { passive: true });
+      window.addEventListener(
+        'resize',
+        () => {
+          updateGuestsPickerPosition();
+        },
+        { passive: true }
+      );
 
       return () => {
         if (scrollTimeout) {
           clearTimeout(scrollTimeout);
         }
-        window.removeEventListener('scroll', handleScroll, { capture: true } as EventListenerOptions);
+        window.removeEventListener('scroll', handleScroll, {
+          capture: true,
+        } as EventListenerOptions);
         window.removeEventListener('resize', () => {
           updateGuestsPickerPosition();
         });
@@ -184,11 +198,19 @@ const HeroSearch: React.FC<HeroSearchProps> = ({
       const target = event.target as Node;
 
       // Check if click is on the button itself - if so, let the button's onClick handle it
-      if (showDatePicker && datePickerButtonRef.current && datePickerButtonRef.current.contains(target)) {
+      if (
+        showDatePicker &&
+        datePickerButtonRef.current &&
+        datePickerButtonRef.current.contains(target)
+      ) {
         return; // Let the button's onClick handle the toggle
       }
 
-      if (showGuestsPicker && guestsPickerButtonRef.current && guestsPickerButtonRef.current.contains(target)) {
+      if (
+        showGuestsPicker &&
+        guestsPickerButtonRef.current &&
+        guestsPickerButtonRef.current.contains(target)
+      ) {
         return; // Let the button's onClick handle the toggle
       }
 
@@ -198,7 +220,11 @@ const HeroSearch: React.FC<HeroSearchProps> = ({
       }
 
       // Check if click is outside guests picker
-      if (showGuestsPicker && guestsPickerRef.current && !guestsPickerRef.current.contains(target)) {
+      if (
+        showGuestsPicker &&
+        guestsPickerRef.current &&
+        !guestsPickerRef.current.contains(target)
+      ) {
         setShowGuestsPicker(false);
       }
     };
@@ -330,7 +356,10 @@ const HeroSearch: React.FC<HeroSearchProps> = ({
     if (dateRange.end) {
       const normalizedEnd = new Date(dateRange.end);
       normalizedEnd.setHours(0, 0, 0, 0);
-      return normalizedDate.getTime() === normalizedStart.getTime() || normalizedDate.getTime() === normalizedEnd.getTime();
+      return (
+        normalizedDate.getTime() === normalizedStart.getTime() ||
+        normalizedDate.getTime() === normalizedEnd.getTime()
+      );
     }
 
     return normalizedDate.getTime() === normalizedStart.getTime();
@@ -388,7 +417,20 @@ const HeroSearch: React.FC<HeroSearchProps> = ({
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
 
   const calendarDays = generateCalendarDays(currentYear, currentMonth);
-  const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+  const monthNames = [
+    'Janeiro',
+    'Fevereiro',
+    'Março',
+    'Abril',
+    'Maio',
+    'Junho',
+    'Julho',
+    'Agosto',
+    'Setembro',
+    'Outubro',
+    'Novembro',
+    'Dezembro',
+  ];
 
   const nextMonth = () => {
     if (currentMonth === 11) {
@@ -450,7 +492,9 @@ const HeroSearch: React.FC<HeroSearchProps> = ({
               className="flex items-center gap-2 px-3 py-2 text-gray-700 font-medium rounded-full hover:bg-gray-50 transition-colors whitespace-nowrap w-full"
             >
               <Calendar size={18} className="text-gray-400 flex-shrink-0" />
-              <span className="text-xs md:text-sm min-w-0 text-left whitespace-nowrap overflow-hidden text-ellipsis flex-1">{getDateRangeText()}</span>
+              <span className="text-xs md:text-sm min-w-0 text-left whitespace-nowrap overflow-hidden text-ellipsis flex-1">
+                {getDateRangeText()}
+              </span>
               {hasDatesSelected && (
                 <button
                   type="button"
@@ -466,102 +510,111 @@ const HeroSearch: React.FC<HeroSearchProps> = ({
                   <X size={14} className="text-gray-500 hover:text-gray-700" />
                 </button>
               )}
-              <ChevronDown size={16} className={`text-gray-400 transition-transform flex-shrink-0 ${showDatePicker ? 'rotate-180' : ''}`} />
+              <ChevronDown
+                size={16}
+                className={`text-gray-400 transition-transform flex-shrink-0 ${showDatePicker ? 'rotate-180' : ''}`}
+              />
             </button>
 
-            {showDatePicker && datePickerPosition && ReactDOM.createPortal(
-              <div
-                ref={datePickerRef}
-                className="fixed bg-white rounded-2xl shadow-2xl border border-gray-200 p-4 min-w-[320px]"
-                style={{
-                  top: `${datePickerPosition.top}px`,
-                  left: `${datePickerPosition.left}px`,
-                  maxWidth: 'calc(100vw - 2rem)',
-                  maxHeight: 'calc(100vh - 2rem)',
-                  overflow: 'auto',
-                  zIndex: 999999
-                }}
-              >
-                <div className="flex items-center justify-between mb-4">
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      prevMonth();
-                    }}
-                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors relative z-[120]"
-                  >
-                    <ChevronDown size={16} className="rotate-90 text-gray-600" />
-                  </button>
-                  <h3 className="font-bold text-gray-900">{monthNames[currentMonth]} {currentYear}</h3>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      nextMonth();
-                    }}
-                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors relative z-[120]"
-                  >
-                    <ChevronDown size={16} className="-rotate-90 text-gray-600" />
-                  </button>
-                </div>
+            {showDatePicker &&
+              datePickerPosition &&
+              ReactDOM.createPortal(
+                <div
+                  ref={datePickerRef}
+                  className="fixed bg-white rounded-2xl shadow-2xl border border-gray-200 p-4 min-w-[320px]"
+                  style={{
+                    top: `${datePickerPosition.top}px`,
+                    left: `${datePickerPosition.left}px`,
+                    maxWidth: 'calc(100vw - 2rem)',
+                    maxHeight: 'calc(100vh - 2rem)',
+                    overflow: 'auto',
+                    zIndex: 999999,
+                  }}
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        prevMonth();
+                      }}
+                      className="p-2 hover:bg-gray-100 rounded-lg transition-colors relative z-[120]"
+                    >
+                      <ChevronDown size={16} className="rotate-90 text-gray-600" />
+                    </button>
+                    <h3 className="font-bold text-gray-900">
+                      {monthNames[currentMonth]} {currentYear}
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        nextMonth();
+                      }}
+                      className="p-2 hover:bg-gray-100 rounded-lg transition-colors relative z-[120]"
+                    >
+                      <ChevronDown size={16} className="-rotate-90 text-gray-600" />
+                    </button>
+                  </div>
 
-                <div className="grid grid-cols-7 gap-1 mb-2">
-                  {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map(day => (
-                    <div key={day} className="text-xs font-bold text-gray-500 text-center py-2">{day}</div>
-                  ))}
-                </div>
+                  <div className="grid grid-cols-7 gap-1 mb-2">
+                    {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((day) => (
+                      <div key={day} className="text-xs font-bold text-gray-500 text-center py-2">
+                        {day}
+                      </div>
+                    ))}
+                  </div>
 
-                <div className="grid grid-cols-7 gap-1">
-                  {calendarDays.map((date, idx) => {
-                    if (!date) return <div key={idx} className="aspect-square" />;
+                  <div className="grid grid-cols-7 gap-1">
+                    {calendarDays.map((date, idx) => {
+                      if (!date) return <div key={idx} className="aspect-square" />;
 
-                    const today = new Date();
-                    today.setHours(0, 0, 0, 0);
-                    const normalizedDate = new Date(date);
-                    normalizedDate.setHours(0, 0, 0, 0);
-                    const isPast = normalizedDate < today;
-                    const isSelected = isDateSelected(date);
-                    const isInRange = isDateInRange(date);
+                      const today = new Date();
+                      today.setHours(0, 0, 0, 0);
+                      const normalizedDate = new Date(date);
+                      normalizedDate.setHours(0, 0, 0, 0);
+                      const isPast = normalizedDate < today;
+                      const isSelected = isDateSelected(date);
+                      const isInRange = isDateInRange(date);
 
-                    return (
-                      <button
-                        key={idx}
-                        type="button"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          clickInsideRef.current = true;
-                          if (!isPast) {
-                            handleDateClick(date);
-                          }
-                        }}
-                        onMouseDown={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          clickInsideRef.current = true;
-                        }}
-                        onMouseEnter={() => !isPast && setHoveredDate(date)}
-                        onMouseLeave={() => setHoveredDate(null)}
-                        disabled={isPast}
-                        className={`
+                      return (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            clickInsideRef.current = true;
+                            if (!isPast) {
+                              handleDateClick(date);
+                            }
+                          }}
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            clickInsideRef.current = true;
+                          }}
+                          onMouseEnter={() => !isPast && setHoveredDate(date)}
+                          onMouseLeave={() => setHoveredDate(null)}
+                          disabled={isPast}
+                          className={`
                           aspect-square text-sm font-medium rounded-lg transition-colors relative z-[10000]
                           ${isPast ? 'text-gray-300 cursor-not-allowed opacity-50' : 'text-gray-700 hover:bg-gray-100 cursor-pointer'}
                           ${isSelected ? 'bg-primary-600 text-white hover:bg-primary-700' : ''}
                           ${isInRange && !isSelected ? 'bg-primary-50 text-primary-700' : ''}
                           ${hoveredDate && !isPast && normalizedDate.getTime() === hoveredDate.getTime() && !isSelected && !isInRange ? 'bg-gray-100' : ''}
                         `}
-                      >
-                        {date.getDate()}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>,
-              document.body
-            )}
+                        >
+                          {date.getDate()}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>,
+                document.body
+              )}
           </div>
 
           <div className="w-px h-8 md:h-10 bg-gray-200 flex-shrink-0 hidden lg:block"></div>
@@ -586,7 +639,9 @@ const HeroSearch: React.FC<HeroSearchProps> = ({
               className="flex items-center gap-2 px-3 py-2 text-gray-700 font-medium rounded-full hover:bg-gray-50 transition-colors whitespace-nowrap w-full"
             >
               <Users size={18} className="text-gray-400 flex-shrink-0" />
-              <span className="text-xs md:text-sm min-w-0 text-left whitespace-nowrap overflow-hidden text-ellipsis flex-1">{getGuestsText()}</span>
+              <span className="text-xs md:text-sm min-w-0 text-left whitespace-nowrap overflow-hidden text-ellipsis flex-1">
+                {getGuestsText()}
+              </span>
               {isGuestsModified && (
                 <button
                   type="button"
@@ -602,72 +657,32 @@ const HeroSearch: React.FC<HeroSearchProps> = ({
                   <X size={14} className="text-gray-500 hover:text-gray-700" />
                 </button>
               )}
-              <ChevronDown size={16} className={`text-gray-400 transition-transform flex-shrink-0 ${showGuestsPicker ? 'rotate-180' : ''}`} />
+              <ChevronDown
+                size={16}
+                className={`text-gray-400 transition-transform flex-shrink-0 ${showGuestsPicker ? 'rotate-180' : ''}`}
+              />
             </button>
 
-            {showGuestsPicker && guestsPickerPosition && ReactDOM.createPortal(
-              <div
-                ref={guestsPickerRef}
-                className="fixed bg-white rounded-2xl shadow-2xl border border-gray-200 p-4 min-w-[240px]"
-                style={{
-                  top: `${guestsPickerPosition.top}px`,
-                  right: `${guestsPickerPosition.right}px`,
-                  maxWidth: 'calc(100vw - 2rem)',
-                  maxHeight: 'calc(100vh - 2rem)',
-                  overflow: 'auto',
-                  zIndex: 999999
-                }}
-              >
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="font-bold text-gray-900">Adultos</div>
-                      <div className="text-xs text-gray-500">13 anos ou mais</div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          clickInsideRef.current = true;
-                          setGuests(prev => ({ ...prev, adults: Math.max(1, prev.adults - 1) }));
-                        }}
-                        onMouseDown={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          clickInsideRef.current = true;
-                        }}
-                        className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:border-primary-500 transition-colors relative z-[10000] cursor-pointer"
-                      >
-                        <Minus size={14} className="text-gray-600" />
-                      </button>
-                      <span className="font-bold text-gray-900 w-8 text-center">{guests.adults}</span>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          clickInsideRef.current = true;
-                          setGuests(prev => ({ ...prev, adults: prev.adults + 1 }));
-                        }}
-                        onMouseDown={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          clickInsideRef.current = true;
-                        }}
-                        className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:border-primary-500 transition-colors relative z-[10000] cursor-pointer"
-                      >
-                        <Plus size={14} className="text-gray-600" />
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="border-t border-gray-200 pt-4">
+            {showGuestsPicker &&
+              guestsPickerPosition &&
+              ReactDOM.createPortal(
+                <div
+                  ref={guestsPickerRef}
+                  className="fixed bg-white rounded-2xl shadow-2xl border border-gray-200 p-4 min-w-[240px]"
+                  style={{
+                    top: `${guestsPickerPosition.top}px`,
+                    right: `${guestsPickerPosition.right}px`,
+                    maxWidth: 'calc(100vw - 2rem)',
+                    maxHeight: 'calc(100vh - 2rem)',
+                    overflow: 'auto',
+                    zIndex: 999999,
+                  }}
+                >
+                  <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <div>
-                        <div className="font-bold text-gray-900">Crianças</div>
-                        <div className="text-xs text-gray-500">0 a 12 anos</div>
+                        <div className="font-bold text-gray-900">Adultos</div>
+                        <div className="text-xs text-gray-500">13 anos ou mais</div>
                       </div>
                       <div className="flex items-center gap-3">
                         <button
@@ -676,7 +691,10 @@ const HeroSearch: React.FC<HeroSearchProps> = ({
                             e.preventDefault();
                             e.stopPropagation();
                             clickInsideRef.current = true;
-                            setGuests(prev => ({ ...prev, children: Math.max(0, prev.children - 1) }));
+                            setGuests((prev) => ({
+                              ...prev,
+                              adults: Math.max(1, prev.adults - 1),
+                            }));
                           }}
                           onMouseDown={(e) => {
                             e.preventDefault();
@@ -687,14 +705,16 @@ const HeroSearch: React.FC<HeroSearchProps> = ({
                         >
                           <Minus size={14} className="text-gray-600" />
                         </button>
-                        <span className="font-bold text-gray-900 w-8 text-center">{guests.children}</span>
+                        <span className="font-bold text-gray-900 w-8 text-center">
+                          {guests.adults}
+                        </span>
                         <button
                           type="button"
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
                             clickInsideRef.current = true;
-                            setGuests(prev => ({ ...prev, children: prev.children + 1 }));
+                            setGuests((prev) => ({ ...prev, adults: prev.adults + 1 }));
                           }}
                           onMouseDown={(e) => {
                             e.preventDefault();
@@ -707,11 +727,61 @@ const HeroSearch: React.FC<HeroSearchProps> = ({
                         </button>
                       </div>
                     </div>
+
+                    <div className="border-t border-gray-200 pt-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="font-bold text-gray-900">Crianças</div>
+                          <div className="text-xs text-gray-500">0 a 12 anos</div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              clickInsideRef.current = true;
+                              setGuests((prev) => ({
+                                ...prev,
+                                children: Math.max(0, prev.children - 1),
+                              }));
+                            }}
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              clickInsideRef.current = true;
+                            }}
+                            className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:border-primary-500 transition-colors relative z-[10000] cursor-pointer"
+                          >
+                            <Minus size={14} className="text-gray-600" />
+                          </button>
+                          <span className="font-bold text-gray-900 w-8 text-center">
+                            {guests.children}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              clickInsideRef.current = true;
+                              setGuests((prev) => ({ ...prev, children: prev.children + 1 }));
+                            }}
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              clickInsideRef.current = true;
+                            }}
+                            className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:border-primary-500 transition-colors relative z-[10000] cursor-pointer"
+                          >
+                            <Plus size={14} className="text-gray-600" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>,
-              document.body
-            )}
+                </div>,
+                document.body
+              )}
           </div>
 
           {/* Search Button - Sempre dentro da barra */}
@@ -755,21 +825,32 @@ const HeroSearch: React.FC<HeroSearchProps> = ({
             >
               <Calendar size={18} className="text-gray-400" />
               <span className="text-xs flex-1 text-left">{getDateRangeText()}</span>
-              <ChevronDown size={14} className={`text-gray-400 transition-transform ${showDatePicker ? 'rotate-180' : ''}`} />
+              <ChevronDown
+                size={14}
+                className={`text-gray-400 transition-transform ${showDatePicker ? 'rotate-180' : ''}`}
+              />
             </button>
             {showDatePicker && (
               <>
-                <div className="fixed inset-0 bg-black/60 z-[9998]" onClick={() => setShowDatePicker(false)} />
-                <div className="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl p-4 z-[9999] animate-[slideUp_0.3s]">
+                <div
+                  className="fixed inset-0 bg-black/60 z-50"
+                  onClick={() => setShowDatePicker(false)}
+                />
+                <div className="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl p-4 z-50 max-h-[70vh] lg:max-h-[60vh] overflow-y-auto animate-[slideUp_0.3s]">
                   <div className="flex justify-between items-center mb-4">
                     <h3 className="font-bold text-lg">Selecionar Datas</h3>
-                    <button onClick={() => setShowDatePicker(false)} className="p-2 bg-gray-100 rounded-full">
+                    <button
+                      onClick={() => setShowDatePicker(false)}
+                      className="p-2 bg-gray-100 rounded-full"
+                    >
                       <X size={20} />
                     </button>
                   </div>
                   <div className="grid grid-cols-7 gap-1 mb-2">
-                    {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map(day => (
-                      <div key={day} className="text-center text-xs font-bold text-gray-400">{day}</div>
+                    {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((day) => (
+                      <div key={day} className="text-center text-xs font-bold text-gray-400">
+                        {day}
+                      </div>
                     ))}
                   </div>
                   <div className="grid grid-cols-7 gap-1 max-h-[60vh] overflow-y-auto">
@@ -822,15 +903,24 @@ const HeroSearch: React.FC<HeroSearchProps> = ({
             >
               <Users size={18} className="text-gray-400" />
               <span className="text-xs flex-1 text-left">{getGuestsText()}</span>
-              <ChevronDown size={14} className={`text-gray-400 transition-transform ${showGuestsPicker ? 'rotate-180' : ''}`} />
+              <ChevronDown
+                size={14}
+                className={`text-gray-400 transition-transform ${showGuestsPicker ? 'rotate-180' : ''}`}
+              />
             </button>
             {showGuestsPicker && (
               <>
-                <div className="fixed inset-0 bg-black/60 z-[9998]" onClick={() => setShowGuestsPicker(false)} />
-                <div className="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl p-6 z-[9999] animate-[slideUp_0.3s]">
+                <div
+                  className="fixed inset-0 bg-black/60 z-50"
+                  onClick={() => setShowGuestsPicker(false)}
+                />
+                <div className="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl p-6 z-50 max-h-[70vh] lg:max-h-[60vh] overflow-y-auto animate-[slideUp_0.3s]">
                   <div className="flex justify-between items-center mb-6">
                     <h3 className="font-bold text-lg">Passageiros</h3>
-                    <button onClick={() => setShowGuestsPicker(false)} className="p-2 bg-gray-100 rounded-full">
+                    <button
+                      onClick={() => setShowGuestsPicker(false)}
+                      className="p-2 bg-gray-100 rounded-full"
+                    >
                       <X size={20} />
                     </button>
                   </div>
@@ -844,7 +934,9 @@ const HeroSearch: React.FC<HeroSearchProps> = ({
                       <div className="flex items-center gap-4">
                         <button
                           type="button"
-                          onClick={() => setGuests(prev => ({ ...prev, adults: Math.max(1, prev.adults - 1) }))}
+                          onClick={() =>
+                            setGuests((prev) => ({ ...prev, adults: Math.max(1, prev.adults - 1) }))
+                          }
                           className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center text-xl text-gray-600"
                         >
                           -
@@ -852,7 +944,9 @@ const HeroSearch: React.FC<HeroSearchProps> = ({
                         <span className="font-bold text-xl">{guests.adults}</span>
                         <button
                           type="button"
-                          onClick={() => setGuests(prev => ({ ...prev, adults: prev.adults + 1 }))}
+                          onClick={() =>
+                            setGuests((prev) => ({ ...prev, adults: prev.adults + 1 }))
+                          }
                           className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center text-xl text-gray-600"
                         >
                           +
@@ -868,7 +962,12 @@ const HeroSearch: React.FC<HeroSearchProps> = ({
                       <div className="flex items-center gap-4">
                         <button
                           type="button"
-                          onClick={() => setGuests(prev => ({ ...prev, children: Math.max(0, prev.children - 1) }))}
+                          onClick={() =>
+                            setGuests((prev) => ({
+                              ...prev,
+                              children: Math.max(0, prev.children - 1),
+                            }))
+                          }
                           className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center text-xl text-gray-600"
                         >
                           -
@@ -876,7 +975,9 @@ const HeroSearch: React.FC<HeroSearchProps> = ({
                         <span className="font-bold text-xl">{guests.children}</span>
                         <button
                           type="button"
-                          onClick={() => setGuests(prev => ({ ...prev, children: prev.children + 1 }))}
+                          onClick={() =>
+                            setGuests((prev) => ({ ...prev, children: prev.children + 1 }))
+                          }
                           className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center text-xl text-gray-600"
                         >
                           +
@@ -910,4 +1011,3 @@ const HeroSearch: React.FC<HeroSearchProps> = ({
 };
 
 export default HeroSearch;
-

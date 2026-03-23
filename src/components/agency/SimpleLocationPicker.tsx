@@ -16,8 +16,8 @@ const SimpleLocationPicker: React.FC<SimpleLocationPickerProps> = ({
   coordinates,
   onChange,
   onCoordinatesChange,
-  placeholder = "Digite o nome do local...",
-  error
+  placeholder = 'Digite o nome do local...',
+  error,
 }) => {
   const [searchQuery, setSearchQuery] = useState(value);
   const [isSearching, setIsSearching] = useState(false);
@@ -53,17 +53,17 @@ const SimpleLocationPicker: React.FC<SimpleLocationPickerProps> = ({
       const response = await fetch(
         `https://maps.googleapis.com/maps/api/geocode/json?address=${encodedQuery}&key=${apiKey}&region=br`
       );
-      
+
       const data = await response.json();
-      
+
       if (data.status === 'OK' && data.results && data.results.length > 0) {
         const result = data.results[0];
         const location = result.geometry.location;
         const coords = {
           lat: location.lat,
-          lng: location.lng
+          lng: location.lng,
         };
-        
+
         onChange(result.formatted_address || searchQuery, coords);
         if (onCoordinatesChange) {
           onCoordinatesChange(coords);
@@ -114,7 +114,7 @@ const SimpleLocationPicker: React.FC<SimpleLocationPickerProps> = ({
           </span>
         )}
       </label>
-      
+
       {/* Search Input */}
       <div className="relative mb-3">
         <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10" size={18} />
@@ -169,12 +169,16 @@ const SimpleLocationPicker: React.FC<SimpleLocationPickerProps> = ({
             {apiKey ? (
               <>
                 <MapPin className="text-gray-400 mx-auto mb-2" size={32} />
-                <p className="text-sm text-gray-600 font-medium">Clique em "Buscar" para ver o mapa</p>
+                <p className="text-sm text-gray-600 font-medium">
+                  Clique em "Buscar" para ver o mapa
+                </p>
               </>
             ) : (
               <>
                 <MapPin className="text-gray-400 mx-auto mb-2" size={32} />
-                <p className="text-sm text-gray-600 font-medium">Configure a API key para visualizar o mapa</p>
+                <p className="text-sm text-gray-600 font-medium">
+                  Configure a API key para visualizar o mapa
+                </p>
               </>
             )}
           </div>

@@ -1,11 +1,30 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useData } from '../context/DataContext';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { Trip, PassengerDetail, UserRole } from '../types';
-import { MapPin, Clock, Calendar, CheckCircle, User, Star, Share2, Heart, ArrowLeft, MessageCircle, AlertTriangle, ShieldCheck, Tag, Bus, Globe, Check, Edit, ChevronLeft, ChevronRight } from 'lucide-react';
+import {
+  MapPin,
+  Clock,
+  Calendar,
+  CheckCircle,
+  User,
+  Star,
+  Share2,
+  Heart,
+  ArrowLeft,
+  MessageCircle,
+  AlertTriangle,
+  ShieldCheck,
+  Tag,
+  Bus,
+  Globe,
+  Check,
+  Edit,
+  ChevronLeft,
+  ChevronRight,
+} from 'lucide-react';
 import { buildWhatsAppLink } from '../utils/whatsapp';
 import { PassengerDataModal } from '../components/PassengerDataModal';
 import { BookingWidget } from '../components/BookingWidget';
@@ -14,10 +33,28 @@ import { X } from 'lucide-react';
 import CreateTripWizard from '../components/agency/CreateTripWizard';
 
 const TripDetails: React.FC = () => {
-  const { slug, tripSlug, agencySlug } = useParams<{ slug?: string; tripSlug?: string; agencySlug?: string }>();
+  const { slug, tripSlug, agencySlug } = useParams<{
+    slug?: string;
+    tripSlug?: string;
+    agencySlug?: string;
+  }>();
   const activeSlug = tripSlug || slug;
 
-  const { getTripBySlug, getAgencyBySlug, getAgencyPublicTrips, getTripById, addBooking, toggleFavorite, clients, getReviewsByTripId, agencies, fetchTripImages, loading, updateTrip, refreshData } = useData();
+  const {
+    getTripBySlug,
+    getAgencyBySlug,
+    getAgencyPublicTrips,
+    getTripById,
+    addBooking,
+    toggleFavorite,
+    clients,
+    getReviewsByTripId,
+    agencies,
+    fetchTripImages,
+    loading,
+    updateTrip,
+    refreshData,
+  } = useData();
   const { user } = useAuth();
   const { showToast } = useToast();
   const navigate = useNavigate();
@@ -64,7 +101,7 @@ const TripDetails: React.FC = () => {
         let waitCount = 0;
         const maxWait = 20; // 20 * 500ms = 10 seconds
         while (loading && waitCount < maxWait) {
-          await new Promise(resolve => setTimeout(resolve, 500));
+          await new Promise((resolve) => setTimeout(resolve, 500));
           waitCount++;
         }
 
@@ -76,7 +113,7 @@ const TripDetails: React.FC = () => {
         if (agency) {
           // In agency microsite: search within agency's trips first
           const agencyTrips = getAgencyPublicTrips(agency.agencyId);
-          foundTrip = agencyTrips.find(t => t.slug === activeSlug);
+          foundTrip = agencyTrips.find((t) => t.slug === activeSlug);
 
           // If not found by slug, try by ID (fallback for old links)
           if (!foundTrip) {
@@ -132,7 +169,7 @@ const TripDetails: React.FC = () => {
     // Timeout after 15 seconds (increased from 5 to give more time for data loading)
     timeoutRef.current = setTimeout(() => {
       // Use a function to check current state, not the closure value
-      setTripLoading(prevLoading => {
+      setTripLoading((prevLoading) => {
         if (prevLoading) {
           setTripError('Tempo de carregamento excedido. Tente novamente.');
           return false;
@@ -147,10 +184,18 @@ const TripDetails: React.FC = () => {
         timeoutRef.current = null;
       }
     };
-  }, [activeSlug, agencySlug, getTripBySlug, getAgencyBySlug, getAgencyPublicTrips, getTripById, loading]);
+  }, [
+    activeSlug,
+    agencySlug,
+    getTripBySlug,
+    getAgencyBySlug,
+    getAgencyPublicTrips,
+    getTripById,
+    loading,
+  ]);
 
   const currentAgency = agencySlug ? getAgencyBySlug(agencySlug) : undefined;
-  const agency = trip ? agencies.find(a => a.agencyId === trip.agencyId) : currentAgency;
+  const agency = trip ? agencies.find((a) => a.agencyId === trip.agencyId) : currentAgency;
 
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -189,8 +234,9 @@ const TripDetails: React.FC = () => {
   }, [trip]);
 
   // Favorites logic
-  const currentUserData = user ? clients.find(c => c.id === user.id) : undefined;
-  const isFavorite = user?.role === 'CLIENT' && trip && currentUserData?.favorites.includes(trip.id);
+  const currentUserData = user ? clients.find((c) => c.id === user.id) : undefined;
+  const isFavorite =
+    user?.role === 'CLIENT' && trip && currentUserData?.favorites.includes(trip.id);
 
   // Loading state with timeout
   // CRITICAL: Always show loading if DataContext is still loading global data
@@ -212,7 +258,10 @@ const TripDetails: React.FC = () => {
         <AlertTriangle size={48} className="text-red-500 mb-4" />
         <h2 className="text-2xl font-bold text-gray-900 mb-2">Viagem não encontrada</h2>
         <p className="text-gray-500 mb-4 text-center max-w-md">
-          {tripError || (activeSlug ? `A viagem com slug "${activeSlug}" não foi encontrada.` : 'Nenhuma viagem especificada.')}
+          {tripError ||
+            (activeSlug
+              ? `A viagem com slug "${activeSlug}" não foi encontrada.`
+              : 'Nenhuma viagem especificada.')}
           {currentAgency && ' Verifique se a viagem pertence a esta agência.'}
         </p>
         <div className="flex gap-3">
@@ -227,7 +276,7 @@ const TripDetails: React.FC = () => {
                 let waitCount = 0;
                 const maxWait = 20;
                 while (loading && waitCount < maxWait) {
-                  await new Promise(resolve => setTimeout(resolve, 500));
+                  await new Promise((resolve) => setTimeout(resolve, 500));
                   waitCount++;
                 }
               }
@@ -238,7 +287,7 @@ const TripDetails: React.FC = () => {
 
               if (agency) {
                 const agencyTrips = getAgencyPublicTrips(agency.agencyId);
-                foundTrip = agencyTrips.find(t => t.slug === activeSlug);
+                foundTrip = agencyTrips.find((t) => t.slug === activeSlug);
                 if (!foundTrip) {
                   foundTrip = getTripById(activeSlug);
                   if (foundTrip && foundTrip.agencyId !== agency.agencyId) {
@@ -268,7 +317,9 @@ const TripDetails: React.FC = () => {
             to={currentAgency ? `/${currentAgency.slug}/trips` : '/trips'}
             className="bg-gray-100 text-gray-700 px-6 py-2.5 rounded-lg font-bold hover:bg-gray-200 transition-colors"
           >
-            {currentAgency ? `Voltar para pacotes de ${currentAgency.name}` : 'Voltar para lista de viagens'}
+            {currentAgency
+              ? `Voltar para pacotes de ${currentAgency.name}`
+              : 'Voltar para lista de viagens'}
           </Link>
         </div>
       </div>
@@ -280,13 +331,16 @@ const TripDetails: React.FC = () => {
       <div className="min-h-[60vh] flex flex-col items-center justify-center px-4">
         <h2 className="text-2xl font-bold text-gray-900 mb-2">Agência não encontrada</h2>
         <p className="text-gray-500 mb-4">A agência desta viagem não foi encontrada.</p>
-        <Link to="/trips" className="text-primary-600 hover:underline font-medium">Voltar para lista</Link>
+        <Link to="/trips" className="text-primary-600 hover:underline font-medium">
+          Voltar para lista
+        </Link>
       </div>
     );
   }
 
   const reviews = getReviewsByTripId(trip.id);
-  const avgRating = reviews.length > 0 ? reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length : 0;
+  const avgRating =
+    reviews.length > 0 ? reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length : 0;
 
   const handleBooking = async () => {
     if (!user) {
@@ -318,13 +372,14 @@ const TripDetails: React.FC = () => {
         allowSeniors: true,
         childAgeLimit: 12,
         allowLapChild: false,
-        childPriceMultiplier: 0.7
+        childPriceMultiplier: 0.7,
       };
 
       // Calculate price: adults pay full price, children pay configured price (fixed or multiplier)
-      const childPriceValue = passengerConfig.childPriceType === 'fixed' && passengerConfig.childPriceFixed !== undefined
-        ? passengerConfig.childPriceFixed
-        : (trip.price * (passengerConfig.childPriceMultiplier || 0.7));
+      const childPriceValue =
+        passengerConfig.childPriceType === 'fixed' && passengerConfig.childPriceFixed !== undefined
+          ? passengerConfig.childPriceFixed
+          : trip.price * (passengerConfig.childPriceMultiplier || 0.7);
       const adultPrice = trip.price * adults;
       const childPrice = childPriceValue * children;
       const totalPrice = adultPrice + childPrice;
@@ -339,7 +394,7 @@ const TripDetails: React.FC = () => {
         passengers: totalPassengers,
         voucherCode: `VS-${trip.id.substring(0, 3).toUpperCase()}-${Math.floor(Math.random() * 10000)}`,
         paymentMethod: 'CREDIT_CARD' as const,
-        passengerDetails: passengersData.length > 0 ? passengersData : undefined
+        passengerDetails: passengersData.length > 0 ? passengersData : undefined,
       };
 
       const newBooking = await addBooking(bookingData);
@@ -350,8 +405,9 @@ const TripDetails: React.FC = () => {
         navigate(successPath, {
           state: {
             booking: newBooking,
-            passengers: passengersData.length > 0 ? passengersData : (newBooking.passengerDetails || [])
-          }
+            passengers:
+              passengersData.length > 0 ? passengersData : newBooking.passengerDetails || [],
+          },
         });
       }
     } catch (error) {
@@ -379,11 +435,13 @@ const TripDetails: React.FC = () => {
 
   const handleShare = () => {
     if (navigator.share) {
-      navigator.share({
-        title: trip.title,
-        text: `Confira essa viagem incrível: ${trip.title}`,
-        url: window.location.href,
-      }).catch((err) => logger.error(err));
+      navigator
+        .share({
+          title: trip.title,
+          text: `Confira essa viagem incrível: ${trip.title}`,
+          url: window.location.href,
+        })
+        .catch((err) => logger.error(err));
     } else {
       navigator.clipboard.writeText(window.location.href);
       showToast('Link copiado!', 'success');
@@ -394,12 +452,13 @@ const TripDetails: React.FC = () => {
 
   // Check if user can edit this trip
   // Admin can edit any trip, Agency/Guide can only edit their own trips
-  const userAgency = user ? agencies.find(a => a.id === user.id) : undefined;
-  const canEdit = user && trip && (
-    user.role === UserRole.ADMIN ||
-    (user.role === UserRole.AGENCY && userAgency?.agencyId === trip.agencyId) ||
-    (user.role === UserRole.GUIDE && userAgency?.agencyId === trip.agencyId)
-  );
+  const userAgency = user ? agencies.find((a) => a.id === user.id) : undefined;
+  const canEdit =
+    user &&
+    trip &&
+    (user.role === UserRole.ADMIN ||
+      (user.role === UserRole.AGENCY && userAgency?.agencyId === trip.agencyId) ||
+      (user.role === UserRole.GUIDE && userAgency?.agencyId === trip.agencyId));
 
   const handleEditTrip = async () => {
     if (!trip) return;
@@ -432,7 +491,7 @@ const TripDetails: React.FC = () => {
 
       if (agency) {
         const agencyTrips = getAgencyPublicTrips(agency.agencyId);
-        foundTrip = agencyTrips.find(t => t.slug === activeSlug);
+        foundTrip = agencyTrips.find((t) => t.slug === activeSlug);
         if (!foundTrip) {
           foundTrip = getTripById(activeSlug);
           if (foundTrip && foundTrip.agencyId !== agency.agencyId) {
@@ -457,7 +516,10 @@ const TripDetails: React.FC = () => {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-[fadeIn_0.3s] pb-32 lg:pb-8">
       {/* Breadcrumb / Back */}
       <div className="mb-6 flex items-center justify-between">
-        <button onClick={() => navigate(-1)} className="flex items-center text-gray-500 hover:text-gray-900 transition-colors">
+        <button
+          onClick={() => navigate(-1)}
+          className="flex items-center text-gray-500 hover:text-gray-900 transition-colors"
+        >
           <ArrowLeft size={20} className="mr-2" /> Voltar
         </button>
         <div className="flex gap-2">
@@ -470,20 +532,24 @@ const TripDetails: React.FC = () => {
               Editar Pacote
             </button>
           )}
-          <button onClick={handleFavorite} className={`p-2 rounded-full border transition-colors ${isFavorite ? 'bg-red-50 text-red-500 border-red-100' : 'bg-white text-gray-400 border-gray-200 hover:text-red-500'}`}>
+          <button
+            onClick={handleFavorite}
+            className={`p-2 rounded-full border transition-colors ${isFavorite ? 'bg-red-50 text-red-500 border-red-100' : 'bg-white text-gray-400 border-gray-200 hover:text-red-500'}`}
+          >
             <Heart size={20} fill={isFavorite ? 'currentColor' : 'none'} />
           </button>
-          <button onClick={handleShare} className="p-2 rounded-full border bg-white text-gray-400 border-gray-200 hover:text-primary-600 transition-colors">
+          <button
+            onClick={handleShare}
+            className="p-2 rounded-full border bg-white text-gray-400 border-gray-200 hover:text-primary-600 transition-colors"
+          >
             <Share2 size={20} />
           </button>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-
         {/* Left Column: Content */}
         <div className="lg:col-span-2 space-y-8">
-
           {/* Gallery - Premium Design */}
           <div className="space-y-4">
             {/* Main Image */}
@@ -516,14 +582,22 @@ const TripDetails: React.FC = () => {
               {trip.images.length > 1 && (
                 <>
                   <button
-                    onClick={() => setActiveImageIndex((prev) => (prev === 0 ? trip.images.length - 1 : prev - 1))}
+                    onClick={() =>
+                      setActiveImageIndex((prev) =>
+                        prev === 0 ? trip.images.length - 1 : prev - 1
+                      )
+                    }
                     className="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 md:w-12 md:h-12 rounded-full bg-white/95 backdrop-blur-md flex items-center justify-center shadow-xl hover:bg-white transition-all md:opacity-0 md:group-hover:opacity-100 hover:scale-110 active:scale-95"
                     aria-label="Imagem anterior"
                   >
                     <ChevronLeft size={20} className="text-gray-900" />
                   </button>
                   <button
-                    onClick={() => setActiveImageIndex((prev) => (prev === trip.images.length - 1 ? 0 : prev + 1))}
+                    onClick={() =>
+                      setActiveImageIndex((prev) =>
+                        prev === trip.images.length - 1 ? 0 : prev + 1
+                      )
+                    }
                     className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 md:w-12 md:h-12 rounded-full bg-white/95 backdrop-blur-md flex items-center justify-center shadow-xl hover:bg-white transition-all md:opacity-0 md:group-hover:opacity-100 hover:scale-110 active:scale-95"
                     aria-label="Próxima imagem"
                   >
@@ -542,10 +616,9 @@ const TripDetails: React.FC = () => {
                     <button
                       key={idx}
                       onClick={() => setActiveImageIndex(idx)}
-                      className={`w-2 h-2 rounded-full transition-all ${activeImageIndex === idx
-                        ? 'bg-white w-6'
-                        : 'bg-white/50 hover:bg-white/75'
-                        }`}
+                      className={`w-2 h-2 rounded-full transition-all ${
+                        activeImageIndex === idx ? 'bg-white w-6' : 'bg-white/50 hover:bg-white/75'
+                      }`}
                       aria-label={`Ir para imagem ${idx + 1}`}
                     />
                   ))}
@@ -561,10 +634,11 @@ const TripDetails: React.FC = () => {
                     <button
                       key={idx}
                       onClick={() => setActiveImageIndex(idx)}
-                      className={`relative flex-shrink-0 rounded-lg md:rounded-xl overflow-hidden border-2 transition-all duration-300 snap-center ${activeImageIndex === idx
-                        ? 'border-primary-600 ring-2 md:ring-4 ring-primary-100 shadow-lg scale-105'
-                        : 'border-gray-200 opacity-60 hover:opacity-100 hover:border-gray-300 hover:scale-102 active:scale-95'
-                        }`}
+                      className={`relative flex-shrink-0 rounded-lg md:rounded-xl overflow-hidden border-2 transition-all duration-300 snap-center ${
+                        activeImageIndex === idx
+                          ? 'border-primary-600 ring-2 md:ring-4 ring-primary-100 shadow-lg scale-105'
+                          : 'border-gray-200 opacity-60 hover:opacity-100 hover:border-gray-300 hover:scale-102 active:scale-95'
+                      }`}
                       style={{ width: '70px', height: '70px' }}
                     >
                       <img
@@ -586,13 +660,18 @@ const TripDetails: React.FC = () => {
 
           {/* Header Info */}
           <div>
-            <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-2 leading-tight">{trip.title}</h1>
+            <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-2 leading-tight">
+              {trip.title}
+            </h1>
 
             {/* Tags Pills */}
             {trip.tags && trip.tags.length > 0 && (
               <div className="flex flex-wrap gap-2 mb-4">
-                {trip.tags.map(tag => (
-                  <span key={tag} className="text-xs font-medium text-gray-600 bg-gray-100 px-2.5 py-1 rounded-full border border-gray-200 flex items-center gap-1">
+                {trip.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="text-xs font-medium text-gray-600 bg-gray-100 px-2.5 py-1 rounded-full border border-gray-200 flex items-center gap-1"
+                  >
                     <Tag size={10} className="text-gray-400" /> {tag}
                   </span>
                 ))}
@@ -600,11 +679,17 @@ const TripDetails: React.FC = () => {
             )}
 
             <div className="flex flex-wrap items-center gap-6 text-sm text-gray-600 mb-6">
-              <div className="flex items-center"><MapPin size={18} className="mr-2 text-primary-500" /> {trip.destination}</div>
-              <div className="flex items-center"><Clock size={18} className="mr-2 text-primary-500" /> {trip.durationDays} dias</div>
+              <div className="flex items-center">
+                <MapPin size={18} className="mr-2 text-primary-500" /> {trip.destination}
+              </div>
+              <div className="flex items-center">
+                <Clock size={18} className="mr-2 text-primary-500" /> {trip.durationDays} dias
+              </div>
               <div className="flex items-center">
                 <Star size={18} className="mr-2 text-amber-400 fill-current" />
-                <span className="font-bold text-gray-900 mr-1">{avgRating > 0 ? avgRating.toFixed(1) : 'Novidade'}</span>
+                <span className="font-bold text-gray-900 mr-1">
+                  {avgRating > 0 ? avgRating.toFixed(1) : 'Novidade'}
+                </span>
                 <span className="text-gray-400">({reviews.length} avaliações)</span>
               </div>
             </div>
@@ -619,18 +704,27 @@ const TripDetails: React.FC = () => {
           {/* Included / Not Included */}
           <div className="grid md:grid-cols-2 gap-6">
             <div className="bg-primary-50 p-6 rounded-2xl border border-primary-100">
-              <h4 className="font-bold text-primary-900 mb-4 flex items-center"><CheckCircle size={18} className="mr-2 text-primary-600" /> O que está incluso</h4>
+              <h4 className="font-bold text-primary-900 mb-4 flex items-center">
+                <CheckCircle size={18} className="mr-2 text-primary-600" /> O que está incluso
+              </h4>
               <ul className="space-y-2">
                 {trip.included.map((item, i) => (
                   <li key={i} className="flex items-start text-sm text-gray-700">
-                    <Check size={14} className="mr-2 text-primary-600 flex-shrink-0 mt-0.5" strokeWidth={3} /> {item}
+                    <Check
+                      size={14}
+                      className="mr-2 text-primary-600 flex-shrink-0 mt-0.5"
+                      strokeWidth={3}
+                    />{' '}
+                    {item}
                   </li>
                 ))}
               </ul>
             </div>
             {trip.notIncluded && trip.notIncluded.length > 0 && (
               <div className="bg-red-50 p-6 rounded-2xl border border-red-100">
-                <h4 className="font-bold text-red-800 mb-4 flex items-center"><AlertTriangle size={18} className="mr-2" /> O que não está incluso</h4>
+                <h4 className="font-bold text-red-800 mb-4 flex items-center">
+                  <AlertTriangle size={18} className="mr-2" /> O que não está incluso
+                </h4>
                 <ul className="space-y-2">
                   {trip.notIncluded.map((item, i) => (
                     <li key={i} className="flex items-start text-sm text-red-700">
@@ -648,9 +742,16 @@ const TripDetails: React.FC = () => {
               <h3 className="text-xl font-bold text-gray-900 mb-6">Roteiro Dia a Dia</h3>
               <div className="space-y-4">
                 {trip.itinerary.map((day) => (
-                  <div key={day.day} className="border border-gray-200 rounded-xl p-5 hover:border-primary-200 transition-colors bg-white min-w-0">
-                    <h4 className="font-bold text-lg text-primary-700 mb-2 break-words">Dia {day.day}: {day.title}</h4>
-                    <p className="text-gray-600 text-sm leading-relaxed break-words whitespace-pre-wrap">{day.description}</p>
+                  <div
+                    key={day.day}
+                    className="border border-gray-200 rounded-xl p-5 hover:border-primary-200 transition-colors bg-white min-w-0"
+                  >
+                    <h4 className="font-bold text-lg text-primary-700 mb-2 break-words">
+                      Dia {day.day}: {day.title}
+                    </h4>
+                    <p className="text-gray-600 text-sm leading-relaxed break-words whitespace-pre-wrap">
+                      {day.description}
+                    </p>
                   </div>
                 ))}
               </div>
@@ -685,12 +786,16 @@ const TripDetails: React.FC = () => {
               </h3>
               <div className="bg-gray-50 border border-gray-200 rounded-xl p-5 space-y-4">
                 {trip.boardingPoints.map((bp) => (
-                  <div key={bp.id} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6 pb-4 border-b border-gray-200 last:border-0 last:pb-0">
+                  <div
+                    key={bp.id}
+                    className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6 pb-4 border-b border-gray-200 last:border-0 last:pb-0"
+                  >
                     <div className="bg-white px-3 py-1.5 rounded-lg border border-gray-200 text-sm font-bold text-gray-900 shadow-sm w-fit flex items-center gap-2">
                       <Clock size={14} className="text-primary-600" /> {bp.time}
                     </div>
                     <div className="flex items-center text-sm text-gray-700">
-                      <MapPin size={16} className="text-gray-400 mr-2 flex-shrink-0" /> {bp.location}
+                      <MapPin size={16} className="text-gray-400 mr-2 flex-shrink-0" />{' '}
+                      {bp.location}
                     </div>
                   </div>
                 ))}
@@ -700,7 +805,13 @@ const TripDetails: React.FC = () => {
 
           {/* Agency Info */}
           <div className="bg-white border border-gray-200 rounded-2xl p-6 flex flex-col sm:flex-row items-center gap-6">
-            <img src={agency.logo} alt={agency.name} loading="lazy" decoding="async" className="w-20 h-20 rounded-full object-cover border-4 border-gray-50 shadow-sm" />
+            <img
+              src={agency.logo}
+              alt={agency.name}
+              loading="lazy"
+              decoding="async"
+              className="w-20 h-20 rounded-full object-cover border-4 border-gray-50 shadow-sm"
+            />
             <div className="text-center sm:text-left flex-1">
               <h4 className="font-bold text-lg text-gray-900 mb-1">{agency.name}</h4>
               <div className="flex items-center justify-center sm:justify-start gap-2 text-sm text-gray-500 mb-3">
@@ -709,17 +820,24 @@ const TripDetails: React.FC = () => {
               <p className="text-sm text-gray-500 line-clamp-2">{agency.description}</p>
             </div>
             <div className="flex flex-col gap-2 w-full sm:w-auto">
-              <Link to={`/${agency.slug}`} className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-bold text-gray-700 hover:bg-gray-50 text-center transition-colors">
+              <Link
+                to={`/${agency.slug}`}
+                className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-bold text-gray-700 hover:bg-gray-50 text-center transition-colors"
+              >
                 Ver Perfil
               </Link>
               {whatsappLink && (
-                <a href={whatsappLink} target="_blank" rel="noopener noreferrer" className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-bold hover:bg-green-700 text-center transition-colors flex items-center justify-center gap-2">
+                <a
+                  href={whatsappLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-bold hover:bg-green-700 text-center transition-colors flex items-center justify-center gap-2"
+                >
                   <MessageCircle size={16} /> WhatsApp
                 </a>
               )}
             </div>
           </div>
-
         </div>
 
         {/* Right Column: Sticky Booking Card (Desktop) */}
@@ -737,7 +855,6 @@ const TripDetails: React.FC = () => {
             />
           </div>
         </div>
-
       </div>
 
       {/* Voltar para SouNativo - Prominent button for agency microsite context */}
@@ -771,13 +888,15 @@ const TripDetails: React.FC = () => {
           mainPassengerCpf={currentUserData?.cpf}
           mainPassengerPhone={currentUserData?.phone}
           mainPassengerBirthDate={currentUserData?.birthDate}
-          passengerConfig={trip.passengerConfig || {
-            allowChildren: trip.allowChildren !== false,
-            allowSeniors: true,
-            childAgeLimit: 12,
-            allowLapChild: false,
-            childPriceMultiplier: 0.7
-          }}
+          passengerConfig={
+            trip.passengerConfig || {
+              allowChildren: trip.allowChildren !== false,
+              allowSeniors: true,
+              childAgeLimit: 12,
+              allowLapChild: false,
+              childPriceMultiplier: 0.7,
+            }
+          }
         />
       )}
 
@@ -800,7 +919,9 @@ const TripDetails: React.FC = () => {
             <span className="text-xs text-gray-500">A partir de</span>
             <div className="flex items-baseline gap-1">
               <span className="text-xs font-semibold text-gray-900">R$</span>
-              <span className="text-2xl font-extrabold text-primary-600">{trip.price.toLocaleString('pt-BR')}</span>
+              <span className="text-2xl font-extrabold text-primary-600">
+                {trip.price.toLocaleString('pt-BR')}
+              </span>
             </div>
             <span className="text-[10px] text-gray-400">por pessoa</span>
           </div>
@@ -820,7 +941,7 @@ const TripDetails: React.FC = () => {
             className="lg:hidden fixed inset-0 bg-black/60 z-50 backdrop-blur-sm animate-[fadeIn_0.2s]"
             onClick={() => setShowMobileBooking(false)}
           />
-          <div className="lg:hidden fixed bottom-0 left-0 right-0 z-[51] animate-[slideUp_0.3s] rounded-t-3xl overflow-hidden max-h-[85vh] overflow-y-auto">
+          <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 animate-[slideUp_0.3s] rounded-t-3xl overflow-hidden max-h-[85vh] overflow-y-auto">
             <div className="bg-white p-1 flex justify-center border-b border-gray-100 sticky top-0 bg-white z-10">
               <div className="w-12 h-1.5 bg-gray-300 rounded-full my-2"></div>
               <button

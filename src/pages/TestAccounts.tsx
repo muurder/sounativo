@@ -3,8 +3,22 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { UserRole } from '../types';
-import { CheckCircle, XCircle, Loader, User, Building, Shield, Compass, Lock, AlertTriangle } from 'lucide-react';
-import { checkSupabaseConnection, getSupabaseDiagnostics, SupabaseConnectionCheckResult } from '../services/supabase';
+import {
+  CheckCircle,
+  XCircle,
+  Loader,
+  User,
+  Building,
+  Shield,
+  Compass,
+  Lock,
+  AlertTriangle,
+} from 'lucide-react';
+import {
+  checkSupabaseConnection,
+  getSupabaseDiagnostics,
+  SupabaseConnectionCheckResult,
+} from '../services/supabase';
 
 interface TestAccount {
   role: UserRole;
@@ -69,21 +83,25 @@ const TestAccounts: React.FC = () => {
   useEffect(() => {
     const checkAccess = () => {
       const isDev = import.meta.env.DEV || import.meta.env.MODE === 'development';
-      const isLocalhost = window.location.hostname === 'localhost' || 
-                         window.location.hostname === '127.0.0.1' ||
-                         window.location.hostname === '[::1]' ||
-                         window.location.hostname.startsWith('192.168.') ||
-                         window.location.hostname.startsWith('10.') ||
-                         window.location.hostname.startsWith('172.');
-      
+      const isLocalhost =
+        window.location.hostname === 'localhost' ||
+        window.location.hostname === '127.0.0.1' ||
+        window.location.hostname === '[::1]' ||
+        window.location.hostname.startsWith('192.168.') ||
+        window.location.hostname.startsWith('10.') ||
+        window.location.hostname.startsWith('172.');
+
       // Also allow if user is admin (extra security layer)
       const isAdmin = user?.role === UserRole.ADMIN;
-      
+
       const allowed = isDev || isLocalhost || isAdmin;
       setIsAllowed(allowed);
 
       if (!allowed) {
-        showToast('error', 'Esta página só está disponível em ambiente de desenvolvimento ou para administradores.');
+        showToast(
+          'error',
+          'Esta página só está disponível em ambiente de desenvolvimento ou para administradores.'
+        );
         setTimeout(() => navigate('/'), 2000);
       }
     };
@@ -107,9 +125,15 @@ const TestAccounts: React.FC = () => {
       if (!res.configured) {
         showToast('error', 'Supabase não configurado. Verifique o .env e reinicie o dev server.');
       } else if (!res.auth.ok && !res.db.ok) {
-        showToast('error', 'Falha ao conectar no Supabase (auth e banco). Veja o diagnóstico abaixo.');
+        showToast(
+          'error',
+          'Falha ao conectar no Supabase (auth e banco). Veja o diagnóstico abaixo.'
+        );
       } else if (!res.db.ok) {
-        showToast('warning', 'Conectou no Supabase, mas a query no banco falhou (possível RLS/tabela).');
+        showToast(
+          'warning',
+          'Conectou no Supabase, mas a query no banco falhou (possível RLS/tabela).'
+        );
       } else {
         showToast('success', 'Conexão com Supabase OK (auth + banco).');
       }
@@ -142,8 +166,8 @@ const TestAccounts: React.FC = () => {
           </div>
           <h1 className="text-2xl font-bold text-gray-900 mb-4">Acesso Negado</h1>
           <p className="text-gray-600 mb-6">
-            Esta página é apenas para ambiente de desenvolvimento ou localhost.
-            Por questões de segurança, ela não está disponível em produção.
+            Esta página é apenas para ambiente de desenvolvimento ou localhost. Por questões de
+            segurança, ela não está disponível em produção.
           </p>
           <button
             onClick={() => navigate('/')}
@@ -158,7 +182,7 @@ const TestAccounts: React.FC = () => {
 
   const handleCreateAccount = async (account: TestAccount) => {
     setCreating(account.email);
-    setErrors(prev => ({ ...prev, [account.email]: '' }));
+    setErrors((prev) => ({ ...prev, [account.email]: '' }));
 
     try {
       const registrationData: any = {
@@ -184,21 +208,24 @@ const TestAccounts: React.FC = () => {
       const result = await register(registrationData, account.role);
 
       if (result.success) {
-        setCreated(prev => new Set([...prev, account.email]));
+        setCreated((prev) => new Set([...prev, account.email]));
         showToast('success', `Conta ${account.name} criada com sucesso!`);
       } else {
         // Check if account already exists
-        if (result.error?.includes('já está cadastrado') || result.error?.includes('already registered')) {
-          setCreated(prev => new Set([...prev, account.email]));
+        if (
+          result.error?.includes('já está cadastrado') ||
+          result.error?.includes('already registered')
+        ) {
+          setCreated((prev) => new Set([...prev, account.email]));
           showToast('info', `Conta ${account.name} já existe. Você pode fazer login.`);
         } else {
-          setErrors(prev => ({ ...prev, [account.email]: result.error || 'Erro desconhecido' }));
+          setErrors((prev) => ({ ...prev, [account.email]: result.error || 'Erro desconhecido' }));
           showToast('error', `Erro ao criar ${account.name}: ${result.error}`);
         }
       }
     } catch (error: any) {
       const errorMsg = error.message || 'Erro desconhecido';
-      setErrors(prev => ({ ...prev, [account.email]: errorMsg }));
+      setErrors((prev) => ({ ...prev, [account.email]: errorMsg }));
       showToast('error', `Erro ao criar ${account.name}: ${errorMsg}`);
     } finally {
       setCreating(null);
@@ -254,8 +281,8 @@ const TestAccounts: React.FC = () => {
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Criar Contas de Teste</h1>
             <p className="text-gray-600">
-              Use esta página para criar contas de teste para diferentes tipos de usuários.
-              As contas já existentes serão detectadas automaticamente.
+              Use esta página para criar contas de teste para diferentes tipos de usuários. As
+              contas já existentes serão detectadas automaticamente.
             </p>
           </div>
 
@@ -273,8 +300,8 @@ const TestAccounts: React.FC = () => {
                     isCreated
                       ? 'bg-gray-50 border-gray-300'
                       : error
-                      ? 'bg-red-50 border-red-300'
-                      : 'bg-white border-gray-200 hover:border-gray-300'
+                        ? 'bg-red-50 border-red-300'
+                        : 'bg-white border-gray-200 hover:border-gray-300'
                   }`}
                 >
                   <div className="flex items-start justify-between">
@@ -324,10 +351,15 @@ const TestAccounts: React.FC = () => {
                               <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-800">
                                 <p className="font-semibold mb-1">Como configurar:</p>
                                 <ol className="list-decimal list-inside space-y-1 ml-2">
-                                  <li>Crie um arquivo <code className="bg-red-100 px-1 rounded">.env</code> na raiz do projeto</li>
-                                  <li>Adicione as variáveis:
+                                  <li>
+                                    Crie um arquivo{' '}
+                                    <code className="bg-red-100 px-1 rounded">.env</code> na raiz do
+                                    projeto
+                                  </li>
+                                  <li>
+                                    Adicione as variáveis:
                                     <pre className="mt-1 p-2 bg-red-100 rounded text-xs overflow-x-auto">
-{`VITE_SUPABASE_URL=https://seu-projeto.supabase.co
+                                      {`VITE_SUPABASE_URL=https://seu-projeto.supabase.co
 VITE_SUPABASE_ANON_KEY=sua-chave-anon-aqui`}
                                     </pre>
                                   </li>
@@ -390,14 +422,19 @@ VITE_SUPABASE_ANON_KEY=sua-chave-anon-aqui`}
                       <span className="font-semibold">URL:</span> {sbDiag.url || '(vazio)'}
                     </p>
                     <p>
-                      <span className="font-semibold">Project ref:</span> {sbDiag.projectRef || '(não detectado)'}
+                      <span className="font-semibold">Project ref:</span>{' '}
+                      {sbDiag.projectRef || '(não detectado)'}
                     </p>
                     <p>
                       <span className="font-semibold">Anon key:</span>{' '}
-                      {sbDiag.anonKeyPresent ? `presente (len ${sbDiag.anonKeyLength}, …${sbDiag.anonKeySuffix})` : 'ausente'}
+                      {sbDiag.anonKeyPresent
+                        ? `presente (len ${sbDiag.anonKeyLength}, …${sbDiag.anonKeySuffix})`
+                        : 'ausente'}
                     </p>
                     <p className="text-xs text-gray-600 mt-2">
-                      Se você alterou o <code className="bg-gray-100 px-1 rounded">.env</code> agora, <strong>reinicie</strong> o dev server (o Vite não recarrega env via hot reload).
+                      Se você alterou o <code className="bg-gray-100 px-1 rounded">.env</code>{' '}
+                      agora, <strong>reinicie</strong> o dev server (o Vite não recarrega env via
+                      hot reload).
                     </p>
                   </div>
                 </div>
@@ -406,7 +443,9 @@ VITE_SUPABASE_ANON_KEY=sua-chave-anon-aqui`}
                   onClick={runSupabaseCheck}
                   disabled={sbChecking}
                   className={`px-5 py-3 rounded-lg font-semibold transition-all ${
-                    sbChecking ? 'bg-gray-400 text-white cursor-not-allowed' : 'bg-gray-900 hover:bg-gray-800 text-white'
+                    sbChecking
+                      ? 'bg-gray-400 text-white cursor-not-allowed'
+                      : 'bg-gray-900 hover:bg-gray-800 text-white'
                   }`}
                 >
                   {sbChecking ? (
@@ -422,23 +461,29 @@ VITE_SUPABASE_ANON_KEY=sua-chave-anon-aqui`}
 
               {sbCheck && (
                 <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div className={`p-3 rounded-lg border ${sbCheck.auth.ok ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
+                  <div
+                    className={`p-3 rounded-lg border ${sbCheck.auth.ok ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}
+                  >
                     <p className="text-sm font-semibold text-gray-900">Auth</p>
                     <p className="text-sm text-gray-700">
-                      <span className="font-semibold">OK:</span> {sbCheck.auth.ok ? 'Sim' : 'Não'} ({sbCheck.auth.ms}ms)
+                      <span className="font-semibold">OK:</span> {sbCheck.auth.ok ? 'Sim' : 'Não'} (
+                      {sbCheck.auth.ms}ms)
                     </p>
                     {!sbCheck.auth.ok && sbCheck.auth.error && (
                       <p className="text-xs text-red-700 mt-1 break-words">{sbCheck.auth.error}</p>
                     )}
                   </div>
 
-                  <div className={`p-3 rounded-lg border ${sbCheck.db.ok ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
+                  <div
+                    className={`p-3 rounded-lg border ${sbCheck.db.ok ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}
+                  >
                     <p className="text-sm font-semibold text-gray-900">Banco (PostgREST)</p>
                     <p className="text-sm text-gray-700">
                       <span className="font-semibold">Tabela:</span> {sbCheck.db.table}
                     </p>
                     <p className="text-sm text-gray-700">
-                      <span className="font-semibold">OK:</span> {sbCheck.db.ok ? 'Sim' : 'Não'} ({sbCheck.db.ms}ms)
+                      <span className="font-semibold">OK:</span> {sbCheck.db.ok ? 'Sim' : 'Não'} (
+                      {sbCheck.db.ms}ms)
                     </p>
                     {!sbCheck.db.ok && sbCheck.db.error && (
                       <p className="text-xs text-red-700 mt-1 break-words">{sbCheck.db.error}</p>
@@ -454,8 +499,8 @@ VITE_SUPABASE_ANON_KEY=sua-chave-anon-aqui`}
                 <div>
                   <h3 className="font-bold text-yellow-900 mb-2">⚠️ Ambiente de Desenvolvimento</h3>
                   <p className="text-sm text-yellow-800">
-                    Esta página só está disponível em localhost ou ambiente de desenvolvimento.
-                    Em produção, esta rota será bloqueada automaticamente.
+                    Esta página só está disponível em localhost ou ambiente de desenvolvimento. Em
+                    produção, esta rota será bloqueada automaticamente.
                   </p>
                 </div>
               </div>
@@ -464,29 +509,61 @@ VITE_SUPABASE_ANON_KEY=sua-chave-anon-aqui`}
             <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
               <h3 className="font-bold text-blue-900 mb-2">📝 Notas Importantes:</h3>
               <ul className="text-sm text-blue-800 space-y-1 list-disc list-inside">
-                <li>As contas são criadas no Supabase e podem ser usadas para login imediatamente.</li>
-                <li>Se uma conta já existir, você verá uma mensagem informativa e poderá fazer login normalmente.</li>
-                <li>Guias turísticos são criados como agências com a tag <code className="bg-blue-100 px-1 rounded">GUIA</code> no custom_settings.</li>
-                <li>Para contas ADMIN, você pode precisar atualizar manualmente o role no banco de dados.</li>
-                <li><strong>Nunca use essas senhas em produção!</strong> Elas são apenas para testes locais.</li>
+                <li>
+                  As contas são criadas no Supabase e podem ser usadas para login imediatamente.
+                </li>
+                <li>
+                  Se uma conta já existir, você verá uma mensagem informativa e poderá fazer login
+                  normalmente.
+                </li>
+                <li>
+                  Guias turísticos são criados como agências com a tag{' '}
+                  <code className="bg-blue-100 px-1 rounded">GUIA</code> no custom_settings.
+                </li>
+                <li>
+                  Para contas ADMIN, você pode precisar atualizar manualmente o role no banco de
+                  dados.
+                </li>
+                <li>
+                  <strong>Nunca use essas senhas em produção!</strong> Elas são apenas para testes
+                  locais.
+                </li>
               </ul>
             </div>
 
             <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg">
               <h3 className="font-bold text-purple-900 mb-2">⚙️ Configuração do Supabase:</h3>
               <p className="text-sm text-purple-800 mb-2">
-                Se você está vendo o erro "Backend não configurado", você precisa configurar o Supabase:
+                Se você está vendo o erro "Backend não configurado", você precisa configurar o
+                Supabase:
               </p>
               <ol className="text-sm text-purple-800 space-y-2 list-decimal list-inside ml-2">
-                <li>Crie um arquivo <code className="bg-purple-100 px-1.5 py-0.5 rounded font-mono">.env</code> na raiz do projeto (mesmo nível que <code className="bg-purple-100 px-1.5 py-0.5 rounded font-mono">package.json</code>)</li>
-                <li>Adicione suas credenciais do Supabase:
+                <li>
+                  Crie um arquivo{' '}
+                  <code className="bg-purple-100 px-1.5 py-0.5 rounded font-mono">.env</code> na
+                  raiz do projeto (mesmo nível que{' '}
+                  <code className="bg-purple-100 px-1.5 py-0.5 rounded font-mono">
+                    package.json
+                  </code>
+                  )
+                </li>
+                <li>
+                  Adicione suas credenciais do Supabase:
                   <pre className="mt-2 p-3 bg-purple-100 rounded text-xs overflow-x-auto font-mono">
-{`VITE_SUPABASE_URL=https://seu-projeto-id.supabase.co
+                    {`VITE_SUPABASE_URL=https://seu-projeto-id.supabase.co
 VITE_SUPABASE_ANON_KEY=sua-chave-anon-key-aqui`}
                   </pre>
                 </li>
-                <li>Você pode encontrar essas credenciais no painel do Supabase em: <strong>Settings → API</strong></li>
-                <li>Após criar o arquivo, <strong>reinicie o servidor de desenvolvimento</strong> (pare e inicie novamente com <code className="bg-purple-100 px-1.5 py-0.5 rounded font-mono">npm run dev</code>)</li>
+                <li>
+                  Você pode encontrar essas credenciais no painel do Supabase em:{' '}
+                  <strong>Settings → API</strong>
+                </li>
+                <li>
+                  Após criar o arquivo, <strong>reinicie o servidor de desenvolvimento</strong>{' '}
+                  (pare e inicie novamente com{' '}
+                  <code className="bg-purple-100 px-1.5 py-0.5 rounded font-mono">npm run dev</code>
+                  )
+                </li>
               </ol>
             </div>
           </div>
@@ -497,4 +574,3 @@ VITE_SUPABASE_ANON_KEY=sua-chave-anon-key-aqui`}
 };
 
 export default TestAccounts;
-

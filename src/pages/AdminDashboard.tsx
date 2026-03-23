@@ -3,13 +3,37 @@ import { useData } from '../context/DataContext';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useToast } from '../context/ToastContext';
-import { UserRole, Trip, Agency, Client, AgencyReview, ThemePalette, TripCategory, UserStats, Booking, OperationalData, RoomConfig, ManualPassenger, BroadcastMessage, BroadcastWithInteractions, BroadcastTargetRole } from '../types';
+import {
+  UserRole,
+  Trip,
+  Agency,
+  Client,
+  AgencyReview,
+  ThemePalette,
+  TripCategory,
+  UserStats,
+  Booking,
+  OperationalData,
+  RoomConfig,
+  ManualPassenger,
+  BroadcastMessage,
+  BroadcastWithInteractions,
+  BroadcastTargetRole,
+} from '../types';
 import Sidebar from '../components/Sidebar';
 
 const ALL_TRIP_CATEGORIES: TripCategory[] = [
-  'PRAIA', 'AVENTURA', 'FAMILIA', 'ROMANTICO', 'URBANO',
-  'NATUREZA', 'CULTURA', 'GASTRONOMICO', 'VIDA_NOTURNA',
-  'VIAGEM_BARATA', 'ARTE'
+  'PRAIA',
+  'AVENTURA',
+  'FAMILIA',
+  'ROMANTICO',
+  'URBANO',
+  'NATUREZA',
+  'CULTURA',
+  'GASTRONOMICO',
+  'VIDA_NOTURNA',
+  'VIAGEM_BARATA',
+  'ARTE',
 ];
 
 // Helper function to normalize date to ISO format (YYYY-MM-DD) for input type="date"
@@ -65,17 +89,80 @@ const normalizeDateToISO = (dateValue: string | Date | undefined | null): string
   }
 };
 import {
-  Trash2, MessageCircle, Users, Briefcase, MapPin,
-  AlertOctagon, Database, Loader, Palette, Lock, Eye, Save,
-  Activity, X, Search, MoreVertical,
-  DollarSign, ShoppingBag, Edit3,
-  CreditCard, CheckCircle, XCircle, Ban, Star, UserX, UserCheck, Key,
-  Sparkles, Filter, ChevronDown, MonitorPlay, Download, BarChart2 as StatsIcon, ExternalLink,
-  LayoutGrid, List, Archive, ArchiveRestore, Trash, Camera, Upload, History, PauseCircle, PlayCircle, Plane, RefreshCw, AlertCircle, LucideProps,
-  TrendingUp, UserPlus, Shield, Calendar, LogIn, FileText, X as XIcon, Gift, CheckCircle2,
-  UserCog, Building2, Package, BookOpen, Settings, CreditCard as CreditCardIcon, Check,
-  Megaphone, Clock, AlertTriangle, CheckCircle2 as CheckCircle2Icon, XCircle as XCircleIcon, Copy,
-  LogOut, Send, BarChart3, ThumbsUp
+  Trash2,
+  MessageCircle,
+  Users,
+  Briefcase,
+  MapPin,
+  AlertOctagon,
+  Database,
+  Loader,
+  Palette,
+  Lock,
+  Eye,
+  Save,
+  Activity,
+  X,
+  Search,
+  MoreVertical,
+  DollarSign,
+  ShoppingBag,
+  Edit3,
+  CreditCard,
+  CheckCircle,
+  XCircle,
+  Ban,
+  Star,
+  UserX,
+  UserCheck,
+  Key,
+  Sparkles,
+  Filter,
+  ChevronDown,
+  MonitorPlay,
+  Download,
+  BarChart2 as StatsIcon,
+  ExternalLink,
+  LayoutGrid,
+  List,
+  Archive,
+  ArchiveRestore,
+  Trash,
+  Camera,
+  Upload,
+  History,
+  PauseCircle,
+  PlayCircle,
+  Plane,
+  RefreshCw,
+  AlertCircle,
+  LucideProps,
+  TrendingUp,
+  UserPlus,
+  Shield,
+  Calendar,
+  LogIn,
+  FileText,
+  X as XIcon,
+  Gift,
+  CheckCircle2,
+  UserCog,
+  Building2,
+  Package,
+  BookOpen,
+  Settings,
+  CreditCard as CreditCardIcon,
+  Check,
+  Megaphone,
+  Clock,
+  AlertTriangle,
+  CheckCircle2 as CheckCircle2Icon,
+  XCircle as XCircleIcon,
+  Copy,
+  LogOut,
+  Send,
+  BarChart3,
+  ThumbsUp,
 } from 'lucide-react';
 import { migrateData } from '../services/dataMigration';
 import { useSearchParams, Link, useNavigate } from 'react-router-dom';
@@ -83,7 +170,15 @@ import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 import { slugify } from '../utils/slugify';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from 'recharts';
 import { logger } from '../utils/logger';
 import GoogleLocationPicker from '../components/agency/GoogleLocationPicker';
 import SimpleLocationPicker from '../components/agency/SimpleLocationPicker';
@@ -91,7 +186,10 @@ import SimpleLocationPicker from '../components/agency/SimpleLocationPicker';
 // --- STYLED COMPONENTS (LOCAL) ---
 
 // Fix: Explicitly define Badge as a functional component returning React.ReactNode
-const Badge: React.FC<{ children: React.ReactNode; color: 'green' | 'red' | 'blue' | 'purple' | 'gray' | 'amber' }> = ({ children, color }) => {
+const Badge: React.FC<{
+  children: React.ReactNode;
+  color: 'green' | 'red' | 'blue' | 'purple' | 'gray' | 'amber';
+}> = ({ children, color }) => {
   const colors = {
     green: 'bg-green-100 text-green-700',
     red: 'bg-amber-100 text-amber-700',
@@ -101,7 +199,9 @@ const Badge: React.FC<{ children: React.ReactNode; color: 'green' | 'red' | 'blu
     amber: 'bg-amber-100 text-amber-700',
   };
   return (
-    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider ${colors[color]} inline-flex items-center gap-1.5 w-fit`}>
+    <span
+      className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider ${colors[color]} inline-flex items-center gap-1.5 w-fit`}
+    >
       {children}
     </span>
   );
@@ -125,9 +225,13 @@ const StatCard: React.FC<StatCardProps> = ({ title, value, subtitle, icon: Icon,
   };
 
   return (
-    <div className={`bg-white p-6 rounded-2xl shadow-sm border ${colorClasses[color]} hover:shadow-md transition-all`}>
+    <div
+      className={`bg-white p-6 rounded-2xl shadow-sm border ${colorClasses[color]} hover:shadow-md transition-all`}
+    >
       <div className="flex items-center justify-between mb-3">
-        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${colorClasses[color]}`}>
+        <div
+          className={`w-10 h-10 rounded-full flex items-center justify-center ${colorClasses[color]}`}
+        >
           <Icon size={20} />
         </div>
         <span className="text-xs font-bold uppercase text-gray-400">{subtitle}</span>
@@ -139,7 +243,14 @@ const StatCard: React.FC<StatCardProps> = ({ title, value, subtitle, icon: Icon,
 };
 
 // Fix: Define ActionMenu component locally
-interface ActionMenuProps { actions: { label: string; onClick: () => void; icon: React.ComponentType<LucideProps>; variant?: 'danger' | 'default' }[] }
+interface ActionMenuProps {
+  actions: {
+    label: string;
+    onClick: () => void;
+    icon: React.ComponentType<LucideProps>;
+    variant?: 'danger' | 'default';
+  }[];
+}
 const ActionMenu: React.FC<ActionMenuProps> = ({ actions }) => {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -165,10 +276,7 @@ const ActionMenu: React.FC<ActionMenuProps> = ({ actions }) => {
       </button>
       {isOpen && (
         <>
-          <div
-            className="fixed inset-0 z-40"
-            onClick={() => setIsOpen(false)}
-          />
+          <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
           <div className="absolute right-0 top-full mt-1 w-56 bg-white rounded-xl shadow-xl border border-gray-200 z-50 overflow-hidden animate-[scaleIn_0.1s] origin-top-right ring-1 ring-black/5">
             <div className="py-1">
               {actions.map((action, idx) => (
@@ -179,10 +287,11 @@ const ActionMenu: React.FC<ActionMenuProps> = ({ actions }) => {
                     action.onClick();
                     setIsOpen(false);
                   }}
-                  className={`w-full text-left px-4 py-2.5 text-sm font-medium flex items-center gap-3 transition-colors ${action.variant === 'danger'
-                    ? 'text-red-600 hover:bg-red-50'
-                    : 'text-gray-700 hover:bg-gray-50'
-                    }`}
+                  className={`w-full text-left px-4 py-2.5 text-sm font-medium flex items-center gap-3 transition-colors ${
+                    action.variant === 'danger'
+                      ? 'text-red-600 hover:bg-red-50'
+                      : 'text-gray-700 hover:bg-gray-50'
+                  }`}
                 >
                   <action.icon size={16} /> {action.label}
                 </button>
@@ -213,7 +322,7 @@ const AgenciesFilterModal: React.FC<AgenciesFilterModalProps> = ({
   agencies,
   onAgencyClick,
   onAgencyAction,
-  showAgencyTrash
+  showAgencyTrash,
 }) => {
   if (!isOpen) return null;
 
@@ -223,10 +332,7 @@ const AgenciesFilterModal: React.FC<AgenciesFilterModalProps> = ({
         className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] animate-[fadeIn_0.2s]"
         onClick={onClose}
       />
-      <div
-        className="fixed inset-0 z-[101] flex items-center justify-center p-4"
-        onClick={onClose}
-      >
+      <div className="fixed inset-0 z-[101] flex items-center justify-center p-4" onClick={onClose}>
         <div
           className="bg-white rounded-3xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col animate-[scaleIn_0.2s]"
           onClick={(e) => e.stopPropagation()}
@@ -261,14 +367,19 @@ const AgenciesFilterModal: React.FC<AgenciesFilterModalProps> = ({
                           alt=""
                         />
                         <div className="flex-1">
-                          <p className="font-semibold text-gray-900 text-sm group-hover:text-primary-600 transition-colors">{agency.name}</p>
+                          <p className="font-semibold text-gray-900 text-sm group-hover:text-primary-600 transition-colors">
+                            {agency.name}
+                          </p>
                           <p className="text-xs text-gray-500 mt-0.5">{agency.email || '---'}</p>
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className={`px-3 py-1 rounded-full text-xs font-semibold ${agency.subscriptionStatus === 'ACTIVE'
-                            ? 'bg-green-50 text-green-700'
-                            : 'bg-red-50 text-red-700'
-                            }`}>
+                          <span
+                            className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                              agency.subscriptionStatus === 'ACTIVE'
+                                ? 'bg-green-50 text-green-700'
+                                : 'bg-red-50 text-red-700'
+                            }`}
+                          >
                             {agency.subscriptionStatus === 'ACTIVE' ? 'Ativo' : 'Inativo'}
                           </span>
                           {agency.subscriptionPlan === 'PREMIUM' && (
@@ -278,18 +389,27 @@ const AgenciesFilterModal: React.FC<AgenciesFilterModalProps> = ({
                           )}
                         </div>
                       </div>
-                      <div className="ml-4 flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                      <div
+                        className="ml-4 flex items-center gap-2"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         {showAgencyTrash ? (
                           <>
                             <button
-                              onClick={(e) => { e.stopPropagation(); onAgencyAction(agency, 'restore'); }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onAgencyAction(agency, 'restore');
+                              }}
                               className="p-2 text-green-600 hover:text-green-700 hover:bg-green-50 rounded-lg transition-colors"
                               title="Restaurar"
                             >
                               <ArchiveRestore size={18} />
                             </button>
                             <button
-                              onClick={(e) => { e.stopPropagation(); onAgencyAction(agency, 'delete'); }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onAgencyAction(agency, 'delete');
+                              }}
                               className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
                               title="Excluir Permanentemente"
                             >
@@ -299,21 +419,30 @@ const AgenciesFilterModal: React.FC<AgenciesFilterModalProps> = ({
                         ) : (
                           <>
                             <button
-                              onClick={(e) => { e.stopPropagation(); onAgencyAction(agency, 'edit'); }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onAgencyAction(agency, 'edit');
+                              }}
                               className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
                               title="Editar Detalhes"
                             >
                               <Edit3 size={18} />
                             </button>
                             <button
-                              onClick={(e) => { e.stopPropagation(); onAgencyAction(agency, 'plan'); }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onAgencyAction(agency, 'plan');
+                              }}
                               className="p-2 text-purple-600 hover:text-purple-700 hover:bg-purple-50 rounded-lg transition-colors"
                               title="Mudar Plano"
                             >
                               <CreditCard size={18} />
                             </button>
                             <button
-                              onClick={(e) => { e.stopPropagation(); onAgencyAction(agency, 'delete'); }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onAgencyAction(agency, 'delete');
+                              }}
                               className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
                               title="Excluir"
                             >
@@ -348,7 +477,14 @@ interface StatsRibbonCardProps {
   trend?: string;
 }
 
-const StatsRibbonCard: React.FC<StatsRibbonCardProps & { onClick?: () => void }> = ({ title, value, icon: Icon, iconColor, trend, onClick }) => {
+const StatsRibbonCard: React.FC<StatsRibbonCardProps & { onClick?: () => void }> = ({
+  title,
+  value,
+  icon: Icon,
+  iconColor,
+  trend,
+  onClick,
+}) => {
   return (
     <div
       className={`bg-white rounded-xl p-5 shadow-sm border border-gray-200 transition-all ${onClick ? 'cursor-pointer hover:shadow-lg hover:border-primary-300 hover:scale-[1.02]' : 'hover:shadow-md'}`}
@@ -356,7 +492,9 @@ const StatsRibbonCard: React.FC<StatsRibbonCardProps & { onClick?: () => void }>
     >
       <div className="flex items-start justify-between">
         <div className="flex-1">
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">{title}</p>
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
+            {title}
+          </p>
           <p className="text-2xl font-extrabold text-gray-900">{value}</p>
           {trend && <p className="text-xs text-gray-400 mt-1">{trend}</p>}
         </div>
@@ -386,7 +524,7 @@ const UsersFilterModal: React.FC<UsersFilterModalProps> = ({
   users,
   onUserClick,
   onUserAction,
-  showUserTrash
+  showUserTrash,
 }) => {
   if (!isOpen) return null;
 
@@ -396,10 +534,7 @@ const UsersFilterModal: React.FC<UsersFilterModalProps> = ({
         className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] animate-[fadeIn_0.2s]"
         onClick={onClose}
       />
-      <div
-        className="fixed inset-0 z-[101] flex items-center justify-center p-4"
-        onClick={onClose}
-      >
+      <div className="fixed inset-0 z-[101] flex items-center justify-center p-4" onClick={onClose}>
         <div
           className="bg-white rounded-3xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col animate-[scaleIn_0.2s]"
           onClick={(e) => e.stopPropagation()}
@@ -434,28 +569,42 @@ const UsersFilterModal: React.FC<UsersFilterModalProps> = ({
                           alt=""
                         />
                         <div className="flex-1">
-                          <p className="font-semibold text-gray-900 text-sm group-hover:text-primary-600 transition-colors">{client.name}</p>
+                          <p className="font-semibold text-gray-900 text-sm group-hover:text-primary-600 transition-colors">
+                            {client.name}
+                          </p>
                           <p className="text-xs text-gray-500 mt-0.5">{client.email}</p>
                         </div>
-                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${client.status === 'ACTIVE'
-                          ? 'bg-green-50 text-green-700'
-                          : 'bg-red-50 text-red-700'
-                          }`}>
+                        <span
+                          className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                            client.status === 'ACTIVE'
+                              ? 'bg-green-50 text-green-700'
+                              : 'bg-red-50 text-red-700'
+                          }`}
+                        >
                           {client.status === 'ACTIVE' ? 'Ativo' : 'Suspenso'}
                         </span>
                       </div>
-                      <div className="ml-4 flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                      <div
+                        className="ml-4 flex items-center gap-2"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         {showUserTrash ? (
                           <>
                             <button
-                              onClick={(e) => { e.stopPropagation(); onUserAction(client, 'restore'); }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onUserAction(client, 'restore');
+                              }}
                               className="p-2 text-green-600 hover:text-green-700 hover:bg-green-50 rounded-lg transition-colors"
                               title="Restaurar"
                             >
                               <ArchiveRestore size={18} />
                             </button>
                             <button
-                              onClick={(e) => { e.stopPropagation(); onUserAction(client, 'delete'); }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onUserAction(client, 'delete');
+                              }}
                               className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
                               title="Excluir Permanentemente"
                             >
@@ -465,24 +614,38 @@ const UsersFilterModal: React.FC<UsersFilterModalProps> = ({
                         ) : (
                           <>
                             <button
-                              onClick={(e) => { e.stopPropagation(); onUserAction(client, 'edit'); }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onUserAction(client, 'edit');
+                              }}
                               className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
                               title="Editar Detalhes"
                             >
                               <Edit3 size={18} />
                             </button>
                             <button
-                              onClick={(e) => { e.stopPropagation(); onUserAction(client, 'toggle'); }}
-                              className={`p-2 rounded-lg transition-colors ${client.status === 'ACTIVE'
-                                ? 'text-amber-600 hover:text-amber-700 hover:bg-amber-50'
-                                : 'text-green-600 hover:text-green-700 hover:bg-green-50'
-                                }`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onUserAction(client, 'toggle');
+                              }}
+                              className={`p-2 rounded-lg transition-colors ${
+                                client.status === 'ACTIVE'
+                                  ? 'text-amber-600 hover:text-amber-700 hover:bg-amber-50'
+                                  : 'text-green-600 hover:text-green-700 hover:bg-green-50'
+                              }`}
                               title={client.status === 'ACTIVE' ? 'Suspender' : 'Ativar'}
                             >
-                              {client.status === 'ACTIVE' ? <Ban size={18} /> : <UserCheck size={18} />}
+                              {client.status === 'ACTIVE' ? (
+                                <Ban size={18} />
+                              ) : (
+                                <UserCheck size={18} />
+                              )}
                             </button>
                             <button
-                              onClick={(e) => { e.stopPropagation(); onUserAction(client, 'delete'); }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onUserAction(client, 'delete');
+                              }}
                               className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
                               title="Excluir"
                             >
@@ -536,7 +699,13 @@ interface DashboardViewerProps {
   onClose: () => void;
 }
 
-const DashboardViewer: React.FC<DashboardViewerProps> = ({ isOpen, type, entityId, entityName, onClose }) => {
+const DashboardViewer: React.FC<DashboardViewerProps> = ({
+  isOpen,
+  type,
+  entityId,
+  entityName,
+  onClose,
+}) => {
   if (!isOpen || !entityId) return null;
 
   // Build the correct URL for HashRouter based on type
@@ -547,7 +716,7 @@ const DashboardViewer: React.FC<DashboardViewerProps> = ({ isOpen, type, entityI
     dashboardUrl = `${window.location.origin}${basePath}/#/client/dashboard/PROFILE?impersonate=${entityId}`;
   } else if (type === 'agency') {
     // Get agency slug from entityId
-    const agency = agencies.find(a => a.agencyId === entityId);
+    const agency = agencies.find((a) => a.agencyId === entityId);
     if (agency?.slug) {
       dashboardUrl = `${window.location.origin}${basePath}/#/${agency.slug}/dashboard?impersonate=${entityId}`;
     } else {
@@ -560,7 +729,7 @@ const DashboardViewer: React.FC<DashboardViewerProps> = ({ isOpen, type, entityI
   const typeLabels = {
     client: 'Cliente',
     agency: 'Agência',
-    guide: 'Guia de Turismo'
+    guide: 'Guia de Turismo',
   };
 
   return (
@@ -569,10 +738,7 @@ const DashboardViewer: React.FC<DashboardViewerProps> = ({ isOpen, type, entityI
         className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[200] animate-[fadeIn_0.2s]"
         onClick={onClose}
       />
-      <div
-        className="fixed inset-0 z-[201] flex items-center justify-center p-4"
-        onClick={onClose}
-      >
+      <div className="fixed inset-0 z-[201] flex items-center justify-center p-4" onClick={onClose}>
         <div
           className="bg-white rounded-3xl shadow-2xl w-full max-w-7xl h-[90vh] flex flex-col animate-[scaleIn_0.2s]"
           onClick={(e) => e.stopPropagation()}
@@ -599,7 +765,10 @@ const DashboardViewer: React.FC<DashboardViewerProps> = ({ isOpen, type, entityI
           <div className="bg-amber-50 border-b border-amber-200 px-6 py-3">
             <div className="flex items-center gap-2 text-sm font-semibold text-amber-900">
               <AlertTriangle size={18} className="text-amber-600" />
-              <span>Você está visualizando o perfil de <strong>{entityName || typeLabels[type]}</strong> como Administrador. Todas as ações serão registradas.</span>
+              <span>
+                Você está visualizando o perfil de <strong>{entityName || typeLabels[type]}</strong>{' '}
+                como Administrador. Todas as ações serão registradas.
+              </span>
             </div>
           </div>
 
@@ -640,7 +809,11 @@ const DashboardViewer: React.FC<DashboardViewerProps> = ({ isOpen, type, entityI
   );
 };
 
-const ClientDashboardPopup: React.FC<ClientDashboardPopupProps> = ({ isOpen, clientId, onClose }) => {
+const ClientDashboardPopup: React.FC<ClientDashboardPopupProps> = ({
+  isOpen,
+  clientId,
+  onClose,
+}) => {
   if (!isOpen || !clientId) return null;
 
   // Build the correct URL for HashRouter
@@ -653,10 +826,7 @@ const ClientDashboardPopup: React.FC<ClientDashboardPopupProps> = ({ isOpen, cli
         className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[200] animate-[fadeIn_0.2s]"
         onClick={onClose}
       />
-      <div
-        className="fixed inset-0 z-[201] flex items-center justify-center p-4"
-        onClick={onClose}
-      >
+      <div className="fixed inset-0 z-[201] flex items-center justify-center p-4" onClick={onClose}>
         <div
           className="bg-white rounded-3xl shadow-2xl w-full max-w-7xl h-[90vh] flex flex-col animate-[scaleIn_0.2s]"
           onClick={(e) => e.stopPropagation()}
@@ -683,7 +853,10 @@ const ClientDashboardPopup: React.FC<ClientDashboardPopupProps> = ({ isOpen, cli
           <div className="bg-amber-50 border-b border-amber-200 px-6 py-3">
             <div className="flex items-center gap-2 text-sm font-semibold text-amber-900">
               <AlertTriangle size={18} className="text-amber-600" />
-              <span>Você está visualizando este perfil como Administrador. Todas as ações serão registradas.</span>
+              <span>
+                Você está visualizando este perfil como Administrador. Todas as ações serão
+                registradas.
+              </span>
             </div>
           </div>
 
@@ -742,17 +915,17 @@ const AgencyDetailModal: React.FC<AgencyDetailModalProps> = ({
   onEdit,
   bookings,
   reviews,
-  trips
+  trips,
 }) => {
   if (!isOpen || !agency) return null;
 
-  const agencyBookings = bookings.filter(b => {
-    const trip = trips.find(t => t.id === b.tripId);
+  const agencyBookings = bookings.filter((b) => {
+    const trip = trips.find((t) => t.id === b.tripId);
     return trip && trip.agencyId === agency.agencyId;
   });
-  const agencyReviews = reviews.filter(r => r.agencyId === agency.agencyId);
+  const agencyReviews = reviews.filter((r) => r.agencyId === agency.agencyId);
   const totalRevenue = agencyBookings.reduce((sum, b) => sum + b.totalPrice, 0);
-  const agencyTrips = trips.filter(t => t.agencyId === agency.agencyId);
+  const agencyTrips = trips.filter((t) => t.agencyId === agency.agencyId);
 
   return (
     <>
@@ -760,10 +933,7 @@ const AgencyDetailModal: React.FC<AgencyDetailModalProps> = ({
         className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] animate-[fadeIn_0.2s]"
         onClick={onClose}
       />
-      <div
-        className="fixed inset-0 z-[101] flex items-center justify-center p-4"
-        onClick={onClose}
-      >
+      <div className="fixed inset-0 z-[101] flex items-center justify-center p-4" onClick={onClose}>
         <div
           className="bg-white rounded-3xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col animate-[scaleIn_0.2s]"
           onClick={(e) => e.stopPropagation()}
@@ -785,15 +955,16 @@ const AgencyDetailModal: React.FC<AgencyDetailModalProps> = ({
               <div className="flex-1">
                 <h2 className="text-3xl font-semibold mb-1 text-slate-900">{agency.name}</h2>
                 <p className="text-slate-600 text-lg">{agency.email || '---'}</p>
-                {agency.phone && (
-                  <p className="text-primary-100 text-sm mt-1">{agency.phone}</p>
-                )}
+                {agency.phone && <p className="text-primary-100 text-sm mt-1">{agency.phone}</p>}
               </div>
               <div className="text-right">
-                <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold ${agency.subscriptionStatus === 'ACTIVE'
-                  ? 'bg-green-500/20 text-green-100 border border-green-300/30'
-                  : 'bg-red-500/20 text-red-100 border border-red-300/30'
-                  }`}>
+                <span
+                  className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold ${
+                    agency.subscriptionStatus === 'ACTIVE'
+                      ? 'bg-green-500/20 text-green-100 border border-green-300/30'
+                      : 'bg-red-500/20 text-red-100 border border-red-300/30'
+                  }`}
+                >
                   {agency.subscriptionStatus === 'ACTIVE' ? 'Ativo' : 'Inativo'}
                 </span>
                 {agency.subscriptionPlan === 'PREMIUM' && (
@@ -810,19 +981,29 @@ const AgencyDetailModal: React.FC<AgencyDetailModalProps> = ({
             {/* Stats Grid */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-xl border border-blue-200">
-                <p className="text-xs font-semibold text-blue-600 uppercase tracking-wider mb-1">Pacotes</p>
+                <p className="text-xs font-semibold text-blue-600 uppercase tracking-wider mb-1">
+                  Pacotes
+                </p>
                 <p className="text-2xl font-extrabold text-blue-900">{agencyTrips.length}</p>
               </div>
               <div className="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-xl border border-green-200">
-                <p className="text-xs font-semibold text-green-600 uppercase tracking-wider mb-1">Receita Total</p>
-                <p className="text-2xl font-extrabold text-green-900">R$ {totalRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                <p className="text-xs font-semibold text-green-600 uppercase tracking-wider mb-1">
+                  Receita Total
+                </p>
+                <p className="text-2xl font-extrabold text-green-900">
+                  R$ {totalRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                </p>
               </div>
               <div className="bg-gradient-to-br from-amber-50 to-amber-100 p-4 rounded-xl border border-amber-200">
-                <p className="text-xs font-semibold text-amber-600 uppercase tracking-wider mb-1">Avaliações</p>
+                <p className="text-xs font-semibold text-amber-600 uppercase tracking-wider mb-1">
+                  Avaliações
+                </p>
                 <p className="text-2xl font-extrabold text-amber-900">{agencyReviews.length}</p>
               </div>
               <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-xl border border-purple-200">
-                <p className="text-xs font-semibold text-purple-600 uppercase tracking-wider mb-1">Vendas</p>
+                <p className="text-xs font-semibold text-purple-600 uppercase tracking-wider mb-1">
+                  Vendas
+                </p>
                 <p className="text-2xl font-extrabold text-purple-900">{agencyBookings.length}</p>
               </div>
             </div>
@@ -835,23 +1016,34 @@ const AgencyDetailModal: React.FC<AgencyDetailModalProps> = ({
                   Vendas Recentes
                 </h3>
                 <div className="space-y-3">
-                  {agencyBookings.slice(0, 3).map(booking => {
-                    const trip = trips.find(t => t.id === booking.tripId);
+                  {agencyBookings.slice(0, 3).map((booking) => {
+                    const trip = trips.find((t) => t.id === booking.tripId);
                     return (
-                      <div key={booking.id} className="bg-gray-50 p-4 rounded-xl border border-gray-200 hover:border-primary-300 transition-colors">
+                      <div
+                        key={booking.id}
+                        className="bg-gray-50 p-4 rounded-xl border border-gray-200 hover:border-primary-300 transition-colors"
+                      >
                         <div className="flex items-center justify-between">
                           <div>
-                            <p className="font-semibold text-gray-900">{trip?.title || 'Viagem não encontrada'}</p>
+                            <p className="font-semibold text-gray-900">
+                              {trip?.title || 'Viagem não encontrada'}
+                            </p>
                             <p className="text-sm text-gray-500 mt-1">
-                              {new Date(booking.createdAt).toLocaleDateString('pt-BR')} • R$ {booking.totalPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                              {new Date(booking.createdAt).toLocaleDateString('pt-BR')} • R${' '}
+                              {booking.totalPrice.toLocaleString('pt-BR', {
+                                minimumFractionDigits: 2,
+                              })}
                             </p>
                           </div>
-                          <span className={`px-3 py-1 rounded-full text-xs font-semibold ${booking.status === 'CONFIRMED'
-                            ? 'bg-green-100 text-green-700'
-                            : booking.status === 'PENDING'
-                              ? 'bg-amber-100 text-amber-700'
-                              : 'bg-gray-100 text-gray-700'
-                            }`}>
+                          <span
+                            className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                              booking.status === 'CONFIRMED'
+                                ? 'bg-green-100 text-green-700'
+                                : booking.status === 'PENDING'
+                                  ? 'bg-amber-100 text-amber-700'
+                                  : 'bg-gray-100 text-gray-700'
+                            }`}
+                          >
                             {booking.status}
                           </span>
                         </div>
@@ -870,8 +1062,11 @@ const AgencyDetailModal: React.FC<AgencyDetailModalProps> = ({
                   Avaliações Recentes
                 </h3>
                 <div className="space-y-3">
-                  {agencyReviews.slice(0, 2).map(review => (
-                    <div key={review.id} className="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                  {agencyReviews.slice(0, 2).map((review) => (
+                    <div
+                      key={review.id}
+                      className="bg-gray-50 p-4 rounded-xl border border-gray-200"
+                    >
                       <div className="flex items-start justify-between mb-2">
                         <div className="flex items-center gap-2">
                           <div className="flex">
@@ -879,11 +1074,17 @@ const AgencyDetailModal: React.FC<AgencyDetailModalProps> = ({
                               <Star
                                 key={i}
                                 size={14}
-                                className={i < review.rating ? 'text-amber-500 fill-amber-500' : 'text-gray-300'}
+                                className={
+                                  i < review.rating
+                                    ? 'text-amber-500 fill-amber-500'
+                                    : 'text-gray-300'
+                                }
                               />
                             ))}
                           </div>
-                          <span className="text-sm font-semibold text-gray-700">{review.clientName}</span>
+                          <span className="text-sm font-semibold text-gray-700">
+                            {review.clientName}
+                          </span>
                         </div>
                         <span className="text-xs text-gray-400">
                           {new Date(review.createdAt).toLocaleDateString('pt-BR')}
@@ -929,14 +1130,14 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
   onAccessDashboard,
   bookings,
   reviews,
-  trips
+  trips,
 }) => {
   if (!isOpen || !client) return null;
 
-  const clientBookings = bookings.filter(b => b.clientId === client.id);
-  const clientReviews = reviews.filter(r => r.clientId === client.id);
+  const clientBookings = bookings.filter((b) => b.clientId === client.id);
+  const clientReviews = reviews.filter((r) => r.clientId === client.id);
   const totalSpent = clientBookings.reduce((sum, b) => sum + b.totalPrice, 0);
-  const favoriteTrips = trips.filter(t => (client as any).favorites?.includes(t.id) || false);
+  const favoriteTrips = trips.filter((t) => (client as any).favorites?.includes(t.id) || false);
 
   return (
     <>
@@ -944,10 +1145,7 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
         className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] animate-[fadeIn_0.2s]"
         onClick={onClose}
       />
-      <div
-        className="fixed inset-0 z-[101] flex items-center justify-center p-4"
-        onClick={onClose}
-      >
+      <div className="fixed inset-0 z-[101] flex items-center justify-center p-4" onClick={onClose}>
         <div
           className="bg-white rounded-3xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col animate-[scaleIn_0.2s]"
           onClick={(e) => e.stopPropagation()}
@@ -969,15 +1167,16 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
               <div className="flex-1">
                 <h2 className="text-3xl font-semibold mb-1 text-slate-900">{client.name}</h2>
                 <p className="text-slate-600 text-lg">{client.email}</p>
-                {client.phone && (
-                  <p className="text-slate-600 text-sm mt-1">{client.phone}</p>
-                )}
+                {client.phone && <p className="text-slate-600 text-sm mt-1">{client.phone}</p>}
               </div>
               <div className="text-right">
-                <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold ${client.status === 'ACTIVE'
-                  ? 'bg-green-500/20 text-green-100 border border-green-300/30'
-                  : 'bg-red-500/20 text-red-100 border border-red-300/30'
-                  }`}>
+                <span
+                  className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold ${
+                    client.status === 'ACTIVE'
+                      ? 'bg-green-500/20 text-green-100 border border-green-300/30'
+                      : 'bg-red-500/20 text-red-100 border border-red-300/30'
+                  }`}
+                >
                   {client.status === 'ACTIVE' ? 'Ativo' : 'Suspenso'}
                 </span>
               </div>
@@ -989,19 +1188,29 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
             {/* Stats Grid */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-xl border border-blue-200">
-                <p className="text-xs font-semibold text-blue-600 uppercase tracking-wider mb-1">Reservas</p>
+                <p className="text-xs font-semibold text-blue-600 uppercase tracking-wider mb-1">
+                  Reservas
+                </p>
                 <p className="text-2xl font-extrabold text-blue-900">{clientBookings.length}</p>
               </div>
               <div className="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-xl border border-green-200">
-                <p className="text-xs font-semibold text-green-600 uppercase tracking-wider mb-1">Total Gasto</p>
-                <p className="text-2xl font-extrabold text-green-900">R$ {totalSpent.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                <p className="text-xs font-semibold text-green-600 uppercase tracking-wider mb-1">
+                  Total Gasto
+                </p>
+                <p className="text-2xl font-extrabold text-green-900">
+                  R$ {totalSpent.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                </p>
               </div>
               <div className="bg-gradient-to-br from-amber-50 to-amber-100 p-4 rounded-xl border border-amber-200">
-                <p className="text-xs font-semibold text-amber-600 uppercase tracking-wider mb-1">Avaliações</p>
+                <p className="text-xs font-semibold text-amber-600 uppercase tracking-wider mb-1">
+                  Avaliações
+                </p>
                 <p className="text-2xl font-extrabold text-amber-900">{clientReviews.length}</p>
               </div>
               <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-xl border border-purple-200">
-                <p className="text-xs font-semibold text-purple-600 uppercase tracking-wider mb-1">Favoritos</p>
+                <p className="text-xs font-semibold text-purple-600 uppercase tracking-wider mb-1">
+                  Favoritos
+                </p>
                 <p className="text-2xl font-extrabold text-purple-900">{favoriteTrips.length}</p>
               </div>
             </div>
@@ -1014,23 +1223,34 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
               </h3>
               {clientBookings.length > 0 ? (
                 <div className="space-y-3">
-                  {clientBookings.slice(0, 3).map(booking => {
-                    const trip = trips.find(t => t.id === booking.tripId);
+                  {clientBookings.slice(0, 3).map((booking) => {
+                    const trip = trips.find((t) => t.id === booking.tripId);
                     return (
-                      <div key={booking.id} className="bg-gray-50 p-4 rounded-xl border border-gray-200 hover:border-primary-300 transition-colors">
+                      <div
+                        key={booking.id}
+                        className="bg-gray-50 p-4 rounded-xl border border-gray-200 hover:border-primary-300 transition-colors"
+                      >
                         <div className="flex items-center justify-between">
                           <div>
-                            <p className="font-semibold text-gray-900">{trip?.title || 'Viagem não encontrada'}</p>
+                            <p className="font-semibold text-gray-900">
+                              {trip?.title || 'Viagem não encontrada'}
+                            </p>
                             <p className="text-sm text-gray-500 mt-1">
-                              {new Date(booking.createdAt).toLocaleDateString('pt-BR')} • R$ {booking.totalPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                              {new Date(booking.createdAt).toLocaleDateString('pt-BR')} • R${' '}
+                              {booking.totalPrice.toLocaleString('pt-BR', {
+                                minimumFractionDigits: 2,
+                              })}
                             </p>
                           </div>
-                          <span className={`px-3 py-1 rounded-full text-xs font-semibold ${booking.status === 'CONFIRMED'
-                            ? 'bg-green-100 text-green-700'
-                            : booking.status === 'PENDING'
-                              ? 'bg-amber-100 text-amber-700'
-                              : 'bg-gray-100 text-gray-700'
-                            }`}>
+                          <span
+                            className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                              booking.status === 'CONFIRMED'
+                                ? 'bg-green-100 text-green-700'
+                                : booking.status === 'PENDING'
+                                  ? 'bg-amber-100 text-amber-700'
+                                  : 'bg-gray-100 text-gray-700'
+                            }`}
+                          >
                             {booking.status}
                           </span>
                         </div>
@@ -1039,7 +1259,9 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
                   })}
                 </div>
               ) : (
-                <p className="text-sm text-gray-500 text-center py-4">Nenhuma reserva encontrada.</p>
+                <p className="text-sm text-gray-500 text-center py-4">
+                  Nenhuma reserva encontrada.
+                </p>
               )}
             </div>
 
@@ -1051,8 +1273,11 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
                   Avaliações Recentes
                 </h3>
                 <div className="space-y-3">
-                  {clientReviews.slice(0, 2).map(review => (
-                    <div key={review.id} className="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                  {clientReviews.slice(0, 2).map((review) => (
+                    <div
+                      key={review.id}
+                      className="bg-gray-50 p-4 rounded-xl border border-gray-200"
+                    >
                       <div className="flex items-start justify-between mb-2">
                         <div className="flex items-center gap-2">
                           <div className="flex">
@@ -1060,11 +1285,17 @@ const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
                               <Star
                                 key={i}
                                 size={14}
-                                className={i < review.rating ? 'text-amber-500 fill-amber-500' : 'text-gray-300'}
+                                className={
+                                  i < review.rating
+                                    ? 'text-amber-500 fill-amber-500'
+                                    : 'text-gray-300'
+                                }
                               />
                             ))}
                           </div>
-                          <span className="text-sm font-semibold text-gray-700">{review.agencyName}</span>
+                          <span className="text-sm font-semibold text-gray-700">
+                            {review.agencyName}
+                          </span>
                         </div>
                         <span className="text-xs text-gray-400">
                           {new Date(review.createdAt).toLocaleDateString('pt-BR')}
@@ -1111,7 +1342,16 @@ interface DrawerProps {
   onSuspend?: () => void;
 }
 
-const DetailDrawer: React.FC<DrawerProps> = ({ isOpen, onClose, item, type, onEdit, onDelete, onRestore, onSuspend }) => {
+const DetailDrawer: React.FC<DrawerProps> = ({
+  isOpen,
+  onClose,
+  item,
+  type,
+  onEdit,
+  onDelete,
+  onRestore,
+  onSuspend,
+}) => {
   if (!isOpen || !item) return null;
 
   return (
@@ -1128,32 +1368,47 @@ const DetailDrawer: React.FC<DrawerProps> = ({ isOpen, onClose, item, type, onEd
           {/* Header */}
           <div className="flex items-center gap-4 pb-6 border-b border-gray-200">
             <img
-              src={(item as any).avatar || (item as any).logo || `https://ui-avatars.com/api/?name=${item.name}`}
+              src={
+                (item as any).avatar ||
+                (item as any).logo ||
+                `https://ui-avatars.com/api/?name=${item.name}`
+              }
               className="w-16 h-16 rounded-full ring-4 ring-gray-100"
               alt=""
             />
             <div>
               <h3 className="text-xl font-extrabold text-gray-900">{item.name}</h3>
-              <p className="text-sm text-gray-500">{(item as any).email || (item as Agency).email}</p>
+              <p className="text-sm text-gray-500">
+                {(item as any).email || (item as Agency).email}
+              </p>
             </div>
           </div>
 
           {/* Info Sections */}
           <div className="space-y-4">
             <div>
-              <h4 className="text-sm font-bold text-gray-700 uppercase tracking-wider mb-3">Informações</h4>
+              <h4 className="text-sm font-bold text-gray-700 uppercase tracking-wider mb-3">
+                Informações
+              </h4>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-gray-500">Status</span>
-                  <span className={`font-semibold ${(item as any).status === 'ACTIVE' || (item as Agency).subscriptionStatus === 'ACTIVE' ? 'text-green-600' : 'text-red-600'}`}>
-                    {(item as any).status === 'ACTIVE' || (item as Agency).subscriptionStatus === 'ACTIVE' ? 'Ativo' : 'Inativo'}
+                  <span
+                    className={`font-semibold ${(item as any).status === 'ACTIVE' || (item as Agency).subscriptionStatus === 'ACTIVE' ? 'text-green-600' : 'text-red-600'}`}
+                  >
+                    {(item as any).status === 'ACTIVE' ||
+                    (item as Agency).subscriptionStatus === 'ACTIVE'
+                      ? 'Ativo'
+                      : 'Inativo'}
                   </span>
                 </div>
                 {type === 'agency' && (
                   <>
                     <div className="flex justify-between">
                       <span className="text-gray-500">Plano</span>
-                      <span className="font-semibold text-gray-900">{(item as Agency).subscriptionPlan}</span>
+                      <span className="font-semibold text-gray-900">
+                        {(item as Agency).subscriptionPlan}
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-500">Slug</span>
@@ -1174,22 +1429,34 @@ const DetailDrawer: React.FC<DrawerProps> = ({ isOpen, onClose, item, type, onEd
           {/* Actions */}
           <div className="pt-6 border-t border-gray-200 space-y-2">
             {onEdit && (
-              <button onClick={onEdit} className="w-full flex items-center gap-2 px-4 py-2.5 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition-colors">
+              <button
+                onClick={onEdit}
+                className="w-full flex items-center gap-2 px-4 py-2.5 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition-colors"
+              >
                 <Edit3 size={18} /> Editar Detalhes
               </button>
             )}
             {onSuspend && (
-              <button onClick={onSuspend} className="w-full flex items-center gap-2 px-4 py-2.5 bg-amber-50 text-amber-700 rounded-lg font-semibold hover:bg-amber-100 transition-colors">
+              <button
+                onClick={onSuspend}
+                className="w-full flex items-center gap-2 px-4 py-2.5 bg-amber-50 text-amber-700 rounded-lg font-semibold hover:bg-amber-100 transition-colors"
+              >
                 <Ban size={18} /> Suspender
               </button>
             )}
             {onRestore && (
-              <button onClick={onRestore} className="w-full flex items-center gap-2 px-4 py-2.5 bg-green-50 text-green-700 rounded-lg font-semibold hover:bg-green-100 transition-colors">
+              <button
+                onClick={onRestore}
+                className="w-full flex items-center gap-2 px-4 py-2.5 bg-green-50 text-green-700 rounded-lg font-semibold hover:bg-green-100 transition-colors"
+              >
                 <ArchiveRestore size={18} /> Restaurar
               </button>
             )}
             {onDelete && (
-              <button onClick={onDelete} className="w-full flex items-center gap-2 px-4 py-2.5 bg-red-50 text-red-700 rounded-lg font-semibold hover:bg-red-100 transition-colors">
+              <button
+                onClick={onDelete}
+                className="w-full flex items-center gap-2 px-4 py-2.5 bg-red-50 text-red-700 rounded-lg font-semibold hover:bg-red-100 transition-colors"
+              >
                 <Trash2 size={18} /> Excluir
               </button>
             )}
@@ -1204,25 +1471,70 @@ const DetailDrawer: React.FC<DrawerProps> = ({ isOpen, onClose, item, type, onEd
 
 // Fix: Export AdminDashboard directly
 export const AdminDashboard: React.FC = () => {
-  const { user, isMaster, sendPasswordReset, adminImpersonate, exitImpersonate, isImpersonating } = useAuth();
+  const { user, isMaster, sendPasswordReset, adminImpersonate, exitImpersonate, isImpersonating } =
+    useAuth();
   const {
-    agencies, trips, clients, bookings, reviews, agencyReviews, auditLogs, platformRevenue, platformSettings,
-    updateAgency, deleteMultipleAgencies, updateClient, deleteMultipleUsers, deleteAllData,
-    migrateData, isProcessing: isDataProcessing, refreshData, updatePlatformSettings, getAgencyStats,
-    adminChangePlan, adminSuspendAgency, updateUserAvatarByAdmin, softDeleteEntity, restoreEntity, toggleAgencyStatus,
-    updateAgencySubscription, createTrip, deleteTrip, updateTrip, toggleTripStatus, toggleTripFeatureStatus, fetchTripImages,
-    updateClientProfile, updateMultipleUsersStatus, sendBroadcast, getBroadcastsForAdmin
+    agencies,
+    trips,
+    clients,
+    bookings,
+    reviews,
+    agencyReviews,
+    auditLogs,
+    platformRevenue,
+    platformSettings,
+    updateAgency,
+    deleteMultipleAgencies,
+    updateClient,
+    deleteMultipleUsers,
+    deleteAllData,
+    migrateData,
+    isProcessing: isDataProcessing,
+    refreshData,
+    updatePlatformSettings,
+    getAgencyStats,
+    adminChangePlan,
+    adminSuspendAgency,
+    updateUserAvatarByAdmin,
+    softDeleteEntity,
+    restoreEntity,
+    toggleAgencyStatus,
+    updateAgencySubscription,
+    createTrip,
+    deleteTrip,
+    updateTrip,
+    toggleTripStatus,
+    toggleTripFeatureStatus,
+    fetchTripImages,
+    updateClientProfile,
+    updateMultipleUsersStatus,
+    sendBroadcast,
+    getBroadcastsForAdmin,
   } = useData();
-  const { themes, activeTheme, setTheme, addTheme, deleteTheme, previewTheme, resetPreview, loading: isThemeProcessing } = useTheme();
+  const {
+    themes,
+    activeTheme,
+    setTheme,
+    addTheme,
+    deleteTheme,
+    previewTheme,
+    resetPreview,
+    loading: isThemeProcessing,
+  } = useTheme();
   const { showToast } = useToast();
   const navigate = useNavigate();
 
   // Dashboard viewer state
-  const [dashboardViewer, setDashboardViewer] = useState<{ isOpen: boolean; type: 'client' | 'agency' | 'guide'; entityId: string | null; entityName?: string }>({
+  const [dashboardViewer, setDashboardViewer] = useState<{
+    isOpen: boolean;
+    type: 'client' | 'agency' | 'guide';
+    entityId: string | null;
+    entityName?: string;
+  }>({
     isOpen: false,
     type: 'client',
     entityId: null,
-    entityName: undefined
+    entityName: undefined,
   });
 
   const [searchParams, setSearchParams] = useSearchParams();
@@ -1231,11 +1543,37 @@ export const AdminDashboard: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [agencyFilter, setAgencyFilter] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
-  const [newThemeForm, setNewThemeForm] = useState({ name: '', primary: '#3b82f6', secondary: '#f97316' });
+  const [newThemeForm, setNewThemeForm] = useState({
+    name: '',
+    primary: '#3b82f6',
+    secondary: '#f97316',
+  });
 
-  const [modalType, setModalType] = useState<'DELETE' | 'EDIT_USER' | 'MANAGE_SUB' | 'EDIT_REVIEW' | 'EDIT_AGENCY' | 'EDIT_TRIP' | 'VIEW_STATS' | 'CHANGE_PLAN' | 'VIEW_AGENCY_DETAILS' | null>(null);
-  const [confirmDialog, setConfirmDialog] = useState<{ isOpen: boolean; title: string; message: string; onConfirm: () => void; variant?: 'danger' | 'warning' | 'info'; confirmText?: string }>({ isOpen: false, title: '', message: '', onConfirm: () => { }, variant: 'danger' });
-  const [agencyDetails, setAgencyDetails] = useState<{ agency: Agency | null; stats: any; trips: Trip[] }>({ agency: null, stats: null, trips: [] });
+  const [modalType, setModalType] = useState<
+    | 'DELETE'
+    | 'EDIT_USER'
+    | 'MANAGE_SUB'
+    | 'EDIT_REVIEW'
+    | 'EDIT_AGENCY'
+    | 'EDIT_TRIP'
+    | 'VIEW_STATS'
+    | 'CHANGE_PLAN'
+    | 'VIEW_AGENCY_DETAILS'
+    | null
+  >(null);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    variant?: 'danger' | 'warning' | 'info';
+    confirmText?: string;
+  }>({ isOpen: false, title: '', message: '', onConfirm: () => {}, variant: 'danger' });
+  const [agencyDetails, setAgencyDetails] = useState<{
+    agency: Agency | null;
+    stats: any;
+    trips: Trip[];
+  }>({ agency: null, stats: null, trips: [] });
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [editFormData, setEditFormData] = useState<any>({});
@@ -1247,27 +1585,21 @@ export const AdminDashboard: React.FC = () => {
   const [selectedTrips, setSelectedTrips] = useState<string[]>([]);
   const [userStats, setUserStats] = useState<UserStats[]>([]);
 
-  const [agencyView, setAgencyView] = useState<'cards' | 'list'>(
-    () => {
-      const saved = localStorage.getItem('adminAgencyView');
-      if (saved) return saved as 'cards' | 'list';
-      return 'cards';
-    }
-  );
-  const [userView, setUserView] = useState<'cards' | 'list'>(
-    () => {
-      const saved = localStorage.getItem('adminUserView');
-      if (saved) return saved as 'cards' | 'list';
-      return 'cards';
-    }
-  );
-  const [tripView, setTripView] = useState<'cards' | 'list'>(
-    () => {
-      const saved = localStorage.getItem('adminTripView');
-      if (saved) return saved as 'cards' | 'list';
-      return 'list';
-    }
-  );
+  const [agencyView, setAgencyView] = useState<'cards' | 'list'>(() => {
+    const saved = localStorage.getItem('adminAgencyView');
+    if (saved) return saved as 'cards' | 'list';
+    return 'cards';
+  });
+  const [userView, setUserView] = useState<'cards' | 'list'>(() => {
+    const saved = localStorage.getItem('adminUserView');
+    if (saved) return saved as 'cards' | 'list';
+    return 'cards';
+  });
+  const [tripView, setTripView] = useState<'cards' | 'list'>(() => {
+    const saved = localStorage.getItem('adminTripView');
+    if (saved) return saved as 'cards' | 'list';
+    return 'list';
+  });
 
   const handleSetTripView = (view: 'cards' | 'list') => {
     setTripView(view);
@@ -1275,7 +1607,9 @@ export const AdminDashboard: React.FC = () => {
   };
   const [showAgencyTrash, setShowAgencyTrash] = useState(false);
   const [showUserTrash, setShowUserTrash] = useState(false);
-  const [activityFilter, setActivityFilter] = useState<'all' | 'user' | 'agency' | 'trip' | 'settings'>('all');
+  const [activityFilter, setActivityFilter] = useState<
+    'all' | 'user' | 'agency' | 'trip' | 'settings'
+  >('all');
   const [activitySearch, setActivitySearch] = useState('');
 
   const [platformSettingsForm, setPlatformSettingsForm] = useState({
@@ -1285,7 +1619,7 @@ export const AdminDashboard: React.FC = () => {
     layout_style: 'rounded' as 'rounded' | 'square' | 'minimal',
     background_color: '#ffffff',
     background_blur: false,
-    background_transparency: 1.0
+    background_transparency: 1.0,
   });
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const [logoPreview, setLogoPreview] = useState<string>('');
@@ -1300,7 +1634,7 @@ export const AdminDashboard: React.FC = () => {
         layout_style: platformSettings.layout_style || 'rounded',
         background_color: platformSettings.background_color || '#ffffff',
         background_blur: platformSettings.background_blur || false,
-        background_transparency: platformSettings.background_transparency || 1.0
+        background_transparency: platformSettings.background_transparency || 1.0,
       });
       setLogoPreview(platformSettings.platform_logo_url || '');
     }
@@ -1316,28 +1650,55 @@ export const AdminDashboard: React.FC = () => {
   const [drawerType, setDrawerType] = useState<'user' | 'agency'>('user');
 
   // Client Detail Modal State
-  const [clientDetailModal, setClientDetailModal] = useState<{ isOpen: boolean; client: Client | null }>({ isOpen: false, client: null });
-  const [clientDashboardPopup, setClientDashboardPopup] = useState<{ isOpen: boolean; clientId: string | null }>({ isOpen: false, clientId: null });
-  const [usersFilterModal, setUsersFilterModal] = useState<{ isOpen: boolean; filterType: 'all' | 'new' | 'active' | 'blocked' | null }>({ isOpen: false, filterType: null });
-  const [agenciesFilterModal, setAgenciesFilterModal] = useState<{ isOpen: boolean; filterType: 'all' | 'premium' | 'pending' | 'active' | null }>({ isOpen: false, filterType: null });
-  const [agencyDetailModal, setAgencyDetailModal] = useState<{ isOpen: boolean; agency: Agency | null }>({ isOpen: false, agency: null });
+  const [clientDetailModal, setClientDetailModal] = useState<{
+    isOpen: boolean;
+    client: Client | null;
+  }>({ isOpen: false, client: null });
+  const [clientDashboardPopup, setClientDashboardPopup] = useState<{
+    isOpen: boolean;
+    clientId: string | null;
+  }>({ isOpen: false, clientId: null });
+  const [usersFilterModal, setUsersFilterModal] = useState<{
+    isOpen: boolean;
+    filterType: 'all' | 'new' | 'active' | 'blocked' | null;
+  }>({ isOpen: false, filterType: null });
+  const [agenciesFilterModal, setAgenciesFilterModal] = useState<{
+    isOpen: boolean;
+    filterType: 'all' | 'premium' | 'pending' | 'active' | null;
+  }>({ isOpen: false, filterType: null });
+  const [agencyDetailModal, setAgencyDetailModal] = useState<{
+    isOpen: boolean;
+    agency: Agency | null;
+  }>({ isOpen: false, agency: null });
 
   // Broadcast State
-  const [broadcastSubTab, setBroadcastSubTab] = useState<'compose' | 'reports' | 'templates' | 'scheduled'>('compose');
+  const [broadcastSubTab, setBroadcastSubTab] = useState<
+    'compose' | 'reports' | 'templates' | 'scheduled'
+  >('compose');
   const [broadcastForm, setBroadcastForm] = useState({
     title: '',
     message: '',
     target_role: 'ALL' as BroadcastTargetRole,
     scheduled_at: '' as string | null,
-    template_id: null as string | null
+    template_id: null as string | null,
   });
   const [broadcastsHistory, setBroadcastsHistory] = useState<BroadcastWithInteractions[]>([]);
   const [expandedBroadcastId, setExpandedBroadcastId] = useState<string | null>(null);
   const [loadingBroadcasts, setLoadingBroadcasts] = useState(false);
-  const [dateFilter, setDateFilter] = useState<'all' | 'today' | 'week' | 'month' | 'custom'>('all');
+  const [dateFilter, setDateFilter] = useState<'all' | 'today' | 'week' | 'month' | 'custom'>(
+    'all'
+  );
   const [customDateStart, setCustomDateStart] = useState<string>('');
   const [customDateEnd, setCustomDateEnd] = useState<string>('');
-  const [broadcastTemplates, setBroadcastTemplates] = useState<Array<{ id: string; name: string; title: string; message: string; target_role: BroadcastTargetRole }>>([]);
+  const [broadcastTemplates, setBroadcastTemplates] = useState<
+    Array<{
+      id: string;
+      name: string;
+      title: string;
+      message: string;
+      target_role: BroadcastTargetRole;
+    }>
+  >([]);
 
   // Sidebar State
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
@@ -1360,8 +1721,8 @@ export const AdminDashboard: React.FC = () => {
 
   // Functions for trips bulk actions
   const handleToggleTrip = (id: string) => {
-    setSelectedTrips(prev =>
-      prev.includes(id) ? prev.filter(tid => tid !== id) : [...prev, id]
+    setSelectedTrips((prev) =>
+      prev.includes(id) ? prev.filter((tid) => tid !== id) : [...prev, id]
     );
   };
 
@@ -1369,7 +1730,7 @@ export const AdminDashboard: React.FC = () => {
     if (selectedTrips.length === filteredTrips.length && filteredTrips.length > 0) {
       setSelectedTrips([]);
     } else {
-      setSelectedTrips(filteredTrips.map(t => t.id));
+      setSelectedTrips(filteredTrips.map((t) => t.id));
     }
   };
 
@@ -1386,7 +1747,7 @@ export const AdminDashboard: React.FC = () => {
       variant: 'danger',
       confirmText: 'Excluir Permanentemente',
       onConfirm: async () => {
-        setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+        setConfirmDialog((prev) => ({ ...prev, isOpen: false }));
         setIsProcessing(true);
         try {
           for (const tripId of selectedTrips) {
@@ -1400,7 +1761,7 @@ export const AdminDashboard: React.FC = () => {
         } finally {
           setIsProcessing(false);
         }
-      }
+      },
     });
   };
 
@@ -1431,34 +1792,44 @@ export const AdminDashboard: React.FC = () => {
         month: monthName,
         revenue: Math.round(revenue),
         subscriptions,
-        commissions: Math.round(commissions)
+        commissions: Math.round(commissions),
       });
     }
     return months;
   }, [platformRevenue]);
 
   // Calculate active agencies first (before using it in other useMemos)
-  const activeAgencies = useMemo(() => agencies.filter(a => !a.deleted_at), [agencies]);
-  const deletedAgencies = useMemo(() => agencies.filter(a => !!a.deleted_at), [agencies]);
-  const activeUsers = useMemo(() => clients.filter(c => c.role === UserRole.CLIENT && !c.deleted_at), [clients]);
-  const deletedUsers = useMemo(() => clients.filter(c => c.role === UserRole.CLIENT && !!c.deleted_at), [clients]);
+  const activeAgencies = useMemo(() => agencies.filter((a) => !a.deleted_at), [agencies]);
+  const deletedAgencies = useMemo(() => agencies.filter((a) => !!a.deleted_at), [agencies]);
+  const activeUsers = useMemo(
+    () => clients.filter((c) => c.role === UserRole.CLIENT && !c.deleted_at),
+    [clients]
+  );
+  const deletedUsers = useMemo(
+    () => clients.filter((c) => c.role === UserRole.CLIENT && !!c.deleted_at),
+    [clients]
+  );
 
   // Calculate MRR and Average Ticket
   const mrr = useMemo(() => {
-    const activeSubscriptions = activeAgencies.filter(a => a.subscriptionStatus === 'ACTIVE').length;
-    const premiumCount = activeAgencies.filter(a => a.subscriptionPlan === 'PREMIUM' && a.subscriptionStatus === 'ACTIVE').length;
+    const activeSubscriptions = activeAgencies.filter(
+      (a) => a.subscriptionStatus === 'ACTIVE'
+    ).length;
+    const premiumCount = activeAgencies.filter(
+      (a) => a.subscriptionPlan === 'PREMIUM' && a.subscriptionStatus === 'ACTIVE'
+    ).length;
     const basicCount = activeSubscriptions - premiumCount;
-    return (premiumCount * 99.90) + (basicCount * 59.90);
+    return premiumCount * 99.9 + basicCount * 59.9;
   }, [activeAgencies]);
 
   const averageTicket = useMemo(() => {
-    const activeCount = activeAgencies.filter(a => a.subscriptionStatus === 'ACTIVE').length;
+    const activeCount = activeAgencies.filter((a) => a.subscriptionStatus === 'ACTIVE').length;
     return activeCount > 0 ? mrr / activeCount : 0;
   }, [mrr, activeAgencies]);
 
   const currentUser = useMemo(() => {
     if (modalType === 'EDIT_USER' && selectedItem) {
-      return clients.find(c => c.id === selectedItem.id) || selectedItem;
+      return clients.find((c) => c.id === selectedItem.id) || selectedItem;
     }
     return null;
   }, [modalType, selectedItem, clients]);
@@ -1468,12 +1839,12 @@ export const AdminDashboard: React.FC = () => {
     if (activeTab === 'BROADCASTS' && broadcastSubTab === 'reports' && !loadingBroadcasts) {
       setLoadingBroadcasts(true);
       getBroadcastsForAdmin()
-        .then(data => {
+        .then((data) => {
           setBroadcastsHistory(data);
           setLoadingBroadcasts(false);
         })
-        .catch(error => {
-          logger.error("[AdminDashboard] Error loading broadcasts:", error);
+        .catch((error) => {
+          logger.error('[AdminDashboard] Error loading broadcasts:', error);
           setLoadingBroadcasts(false);
         });
     }
@@ -1486,14 +1857,15 @@ export const AdminDashboard: React.FC = () => {
       try {
         setBroadcastTemplates(JSON.parse(saved));
       } catch (e) {
-        logger.error("[AdminDashboard] Error loading templates:", e);
+        logger.error('[AdminDashboard] Error loading templates:', e);
       }
     }
   }, []);
 
   // TAREFA 3: Pending Agencies (Mock)
   const pendingAgencies = useMemo(() => {
-    return activeAgencies.filter(a => a.subscriptionStatus === 'PENDING' || !a.is_active)
+    return activeAgencies
+      .filter((a) => a.subscriptionStatus === 'PENDING' || !a.is_active)
       .slice(0, 5); // Show max 5
   }, [activeAgencies]);
 
@@ -1506,15 +1878,23 @@ export const AdminDashboard: React.FC = () => {
         '10.0.0.45',
         '172.16.0.23',
         '203.0.113.42',
-        '198.51.100.15'
+        '198.51.100.15',
       ];
 
       // Determine severity
       const actionUpper = log.action.toUpperCase();
       let severity: 'high' | 'medium' | 'low' = 'low';
-      if (actionUpper.includes('DELETE') || actionUpper.includes('EXCLUIR') || actionUpper.includes('REMOVE')) {
+      if (
+        actionUpper.includes('DELETE') ||
+        actionUpper.includes('EXCLUIR') ||
+        actionUpper.includes('REMOVE')
+      ) {
         severity = 'high';
-      } else if (actionUpper.includes('UPDATE') || actionUpper.includes('ALTERAR') || actionUpper.includes('CHANGE')) {
+      } else if (
+        actionUpper.includes('UPDATE') ||
+        actionUpper.includes('ALTERAR') ||
+        actionUpper.includes('CHANGE')
+      ) {
         severity = 'medium';
       }
 
@@ -1522,7 +1902,7 @@ export const AdminDashboard: React.FC = () => {
         ...log,
         ip: mockIPs[index % mockIPs.length],
         severity,
-        targetId: log.details.match(/ID: ([a-f0-9-]+)/i)?.[1] || 'N/A'
+        targetId: log.details.match(/ID: ([a-f0-9-]+)/i)?.[1] || 'N/A',
       };
     });
   }, [auditLogs]);
@@ -1531,33 +1911,103 @@ export const AdminDashboard: React.FC = () => {
   const getActivityInfo = (action: string) => {
     const actionUpper = action.toUpperCase();
     if (actionUpper.includes('AVATAR') || actionUpper.includes('PROFILE')) {
-      return { icon: UserCog, color: 'text-blue-600', bgColor: 'bg-blue-50', borderColor: 'border-blue-200' };
+      return {
+        icon: UserCog,
+        color: 'text-blue-600',
+        bgColor: 'bg-blue-50',
+        borderColor: 'border-blue-200',
+      };
     }
     if (actionUpper.includes('AGENCY') || actionUpper.includes('AGÊNCIA')) {
-      return { icon: Building2, color: 'text-purple-600', bgColor: 'bg-purple-50', borderColor: 'border-purple-200' };
+      return {
+        icon: Building2,
+        color: 'text-purple-600',
+        bgColor: 'bg-purple-50',
+        borderColor: 'border-purple-200',
+      };
     }
-    if (actionUpper.includes('TRIP') || actionUpper.includes('VIAGEM') || actionUpper.includes('PACOTE')) {
-      return { icon: Package, color: 'text-green-600', bgColor: 'bg-green-50', borderColor: 'border-green-200' };
+    if (
+      actionUpper.includes('TRIP') ||
+      actionUpper.includes('VIAGEM') ||
+      actionUpper.includes('PACOTE')
+    ) {
+      return {
+        icon: Package,
+        color: 'text-green-600',
+        bgColor: 'bg-green-50',
+        borderColor: 'border-green-200',
+      };
     }
-    if (actionUpper.includes('USER') || actionUpper.includes('USUÁRIO') || actionUpper.includes('CLIENT')) {
-      return { icon: Users, color: 'text-indigo-600', bgColor: 'bg-indigo-50', borderColor: 'border-indigo-200' };
+    if (
+      actionUpper.includes('USER') ||
+      actionUpper.includes('USUÁRIO') ||
+      actionUpper.includes('CLIENT')
+    ) {
+      return {
+        icon: Users,
+        color: 'text-indigo-600',
+        bgColor: 'bg-indigo-50',
+        borderColor: 'border-indigo-200',
+      };
     }
     if (actionUpper.includes('REVIEW') || actionUpper.includes('AVALIAÇÃO')) {
-      return { icon: Star, color: 'text-amber-600', bgColor: 'bg-amber-50', borderColor: 'border-amber-200' };
+      return {
+        icon: Star,
+        color: 'text-amber-600',
+        bgColor: 'bg-amber-50',
+        borderColor: 'border-amber-200',
+      };
     }
-    if (actionUpper.includes('SUBSCRIPTION') || actionUpper.includes('PLANO') || actionUpper.includes('PLAN')) {
-      return { icon: CreditCardIcon, color: 'text-pink-600', bgColor: 'bg-pink-50', borderColor: 'border-pink-200' };
+    if (
+      actionUpper.includes('SUBSCRIPTION') ||
+      actionUpper.includes('PLANO') ||
+      actionUpper.includes('PLAN')
+    ) {
+      return {
+        icon: CreditCardIcon,
+        color: 'text-pink-600',
+        bgColor: 'bg-pink-50',
+        borderColor: 'border-pink-200',
+      };
     }
     if (actionUpper.includes('SETTINGS') || actionUpper.includes('CONFIGURAÇÃO')) {
-      return { icon: Settings, color: 'text-gray-600', bgColor: 'bg-gray-50', borderColor: 'border-gray-200' };
+      return {
+        icon: Settings,
+        color: 'text-gray-600',
+        bgColor: 'bg-gray-50',
+        borderColor: 'border-gray-200',
+      };
     }
-    if (actionUpper.includes('DELETE') || actionUpper.includes('EXCLUIR') || actionUpper.includes('REMOVE')) {
-      return { icon: Trash2, color: 'text-red-600', bgColor: 'bg-red-50', borderColor: 'border-red-200' };
+    if (
+      actionUpper.includes('DELETE') ||
+      actionUpper.includes('EXCLUIR') ||
+      actionUpper.includes('REMOVE')
+    ) {
+      return {
+        icon: Trash2,
+        color: 'text-red-600',
+        bgColor: 'bg-red-50',
+        borderColor: 'border-red-200',
+      };
     }
-    if (actionUpper.includes('CREATE') || actionUpper.includes('CRIAR') || actionUpper.includes('ADD')) {
-      return { icon: CheckCircle, color: 'text-green-600', bgColor: 'bg-green-50', borderColor: 'border-green-200' };
+    if (
+      actionUpper.includes('CREATE') ||
+      actionUpper.includes('CRIAR') ||
+      actionUpper.includes('ADD')
+    ) {
+      return {
+        icon: CheckCircle,
+        color: 'text-green-600',
+        bgColor: 'bg-green-50',
+        borderColor: 'border-green-200',
+      };
     }
-    return { icon: Activity, color: 'text-primary-600', bgColor: 'bg-primary-50', borderColor: 'border-primary-200' };
+    return {
+      icon: Activity,
+      color: 'text-primary-600',
+      bgColor: 'bg-primary-50',
+      borderColor: 'border-primary-200',
+    };
   };
 
   // Function to clear all data
@@ -1601,8 +2051,8 @@ export const AdminDashboard: React.FC = () => {
 
   // Functions for pending agencies bulk actions
   const handleTogglePendingAgency = (id: string) => {
-    setSelectedPendingAgencies(prev =>
-      prev.includes(id) ? prev.filter(aid => aid !== id) : [...prev, id]
+    setSelectedPendingAgencies((prev) =>
+      prev.includes(id) ? prev.filter((aid) => aid !== id) : [...prev, id]
     );
   };
 
@@ -1610,7 +2060,7 @@ export const AdminDashboard: React.FC = () => {
     if (selectedPendingAgencies.length === pendingAgencies.length && pendingAgencies.length > 0) {
       setSelectedPendingAgencies([]);
     } else {
-      setSelectedPendingAgencies(pendingAgencies.map(a => a.agencyId));
+      setSelectedPendingAgencies(pendingAgencies.map((a) => a.agencyId));
     }
   };
 
@@ -1627,22 +2077,29 @@ export const AdminDashboard: React.FC = () => {
       variant: 'info',
       confirmText: 'Aprovar Todas',
       onConfirm: async () => {
-        setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+        setConfirmDialog((prev) => ({ ...prev, isOpen: false }));
         setIsProcessing(true);
         try {
           for (const agencyId of selectedPendingAgencies) {
             // Activate the agency (toggle status to true if false, and set subscription status to ACTIVE)
-            const agency = agencies.find(a => a.agencyId === agencyId);
+            const agency = agencies.find((a) => a.agencyId === agencyId);
             if (agency) {
               // First ensure it's active
               if (!agency.is_active) {
                 await toggleAgencyStatus(agencyId);
               }
               // Update subscription status to ACTIVE (keep current plan)
-              await updateAgencySubscription(agencyId, 'ACTIVE', agency.subscriptionPlan || 'BASIC');
+              await updateAgencySubscription(
+                agencyId,
+                'ACTIVE',
+                agency.subscriptionPlan || 'BASIC'
+              );
             }
           }
-          showToast(`${selectedPendingAgencies.length} agência(s) aprovada(s) com sucesso!`, 'success');
+          showToast(
+            `${selectedPendingAgencies.length} agência(s) aprovada(s) com sucesso!`,
+            'success'
+          );
           setSelectedPendingAgencies([]);
           await refreshData();
         } catch (error: any) {
@@ -1650,7 +2107,7 @@ export const AdminDashboard: React.FC = () => {
         } finally {
           setIsProcessing(false);
         }
-      }
+      },
     });
   };
 
@@ -1667,13 +2124,16 @@ export const AdminDashboard: React.FC = () => {
       variant: 'danger',
       confirmText: 'Rejeitar Todas',
       onConfirm: async () => {
-        setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+        setConfirmDialog((prev) => ({ ...prev, isOpen: false }));
         setIsProcessing(true);
         try {
           for (const agencyId of selectedPendingAgencies) {
             await handleSoftDelete(agencyId, 'agency', true);
           }
-          showToast(`${selectedPendingAgencies.length} agência(s) rejeitada(s) com sucesso!`, 'success');
+          showToast(
+            `${selectedPendingAgencies.length} agência(s) rejeitada(s) com sucesso!`,
+            'success'
+          );
           setSelectedPendingAgencies([]);
           await refreshData();
         } catch (error: any) {
@@ -1681,16 +2141,21 @@ export const AdminDashboard: React.FC = () => {
         } finally {
           setIsProcessing(false);
         }
-      }
+      },
     });
   };
 
-  const handleSoftDelete = async (id: string, type: 'user' | 'agency', skipConfirm: boolean = false) => {
+  const handleSoftDelete = async (
+    id: string,
+    type: 'user' | 'agency',
+    skipConfirm: boolean = false
+  ) => {
     // For agencies, id should be agencyId (PK of agencies table)
     // For users, id should be user_id (PK of profiles table)
-    const name = type === 'user'
-      ? clients.find(c => c.id === id)?.name
-      : agencies.find(a => a.agencyId === id)?.name;
+    const name =
+      type === 'user'
+        ? clients.find((c) => c.id === id)?.name
+        : agencies.find((a) => a.agencyId === id)?.name;
     if (!name) {
       showToast(`${type === 'user' ? 'Usuário' : 'Agência'} não encontrado(a).`, 'error');
       return;
@@ -1715,7 +2180,10 @@ export const AdminDashboard: React.FC = () => {
         setShowAgencyTrash(true);
       }
     } catch (error: any) {
-      showToast(`Erro ao mover ${type === 'user' ? 'usuário' : 'agência'} para a lixeira: ${error.message}`, 'error');
+      showToast(
+        `Erro ao mover ${type === 'user' ? 'usuário' : 'agência'} para a lixeira: ${error.message}`,
+        'error'
+      );
       throw error;
     } finally {
       setIsProcessing(false);
@@ -1746,14 +2214,19 @@ export const AdminDashboard: React.FC = () => {
 
   const handleEmptyTrash = async (type: 'user' | 'agency') => {
     const itemsToDelete = type === 'user' ? deletedUsers : deletedAgencies;
-    if (itemsToDelete.length > 0 && window.confirm(`Excluir permanentemente ${itemsToDelete.length} item(ns) da lixeira? Esta ação não pode ser desfeita.`)) {
+    if (
+      itemsToDelete.length > 0 &&
+      window.confirm(
+        `Excluir permanentemente ${itemsToDelete.length} item(ns) da lixeira? Esta ação não pode ser desfeita.`
+      )
+    ) {
       setIsProcessing(true);
       try {
         if (type === 'user') {
-          await deleteMultipleUsers(itemsToDelete.map(i => i.id));
+          await deleteMultipleUsers(itemsToDelete.map((i) => i.id));
         } else {
           // FIX: Pass agencyId (PK) for deletion from agencies table, not user ID
-          await deleteMultipleAgencies(itemsToDelete.map(i => i.agencyId));
+          await deleteMultipleAgencies(itemsToDelete.map((i) => i.agencyId));
         }
       } catch (e: any) {
         showToast(e.message || 'Erro ao esvaziar a lixeira.', 'error');
@@ -1778,7 +2251,9 @@ export const AdminDashboard: React.FC = () => {
       doc.text('RELATÓRIO DE AGÊNCIAS', 105, 25, { align: 'center' });
       doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
-      doc.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR')}`, 105, 35, { align: 'center' });
+      doc.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR')}`, 105, 35, {
+        align: 'center',
+      });
 
       // Stats Summary
       doc.setTextColor(30, 30, 30);
@@ -1791,7 +2266,11 @@ export const AdminDashboard: React.FC = () => {
       doc.setFont('helvetica', 'normal');
       doc.text(`Total de Agências: ${agencyStatsData.totalAgencies}`, 15, y);
       y += 7;
-      doc.text(`Receita Estimada: R$ ${agencyStatsData.estimatedRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, 15, y);
+      doc.text(
+        `Receita Estimada: R$ ${agencyStatsData.estimatedRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+        15,
+        y
+      );
       y += 7;
       doc.text(`Planos Premium: ${agencyStatsData.premiumPlans}`, 15, y);
       y += 7;
@@ -1808,13 +2287,18 @@ export const AdminDashboard: React.FC = () => {
       doc.text('LISTA DE AGÊNCIAS', 15, y);
       y += 10;
 
-      const tableData = filteredAgencies.map(agency => {
-        const expiryDate = agency.subscriptionExpiresAt ? new Date(agency.subscriptionExpiresAt) : null;
-        const daysLeft = expiryDate ? Math.ceil((expiryDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : null;
-        const daysText = daysLeft !== null ? (daysLeft < 0 ? 'Expirado' : `${daysLeft} dias`) : 'N/A';
+      const tableData = filteredAgencies.map((agency) => {
+        const expiryDate = agency.subscriptionExpiresAt
+          ? new Date(agency.subscriptionExpiresAt)
+          : null;
+        const daysLeft = expiryDate
+          ? Math.ceil((expiryDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+          : null;
+        const daysText =
+          daysLeft !== null ? (daysLeft < 0 ? 'Expirado' : `${daysLeft} dias`) : 'N/A';
 
-        const agencyBookings = bookings.filter(b => {
-          const trip = trips.find(t => t.id === b.tripId);
+        const agencyBookings = bookings.filter((b) => {
+          const trip = trips.find((t) => t.id === b.tripId);
           return trip && trip.agencyId === agency.agencyId;
         });
         const totalSales = agencyBookings.reduce((sum, b) => sum + b.totalPrice, 0);
@@ -1824,7 +2308,7 @@ export const AdminDashboard: React.FC = () => {
           agency.subscriptionPlan || 'STARTER',
           agency.subscriptionStatus,
           daysText,
-          `R$ ${totalSales.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+          `R$ ${totalSales.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
         ];
       });
 
@@ -1835,7 +2319,7 @@ export const AdminDashboard: React.FC = () => {
         styles: { fontSize: 8 },
         headStyles: { fillColor: primaryColor, textColor: 255, fontStyle: 'bold' },
         alternateRowStyles: { fillColor: [245, 247, 250] },
-        margin: { left: 15, right: 15 }
+        margin: { left: 15, right: 15 },
       });
 
       doc.save(`relatorio-agencias-${new Date().toISOString().split('T')[0]}.pdf`);
@@ -1851,7 +2335,12 @@ export const AdminDashboard: React.FC = () => {
     setIsProcessing(true);
     try {
       // FIX: Pass expiresAt to DataContext function
-      await updateAgencySubscription(selectedItem.agencyId, editFormData.status, editFormData.plan, editFormData.expiresAt);
+      await updateAgencySubscription(
+        selectedItem.agencyId,
+        editFormData.status,
+        editFormData.plan,
+        editFormData.expiresAt
+      );
     } catch (error) {
       // Toast is already handled in DataContext
     } finally {
@@ -1862,8 +2351,8 @@ export const AdminDashboard: React.FC = () => {
 
   const addSubscriptionTime = (days: number) => {
     const current = editFormData.expiresAt ? new Date(editFormData.expiresAt) : new Date();
-    // If current is invalid or in the past, maybe start from now? 
-    const baseDate = (current.getTime() > Date.now()) ? current : new Date();
+    // If current is invalid or in the past, maybe start from now?
+    const baseDate = current.getTime() > Date.now() ? current : new Date();
 
     const newDate = new Date(baseDate);
     newDate.setDate(newDate.getDate() + days);
@@ -1875,21 +2364,24 @@ export const AdminDashboard: React.FC = () => {
     const currentStatus = user.status || 'ACTIVE'; // Default to ACTIVE if undefined
     const newStatus = currentStatus === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE';
 
-    logger.log("[AdminDashboard] Toggling user status:", {
+    logger.log('[AdminDashboard] Toggling user status:', {
       userId: user.id,
       currentStatus,
-      newStatus
+      newStatus,
     });
 
     setIsProcessing(true);
     try {
       await updateClientProfile(user.id, { status: newStatus });
-      logger.log("[AdminDashboard] User status updated successfully");
-      showToast(`Usuário ${newStatus === 'ACTIVE' ? 'reativado' : 'suspenso'} com sucesso!`, 'success');
+      logger.log('[AdminDashboard] User status updated successfully');
+      showToast(
+        `Usuário ${newStatus === 'ACTIVE' ? 'reativado' : 'suspenso'} com sucesso!`,
+        'success'
+      );
       // Refresh data to update UI
       await refreshData();
     } catch (e: any) {
-      logger.error("[AdminDashboard] Error toggling user status:", e);
+      logger.error('[AdminDashboard] Error toggling user status:', e);
       showToast(`Erro ao alterar status: ${e.message || 'Erro desconhecido'}`, 'error');
       throw e;
     } finally {
@@ -1947,7 +2439,7 @@ export const AdminDashboard: React.FC = () => {
   useEffect(() => {
     if (modalType === 'EDIT_USER' && selectedItem?.id) {
       // Load user data into form - find the latest data from clients array
-      const user = clients.find(c => c.id === selectedItem.id) || selectedItem;
+      const user = clients.find((c) => c.id === selectedItem.id) || selectedItem;
 
       // Extract all relevant user data - use the most complete source
       if (user && user.id) {
@@ -1967,7 +2459,6 @@ export const AdminDashboard: React.FC = () => {
       // Clear form data when modal is closed
       setEditFormData({});
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [modalType, selectedItem?.id]);
 
   // Auto-calculate duration when dates change
@@ -1980,7 +2471,10 @@ export const AdminDashboard: React.FC = () => {
         const endDateStr = editFormData.endDate;
 
         // Validate date strings
-        if (!startDateStr.match(/^\d{4}-\d{2}-\d{2}$/) || !endDateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        if (
+          !startDateStr.match(/^\d{4}-\d{2}-\d{2}$/) ||
+          !endDateStr.match(/^\d{4}-\d{2}-\d{2}$/)
+        ) {
           return; // Invalid format, skip calculation
         }
 
@@ -1989,8 +2483,14 @@ export const AdminDashboard: React.FC = () => {
         const [endYear, endMonth, endDay] = endDateStr.split('-').map(Number);
 
         // Validate parsed values
-        if (isNaN(startYear) || isNaN(startMonth) || isNaN(startDay) ||
-          isNaN(endYear) || isNaN(endMonth) || isNaN(endDay)) {
+        if (
+          isNaN(startYear) ||
+          isNaN(startMonth) ||
+          isNaN(startDay) ||
+          isNaN(endYear) ||
+          isNaN(endMonth) ||
+          isNaN(endDay)
+        ) {
           return; // Invalid values, skip calculation
         }
 
@@ -2013,9 +2513,13 @@ export const AdminDashboard: React.FC = () => {
         const calculatedDuration = diffDays >= 0 ? diffDays + 1 : 1;
 
         // Only update if different to avoid infinite loops
-        setEditFormData(prev => {
+        setEditFormData((prev) => {
           // Check if dates haven't changed but duration is different
-          if (prev.startDate === startDateStr && prev.endDate === endDateStr && prev.durationDays === calculatedDuration) {
+          if (
+            prev.startDate === startDateStr &&
+            prev.endDate === endDateStr &&
+            prev.durationDays === calculatedDuration
+          ) {
             return prev; // No change needed
           }
           return { ...prev, durationDays: calculatedDuration };
@@ -2026,10 +2530,13 @@ export const AdminDashboard: React.FC = () => {
     }
   }, [editFormData.startDate, editFormData.endDate, modalType]);
 
-
   // Initialize form data and location coordinates when editing
   useEffect(() => {
-    if (modalType === 'EDIT_TRIP' && selectedItem && (!editFormData.id || editFormData.id !== selectedItem.id)) {
+    if (
+      modalType === 'EDIT_TRIP' &&
+      selectedItem &&
+      (!editFormData.id || editFormData.id !== selectedItem.id)
+    ) {
       // Initialize all form data from selectedItem (only if not already set or different trip)
       // Use helper function to ensure correct ISO format (YYYY-MM-DD) for input type="date"
       const formattedStartDate = normalizeDateToISO(selectedItem.startDate);
@@ -2081,22 +2588,25 @@ export const AdminDashboard: React.FC = () => {
     }
   }, [modalType, selectedItem, editFormData.id]);
 
-  const handleLocationChange = useCallback((location: string, coords: { lat: number; lng: number }) => {
-    setLocationCoords(coords);
-    setEditFormData(prev => ({
-      ...prev,
-      destination: location,
-      latitude: coords.lat,
-      longitude: coords.lng
-    }));
-  }, []);
+  const handleLocationChange = useCallback(
+    (location: string, coords: { lat: number; lng: number }) => {
+      setLocationCoords(coords);
+      setEditFormData((prev) => ({
+        ...prev,
+        destination: location,
+        latitude: coords.lat,
+        longitude: coords.lng,
+      }));
+    },
+    []
+  );
 
   const handleCoordinatesChange = useCallback((coords: { lat: number; lng: number }) => {
     setLocationCoords(coords);
-    setEditFormData(prev => ({
+    setEditFormData((prev) => ({
       ...prev,
       latitude: coords.lat,
-      longitude: coords.lng
+      longitude: coords.lng,
     }));
   }, []);
 
@@ -2118,7 +2628,7 @@ export const AdminDashboard: React.FC = () => {
         ...editFormData,
         categories: editFormData.categories || [],
         // Keep category field for backward compatibility (use first category)
-        category: editFormData.categories?.[0] || editFormData.category
+        category: editFormData.categories?.[0] || editFormData.category,
       };
 
       await updateTrip(updateData);
@@ -2172,7 +2682,7 @@ export const AdminDashboard: React.FC = () => {
   };
 
   const handleDeleteTrip = async (tripId: string, skipConfirm: boolean = false) => {
-    const trip = trips.find(t => t.id === tripId);
+    const trip = trips.find((t) => t.id === tripId);
     if (!trip) {
       showToast('Viagem não encontrada.', 'error');
       return;
@@ -2186,9 +2696,9 @@ export const AdminDashboard: React.FC = () => {
         variant: 'danger',
         confirmText: 'Excluir Permanentemente',
         onConfirm: async () => {
-          setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+          setConfirmDialog((prev) => ({ ...prev, isOpen: false }));
           await handleDeleteTrip(tripId, true);
-        }
+        },
       });
       return;
     }
@@ -2215,8 +2725,8 @@ export const AdminDashboard: React.FC = () => {
       name: newThemeForm.name,
       colors: {
         primary: newThemeForm.primary,
-        secondary: newThemeForm.secondary
-      }
+        secondary: newThemeForm.secondary,
+      },
     });
     if (newId) {
       showToast('Tema adicionado com sucesso!', 'success');
@@ -2227,36 +2737,76 @@ export const AdminDashboard: React.FC = () => {
   };
 
   const handleDeleteTheme = async (themeId: string) => {
-    if (window.confirm('Tem certeza que deseja excluir este tema? Esta ação não pode ser desfeita.')) {
+    if (
+      window.confirm('Tem certeza que deseja excluir este tema? Esta ação não pode ser desfeita.')
+    ) {
       await deleteTheme(themeId);
       showToast('Tema excluído com sucesso.', 'success');
     }
-  }
+  };
 
-  const tripCategories = useMemo(() => Array.from(new Set(trips.map(t => t.category))), [trips]);
+  const tripCategories = useMemo(() => Array.from(new Set(trips.map((t) => t.category))), [trips]);
 
-  const filteredUsers = useMemo(() => (showUserTrash ? deletedUsers : activeUsers).filter(c => c.name.toLowerCase().includes(searchTerm.toLowerCase()) || c.email.toLowerCase().includes(searchTerm.toLowerCase())), [activeUsers, deletedUsers, showUserTrash, searchTerm]);
-  const filteredAgencies = useMemo(() => (showAgencyTrash ? deletedAgencies : activeAgencies).filter(a => a.name.toLowerCase().includes(searchTerm.toLowerCase()) || (a.email && a.email.toLowerCase().includes(searchTerm.toLowerCase()))), [activeAgencies, deletedAgencies, showAgencyTrash, searchTerm]);
-  const filteredTrips = useMemo(() => trips.filter(t => (t.title.toLowerCase().includes(searchTerm.toLowerCase())) && (agencyFilter ? t.agencyId === agencyFilter : true) && (categoryFilter ? t.category === categoryFilter : true)), [trips, searchTerm, agencyFilter, categoryFilter]);
-  const filteredReviews = useMemo(() => agencyReviews.filter(r => r.comment.toLowerCase().includes(searchTerm.toLowerCase()) || r.agencyName?.toLowerCase().includes(searchTerm.toLowerCase())), [agencyReviews, searchTerm]);
+  const filteredUsers = useMemo(
+    () =>
+      (showUserTrash ? deletedUsers : activeUsers).filter(
+        (c) =>
+          c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          c.email.toLowerCase().includes(searchTerm.toLowerCase())
+      ),
+    [activeUsers, deletedUsers, showUserTrash, searchTerm]
+  );
+  const filteredAgencies = useMemo(
+    () =>
+      (showAgencyTrash ? deletedAgencies : activeAgencies).filter(
+        (a) =>
+          a.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (a.email && a.email.toLowerCase().includes(searchTerm.toLowerCase()))
+      ),
+    [activeAgencies, deletedAgencies, showAgencyTrash, searchTerm]
+  );
+  const filteredTrips = useMemo(
+    () =>
+      trips.filter(
+        (t) =>
+          t.title.toLowerCase().includes(searchTerm.toLowerCase()) &&
+          (agencyFilter ? t.agencyId === agencyFilter : true) &&
+          (categoryFilter ? t.category === categoryFilter : true)
+      ),
+    [trips, searchTerm, agencyFilter, categoryFilter]
+  );
+  const filteredReviews = useMemo(
+    () =>
+      agencyReviews.filter(
+        (r) =>
+          r.comment.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          r.agencyName?.toLowerCase().includes(searchTerm.toLowerCase())
+      ),
+    [agencyReviews, searchTerm]
+  );
 
   // Filter guides from agencies
-  const allGuides = useMemo(() => agencies.filter(agency => {
-    if (agency.isGuide === true) return true;
-    if (agency.customSettings?.tags?.includes('GUIA')) return true;
-    return false;
-  }), [agencies]);
+  const allGuides = useMemo(
+    () =>
+      agencies.filter((agency) => {
+        if (agency.isGuide === true) return true;
+        if (agency.customSettings?.tags?.includes('GUIA')) return true;
+        return false;
+      }),
+    [agencies]
+  );
 
   const filteredGuides = useMemo(() => {
     let filtered = [...allGuides];
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(guide =>
-        guide.name.toLowerCase().includes(term) ||
-        guide.description?.toLowerCase().includes(term) ||
-        guide.email?.toLowerCase().includes(term) ||
-        guide.address?.city?.toLowerCase().includes(term) ||
-        guide.address?.state?.toLowerCase().includes(term)
+      filtered = filtered.filter(
+        (guide) =>
+          guide.name.toLowerCase().includes(term) ||
+          guide.description?.toLowerCase().includes(term) ||
+          guide.email?.toLowerCase().includes(term) ||
+          guide.address?.city?.toLowerCase().includes(term) ||
+          guide.address?.state?.toLowerCase().includes(term)
       );
     }
     return filtered;
@@ -2264,69 +2814,75 @@ export const AdminDashboard: React.FC = () => {
 
   // Generate recent activities from actual data
   const generatedActivities = useMemo(() => {
-    const activities: Array<{ id: string; action: string; details: string; createdAt: string; type: 'user' | 'agency' | 'trip' | 'booking' | 'settings' }> = [];
+    const activities: Array<{
+      id: string;
+      action: string;
+      details: string;
+      createdAt: string;
+      type: 'user' | 'agency' | 'trip' | 'booking' | 'settings';
+    }> = [];
     const now = Date.now();
-    const oneDayAgo = now - (24 * 60 * 60 * 1000); // Last 24 hours
-    const oneWeekAgo = now - (7 * 24 * 60 * 60 * 1000); // Last week
+    const oneDayAgo = now - 24 * 60 * 60 * 1000; // Last 24 hours
+    const oneWeekAgo = now - 7 * 24 * 60 * 60 * 1000; // Last week
 
     // New users (last 24 hours)
     activeUsers
-      .filter(u => u.createdAt && new Date(u.createdAt).getTime() > oneDayAgo)
-      .forEach(user => {
+      .filter((u) => u.createdAt && new Date(u.createdAt).getTime() > oneDayAgo)
+      .forEach((user) => {
         activities.push({
           id: `user-${user.id}`,
           action: 'NOVO_USUARIO_CRIADO',
           details: `Novo usuário cadastrado: ${user.name} (${user.email})`,
           createdAt: user.createdAt || new Date().toISOString(),
-          type: 'user'
+          type: 'user',
         });
       });
 
     // New agencies (last 24 hours)
     activeAgencies
-      .filter(a => a.createdAt && new Date(a.createdAt).getTime() > oneDayAgo)
-      .forEach(agency => {
+      .filter((a) => a.createdAt && new Date(a.createdAt).getTime() > oneDayAgo)
+      .forEach((agency) => {
         activities.push({
           id: `agency-${agency.agencyId}`,
           action: 'NOVA_AGENCIA_CRIADA',
           details: `Nova agência registrada: ${agency.name} (Plano: ${agency.subscriptionPlan})`,
           createdAt: agency.createdAt || new Date().toISOString(),
-          type: 'agency'
+          type: 'agency',
         });
       });
 
     // New trips (last 24 hours)
     trips
-      .filter(t => t.createdAt && new Date(t.createdAt).getTime() > oneDayAgo)
-      .forEach(trip => {
-        const agency = activeAgencies.find(a => a.agencyId === trip.agencyId);
+      .filter((t) => t.createdAt && new Date(t.createdAt).getTime() > oneDayAgo)
+      .forEach((trip) => {
+        const agency = activeAgencies.find((a) => a.agencyId === trip.agencyId);
         activities.push({
           id: `trip-${trip.id}`,
           action: 'NOVO_PACOTE_CRIADO',
           details: `Novo pacote criado: ${trip.title} por ${agency?.name || 'Agência desconhecida'}`,
           createdAt: trip.createdAt || new Date().toISOString(),
-          type: 'trip'
+          type: 'trip',
         });
       });
 
     // New bookings (last 24 hours)
     bookings
-      .filter(b => b.date && new Date(b.date).getTime() > oneDayAgo)
+      .filter((b) => b.date && new Date(b.date).getTime() > oneDayAgo)
       .slice(0, 10) // Limit to 10 most recent
-      .forEach(booking => {
-        const trip = trips.find(t => t.id === booking.tripId);
-        const client = activeUsers.find(u => u.id === booking.clientId);
+      .forEach((booking) => {
+        const trip = trips.find((t) => t.id === booking.tripId);
+        const client = activeUsers.find((u) => u.id === booking.clientId);
         activities.push({
           id: `booking-${booking.id}`,
           action: 'NOVA_RESERVA_CRIADA',
           details: `Nova reserva: ${client?.name || 'Cliente'} reservou "${trip?.title || 'Viagem'}" - R$ ${booking.totalPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
           createdAt: booking.date || new Date().toISOString(),
-          type: 'booking'
+          type: 'booking',
         });
       });
 
     // Subscription plan changes (last week)
-    activeAgencies.forEach(agency => {
+    activeAgencies.forEach((agency) => {
       if (agency.updatedAt && new Date(agency.updatedAt).getTime() > oneWeekAgo) {
         // This is simplified - in a real scenario, you'd track what changed
         activities.push({
@@ -2334,7 +2890,7 @@ export const AdminDashboard: React.FC = () => {
           action: 'AGENCIA_ATUALIZADA',
           details: `Agência atualizada: ${agency.name} (Status: ${agency.subscriptionStatus})`,
           createdAt: agency.updatedAt || new Date().toISOString(),
-          type: 'agency'
+          type: 'agency',
         });
       }
     });
@@ -2345,29 +2901,55 @@ export const AdminDashboard: React.FC = () => {
       // For now, we'll skip this or use a default timestamp
     }
 
-    return activities.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return activities.sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
   }, [activeUsers, activeAgencies, trips, bookings, platformSettings]);
 
   // Combine audit logs with generated activities
   const allActivities = useMemo(() => {
     const combined = [
-      ...auditLogs.map(log => ({
+      ...auditLogs.map((log) => ({
         ...log,
         type: (() => {
           const actionUpper = log.action.toUpperCase();
-          if (actionUpper.includes('USER') || actionUpper.includes('USUÁRIO') || actionUpper.includes('CLIENT')) return 'user' as const;
-          if (actionUpper.includes('AGENCY') || actionUpper.includes('AGÊNCIA') || actionUpper.includes('SUBSCRIPTION') || actionUpper.includes('PLANO')) return 'agency' as const;
-          if (actionUpper.includes('TRIP') || actionUpper.includes('VIAGEM') || actionUpper.includes('PACOTE')) return 'trip' as const;
-          if (actionUpper.includes('SETTINGS') || actionUpper.includes('CONFIGURAÇÃO') || actionUpper.includes('THEME')) return 'settings' as const;
-          if (actionUpper.includes('BOOKING') || actionUpper.includes('RESERVA')) return 'booking' as const;
+          if (
+            actionUpper.includes('USER') ||
+            actionUpper.includes('USUÁRIO') ||
+            actionUpper.includes('CLIENT')
+          )
+            return 'user' as const;
+          if (
+            actionUpper.includes('AGENCY') ||
+            actionUpper.includes('AGÊNCIA') ||
+            actionUpper.includes('SUBSCRIPTION') ||
+            actionUpper.includes('PLANO')
+          )
+            return 'agency' as const;
+          if (
+            actionUpper.includes('TRIP') ||
+            actionUpper.includes('VIAGEM') ||
+            actionUpper.includes('PACOTE')
+          )
+            return 'trip' as const;
+          if (
+            actionUpper.includes('SETTINGS') ||
+            actionUpper.includes('CONFIGURAÇÃO') ||
+            actionUpper.includes('THEME')
+          )
+            return 'settings' as const;
+          if (actionUpper.includes('BOOKING') || actionUpper.includes('RESERVA'))
+            return 'booking' as const;
           return 'settings' as const;
-        })()
+        })(),
       })),
-      ...generatedActivities
+      ...generatedActivities,
     ];
 
     // Sort by date, newest first
-    return combined.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return combined.sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
   }, [auditLogs, generatedActivities]);
 
   // Filter activities
@@ -2376,7 +2958,7 @@ export const AdminDashboard: React.FC = () => {
 
     // Filter by type
     if (activityFilter !== 'all') {
-      filtered = filtered.filter(log => {
+      filtered = filtered.filter((log) => {
         if (activityFilter === 'user') {
           return log.type === 'user';
         }
@@ -2396,9 +2978,10 @@ export const AdminDashboard: React.FC = () => {
     // Filter by search
     if (activitySearch.trim()) {
       const searchLower = activitySearch.toLowerCase();
-      filtered = filtered.filter(log =>
-        log.action.toLowerCase().includes(searchLower) ||
-        log.details.toLowerCase().includes(searchLower)
+      filtered = filtered.filter(
+        (log) =>
+          log.action.toLowerCase().includes(searchLower) ||
+          log.details.toLowerCase().includes(searchLower)
       );
     }
 
@@ -2410,9 +2993,11 @@ export const AdminDashboard: React.FC = () => {
     const totalUsers = activeUsers.length;
     const thisMonth = new Date();
     thisMonth.setDate(1);
-    const newThisMonth = activeUsers.filter(u => u.createdAt && new Date(u.createdAt) >= thisMonth).length;
-    const activeNow = activeUsers.filter(u => u.status === 'ACTIVE').length;
-    const blocked = activeUsers.filter(u => u.status === 'SUSPENDED').length;
+    const newThisMonth = activeUsers.filter(
+      (u) => u.createdAt && new Date(u.createdAt) >= thisMonth
+    ).length;
+    const activeNow = activeUsers.filter((u) => u.status === 'ACTIVE').length;
+    const blocked = activeUsers.filter((u) => u.status === 'SUSPENDED').length;
     return { totalUsers, newThisMonth, activeNow, blocked };
   }, [activeUsers]);
 
@@ -2421,22 +3006,49 @@ export const AdminDashboard: React.FC = () => {
     const totalAgencies = activeAgencies.length;
     const estimatedRevenue = activeAgencies.reduce((sum, a) => {
       if (a.subscriptionStatus === 'ACTIVE') {
-        return sum + (a.subscriptionPlan === 'PREMIUM' ? 99.90 : a.subscriptionPlan === 'BASIC' ? 59.90 : 0);
+        return (
+          sum +
+          (a.subscriptionPlan === 'PREMIUM' ? 99.9 : a.subscriptionPlan === 'BASIC' ? 59.9 : 0)
+        );
       }
       return sum;
     }, 0);
-    const premiumPlans = activeAgencies.filter(a => a.subscriptionPlan === 'PREMIUM' && a.subscriptionStatus === 'ACTIVE').length;
-    const pending = activeAgencies.filter(a => a.subscriptionStatus !== 'ACTIVE').length;
+    const premiumPlans = activeAgencies.filter(
+      (a) => a.subscriptionPlan === 'PREMIUM' && a.subscriptionStatus === 'ACTIVE'
+    ).length;
+    const pending = activeAgencies.filter((a) => a.subscriptionStatus !== 'ACTIVE').length;
     return { totalAgencies, estimatedRevenue, premiumPlans, pending };
   }, [activeAgencies]);
 
-  const handleToggleUser = (id: string) => setSelectedUsers(prev => prev.includes(id) ? prev.filter(uid => uid !== id) : [...prev, id]);
-  const handleToggleAllUsers = () => setSelectedUsers(prev => prev.length === filteredUsers.length && filteredUsers.length > 0 ? [] : filteredUsers.map(u => u.id));
+  const handleToggleUser = (id: string) =>
+    setSelectedUsers((prev) =>
+      prev.includes(id) ? prev.filter((uid) => uid !== id) : [...prev, id]
+    );
+  const handleToggleAllUsers = () =>
+    setSelectedUsers((prev) =>
+      prev.length === filteredUsers.length && filteredUsers.length > 0
+        ? []
+        : filteredUsers.map((u) => u.id)
+    );
   // FIX: Update toggle to use agencyId (PK) instead of id (Auth ID)
-  const handleToggleAgency = (id: string) => setSelectedAgencies(prev => prev.includes(id) ? prev.filter(aid => aid !== id) : [...prev, id]);
-  const handleToggleAllAgencies = () => setSelectedAgencies(prev => prev.length === filteredAgencies.length && filteredAgencies.length > 0 ? [] : filteredAgencies.map(a => a.agencyId));
+  const handleToggleAgency = (id: string) =>
+    setSelectedAgencies((prev) =>
+      prev.includes(id) ? prev.filter((aid) => aid !== id) : [...prev, id]
+    );
+  const handleToggleAllAgencies = () =>
+    setSelectedAgencies((prev) =>
+      prev.length === filteredAgencies.length && filteredAgencies.length > 0
+        ? []
+        : filteredAgencies.map((a) => a.agencyId)
+    );
 
-  const handleMassDeleteUsers = async () => { if (window.confirm(`Excluir ${selectedUsers.length} usuários?`)) { await deleteMultipleUsers(selectedUsers); setSelectedUsers([]); showToast('Usuários excluídos.', 'success'); } };
+  const handleMassDeleteUsers = async () => {
+    if (window.confirm(`Excluir ${selectedUsers.length} usuários?`)) {
+      await deleteMultipleUsers(selectedUsers);
+      setSelectedUsers([]);
+      showToast('Usuários excluídos.', 'success');
+    }
+  };
 
   const handleMassDeleteAgencies = async () => {
     setConfirmDialog({
@@ -2456,7 +3068,7 @@ export const AdminDashboard: React.FC = () => {
         } finally {
           setIsProcessing(false);
         }
-      }
+      },
     });
   };
 
@@ -2478,7 +3090,7 @@ export const AdminDashboard: React.FC = () => {
         } finally {
           setIsProcessing(false);
         }
-      }
+      },
     });
   };
 
@@ -2500,16 +3112,23 @@ export const AdminDashboard: React.FC = () => {
         } finally {
           setIsProcessing(false);
         }
-      }
+      },
     });
   };
 
-  const handleMassUpdateUserStatus = async (status: 'ACTIVE' | 'SUSPENDED') => { await updateMultipleUsersStatus(selectedUsers, status); setSelectedUsers([]); showToast('Status atualizado.', 'success'); };
+  const handleMassUpdateUserStatus = async (status: 'ACTIVE' | 'SUSPENDED') => {
+    await updateMultipleUsersStatus(selectedUsers, status);
+    setSelectedUsers([]);
+    showToast('Status atualizado.', 'success');
+  };
   const handleUpdateUserStatus = async (userId: string, status: 'ACTIVE' | 'SUSPENDED') => {
     setIsProcessing(true);
     try {
       await updateMultipleUsersStatus([userId], status);
-      showToast(`Usuário ${status === 'ACTIVE' ? 'reativado' : 'suspenso'} com sucesso!`, 'success');
+      showToast(
+        `Usuário ${status === 'ACTIVE' ? 'reativado' : 'suspenso'} com sucesso!`,
+        'success'
+      );
       await refreshData();
     } catch (error: any) {
       showToast(`Erro ao alterar status: ${error.message || 'Erro desconhecido'}`, 'error');
@@ -2517,7 +3136,11 @@ export const AdminDashboard: React.FC = () => {
       setIsProcessing(false);
     }
   };
-  const handleMassUpdateAgencyStatus = async (status: 'ACTIVE' | 'INACTIVE') => { await updateMultipleAgenciesStatus(selectedAgencies, status); setSelectedAgencies([]); showToast('Status atualizado.', 'success'); };
+  const handleMassUpdateAgencyStatus = async (status: 'ACTIVE' | 'INACTIVE') => {
+    await updateMultipleAgenciesStatus(selectedAgencies, status);
+    setSelectedAgencies([]);
+    showToast('Status atualizado.', 'success');
+  };
 
   // Filter users by type for modal
   const getFilteredUsers = (filterType: 'all' | 'new' | 'active' | 'blocked') => {
@@ -2528,12 +3151,12 @@ export const AdminDashboard: React.FC = () => {
       case 'new': {
         const thisMonth = new Date();
         thisMonth.setDate(1);
-        return baseUsers.filter(u => u.createdAt && new Date(u.createdAt) >= thisMonth);
+        return baseUsers.filter((u) => u.createdAt && new Date(u.createdAt) >= thisMonth);
       }
       case 'active':
-        return baseUsers.filter(u => u.status === 'ACTIVE');
+        return baseUsers.filter((u) => u.status === 'ACTIVE');
       case 'blocked':
-        return baseUsers.filter(u => u.status === 'SUSPENDED');
+        return baseUsers.filter((u) => u.status === 'SUSPENDED');
       default:
         return baseUsers;
     }
@@ -2565,27 +3188,41 @@ export const AdminDashboard: React.FC = () => {
   };
 
   // Filter agencies by type for modal
-  const getFilteredAgencies = (filterType: 'all' | 'premium' | 'pending' | 'active' | 'basic' | 'free') => {
+  const getFilteredAgencies = (
+    filterType: 'all' | 'premium' | 'pending' | 'active' | 'basic' | 'free'
+  ) => {
     const baseAgencies = showAgencyTrash ? deletedAgencies : activeAgencies;
     switch (filterType) {
       case 'all':
         return baseAgencies;
       case 'premium':
-        return baseAgencies.filter(a => a.subscriptionPlan === 'PREMIUM' && a.subscriptionStatus === 'ACTIVE');
+        return baseAgencies.filter(
+          (a) => a.subscriptionPlan === 'PREMIUM' && a.subscriptionStatus === 'ACTIVE'
+        );
       case 'basic':
-        return baseAgencies.filter(a => a.subscriptionPlan === 'BASIC' && a.subscriptionStatus === 'ACTIVE');
+        return baseAgencies.filter(
+          (a) => a.subscriptionPlan === 'BASIC' && a.subscriptionStatus === 'ACTIVE'
+        );
       case 'free':
-        return baseAgencies.filter(a => (a.subscriptionPlan === 'STARTER' || !a.subscriptionPlan || a.subscriptionPlan === 'FREE') && a.subscriptionStatus === 'ACTIVE');
+        return baseAgencies.filter(
+          (a) =>
+            (a.subscriptionPlan === 'STARTER' ||
+              !a.subscriptionPlan ||
+              a.subscriptionPlan === 'FREE') &&
+            a.subscriptionStatus === 'ACTIVE'
+        );
       case 'pending':
-        return baseAgencies.filter(a => a.subscriptionStatus !== 'ACTIVE');
+        return baseAgencies.filter((a) => a.subscriptionStatus !== 'ACTIVE');
       case 'active':
-        return baseAgencies.filter(a => a.subscriptionStatus === 'ACTIVE');
+        return baseAgencies.filter((a) => a.subscriptionStatus === 'ACTIVE');
       default:
         return baseAgencies;
     }
   };
 
-  const handleAgencyFilterClick = (filterType: 'all' | 'premium' | 'pending' | 'active' | 'basic' | 'free') => {
+  const handleAgencyFilterClick = (
+    filterType: 'all' | 'premium' | 'pending' | 'active' | 'basic' | 'free'
+  ) => {
     setAgenciesFilterModal({ isOpen: true, filterType });
   };
 
@@ -2593,7 +3230,17 @@ export const AdminDashboard: React.FC = () => {
     switch (action) {
       case 'edit':
         setSelectedItem(agency);
-        setEditFormData({ name: agency.name, description: agency.description, cnpj: agency.cnpj, slug: agency.slug, phone: agency.phone, whatsapp: agency.whatsapp, website: agency.website, address: agency.address, bankInfo: agency.bankInfo });
+        setEditFormData({
+          name: agency.name,
+          description: agency.description,
+          cnpj: agency.cnpj,
+          slug: agency.slug,
+          phone: agency.phone,
+          whatsapp: agency.whatsapp,
+          website: agency.website,
+          address: agency.address,
+          bankInfo: agency.bankInfo,
+        });
         setModalType('EDIT_AGENCY');
         setAgenciesFilterModal({ isOpen: false, filterType: null });
         break;
@@ -2615,7 +3262,7 @@ export const AdminDashboard: React.FC = () => {
     setIsProcessing(true);
     try {
       const stats = await getAgencyStats(agency.agencyId);
-      const agencyTrips = trips.filter(t => t.agencyId === agency.agencyId);
+      const agencyTrips = trips.filter((t) => t.agencyId === agency.agencyId);
       setAgencyDetails({ agency, stats, trips: agencyTrips });
       setModalType('VIEW_AGENCY_DETAILS');
     } catch (error) {
@@ -2629,10 +3276,13 @@ export const AdminDashboard: React.FC = () => {
     setIsProcessing(true);
     try {
       await adminChangePlan(agencyId, newPlan);
-      showToast(`Plano alterado para ${newPlan === 'PREMIUM' ? 'Premium' : 'Básico'} com sucesso!`, 'success');
+      showToast(
+        `Plano alterado para ${newPlan === 'PREMIUM' ? 'Premium' : 'Básico'} com sucesso!`,
+        'success'
+      );
       await refreshData();
       // Update selectedItem with new plan
-      const updatedAgency = agencies.find(a => a.agencyId === agencyId);
+      const updatedAgency = agencies.find((a) => a.agencyId === agencyId);
       if (updatedAgency) {
         setSelectedItem(updatedAgency);
       }
@@ -2676,8 +3326,25 @@ export const AdminDashboard: React.FC = () => {
     }
   };
 
-
-  const downloadPdf = (type: 'users' | 'agencies') => { const doc = new jsPDF(); doc.setFontSize(18); doc.text(`Relatório de ${type === 'users' ? 'Usuários' : 'Agências'}`, 14, 22); doc.setFontSize(11); doc.setTextColor(100); const headers = type === 'users' ? [["NOME", "EMAIL", "STATUS"]] : [["NOME", "PLANO", "STATUS"]]; const data = type === 'users' ? filteredUsers.filter(u => selectedUsers.includes(u.id)).map(u => [u.name, u.email, u.status]) : filteredAgencies.filter(a => selectedAgencies.includes(a.agencyId)).map(a => [a.name, a.subscriptionPlan, a.subscriptionStatus]); (doc as any).autoTable({ head: headers, body: data, startY: 30, }); doc.save(`relatorio_${type}.pdf`); };
+  const downloadPdf = (type: 'users' | 'agencies') => {
+    const doc = new jsPDF();
+    doc.setFontSize(18);
+    doc.text(`Relatório de ${type === 'users' ? 'Usuários' : 'Agências'}`, 14, 22);
+    doc.setFontSize(11);
+    doc.setTextColor(100);
+    const headers =
+      type === 'users' ? [['NOME', 'EMAIL', 'STATUS']] : [['NOME', 'PLANO', 'STATUS']];
+    const data =
+      type === 'users'
+        ? filteredUsers
+            .filter((u) => selectedUsers.includes(u.id))
+            .map((u) => [u.name, u.email, u.status])
+        : filteredAgencies
+            .filter((a) => selectedAgencies.includes(a.agencyId))
+            .map((a) => [a.name, a.subscriptionPlan, a.subscriptionStatus]);
+    (doc as any).autoTable({ head: headers, body: data, startY: 30 });
+    doc.save(`relatorio_${type}.pdf`);
+  };
 
   // Allow access if user is ADMIN or if it's a test admin account (for quick switching)
   const isTestAdmin = user?.email === 'admin@teste.com' || user?.email === 'juannicolas1@gmail.com';
@@ -2724,11 +3391,23 @@ export const AdminDashboard: React.FC = () => {
                 <div className="grid grid-cols-2 gap-4 mb-4">
                   <div>
                     <p className="text-xs text-gray-500 mb-1">MRR</p>
-                    <p className="text-xl font-extrabold text-gray-900">R$ {mrr.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                    <p className="text-xl font-extrabold text-gray-900">
+                      R${' '}
+                      {mrr.toLocaleString('pt-BR', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                    </p>
                   </div>
                   <div>
                     <p className="text-xs text-gray-500 mb-1">Ticket Médio</p>
-                    <p className="text-xl font-extrabold text-gray-900">R$ {averageTicket.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                    <p className="text-xl font-extrabold text-gray-900">
+                      R${' '}
+                      {averageTicket.toLocaleString('pt-BR', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                    </p>
                   </div>
                 </div>
                 <div className="h-[200px] min-h-[200px]">
@@ -2748,9 +3427,12 @@ export const AdminDashboard: React.FC = () => {
                           backgroundColor: '#fff',
                           border: '1px solid #e5e7eb',
                           borderRadius: '8px',
-                          fontSize: '12px'
+                          fontSize: '12px',
                         }}
-                        formatter={(value: any) => [`R$ ${value.toLocaleString('pt-BR')}`, 'Receita']}
+                        formatter={(value: any) => [
+                          `R$ ${value.toLocaleString('pt-BR')}`,
+                          'Receita',
+                        ]}
                       />
                       <Area
                         type="monotone"
@@ -2764,13 +3446,37 @@ export const AdminDashboard: React.FC = () => {
                   </ResponsiveContainer>
                 </div>
               </div>
-              <StatCard title="Agências Ativas" value={activeAgencies.length} subtitle="Parceiros verificados" icon={Briefcase} color="blue" />
-              <StatCard title="Usuários Ativos" value={activeUsers.length} subtitle="Clientes da plataforma" icon={Users} color="purple" />
+              <StatCard
+                title="Agências Ativas"
+                value={activeAgencies.length}
+                subtitle="Parceiros verificados"
+                icon={Briefcase}
+                color="blue"
+              />
+              <StatCard
+                title="Usuários Ativos"
+                value={activeUsers.length}
+                subtitle="Clientes da plataforma"
+                icon={Users}
+                color="purple"
+              />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <StatCard title="Pacotes Ativos" value={trips.length} subtitle="Viagens disponíveis" icon={Plane} color="amber" />
-              <StatCard title="Receita Total" value={`R$ ${(platformRevenue || 0).toLocaleString()}`} subtitle="Receita bruta acumulada" icon={DollarSign} color="green" />
+              <StatCard
+                title="Pacotes Ativos"
+                value={trips.length}
+                subtitle="Viagens disponíveis"
+                icon={Plane}
+                color="amber"
+              />
+              <StatCard
+                title="Receita Total"
+                value={`R$ ${(platformRevenue || 0).toLocaleString()}`}
+                subtitle="Receita bruta acumulada"
+                icon={DollarSign}
+                color="green"
+              />
             </div>
 
             {/* TAREFA 3: Approval Queue Widget */}
@@ -2781,9 +3487,13 @@ export const AdminDashboard: React.FC = () => {
                     <AlertTriangle size={20} className="text-amber-600" />
                     Atenção Necessária
                   </h3>
-                  <Badge color="amber">{pendingAgencies.length} pendente{pendingAgencies.length > 1 ? 's' : ''}</Badge>
+                  <Badge color="amber">
+                    {pendingAgencies.length} pendente{pendingAgencies.length > 1 ? 's' : ''}
+                  </Badge>
                 </div>
-                <p className="text-sm text-gray-600 mb-4">Agências recém-criadas aguardando verificação:</p>
+                <p className="text-sm text-gray-600 mb-4">
+                  Agências recém-criadas aguardando verificação:
+                </p>
 
                 {/* Bulk Actions Bar */}
                 {selectedPendingAgencies.length > 0 && (
@@ -2813,14 +3523,22 @@ export const AdminDashboard: React.FC = () => {
                 )}
 
                 {/* Select All Checkbox */}
-                <div className="mb-3 flex items-center gap-2 p-2 hover:bg-gray-50 rounded-lg cursor-pointer" onClick={handleToggleAllPendingAgencies}>
-                  <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${selectedPendingAgencies.length === pendingAgencies.length && pendingAgencies.length > 0
-                    ? 'bg-primary-600 border-primary-600'
-                    : 'border-gray-300 hover:border-primary-400'
-                    }`}>
-                    {selectedPendingAgencies.length === pendingAgencies.length && pendingAgencies.length > 0 && (
-                      <Check size={14} className="text-white" strokeWidth={3} />
-                    )}
+                <div
+                  className="mb-3 flex items-center gap-2 p-2 hover:bg-gray-50 rounded-lg cursor-pointer"
+                  onClick={handleToggleAllPendingAgencies}
+                >
+                  <div
+                    className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
+                      selectedPendingAgencies.length === pendingAgencies.length &&
+                      pendingAgencies.length > 0
+                        ? 'bg-primary-600 border-primary-600'
+                        : 'border-gray-300 hover:border-primary-400'
+                    }`}
+                  >
+                    {selectedPendingAgencies.length === pendingAgencies.length &&
+                      pendingAgencies.length > 0 && (
+                        <Check size={14} className="text-white" strokeWidth={3} />
+                      )}
                   </div>
                   <span className="text-sm font-medium text-gray-700">
                     Selecionar todas ({pendingAgencies.length})
@@ -2828,8 +3546,11 @@ export const AdminDashboard: React.FC = () => {
                 </div>
 
                 <div className="space-y-3">
-                  {pendingAgencies.map(agency => (
-                    <div key={agency.agencyId} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200 hover:border-primary-300 transition-colors">
+                  {pendingAgencies.map((agency) => (
+                    <div
+                      key={agency.agencyId}
+                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200 hover:border-primary-300 transition-colors"
+                    >
                       <div className="flex items-center gap-3 flex-1">
                         {/* Checkbox */}
                         <div
@@ -2839,8 +3560,12 @@ export const AdminDashboard: React.FC = () => {
                             handleTogglePendingAgency(agency.agencyId);
                           }}
                           style={{
-                            backgroundColor: selectedPendingAgencies.includes(agency.agencyId) ? '#2563eb' : 'transparent',
-                            borderColor: selectedPendingAgencies.includes(agency.agencyId) ? '#2563eb' : '#d1d5db'
+                            backgroundColor: selectedPendingAgencies.includes(agency.agencyId)
+                              ? '#2563eb'
+                              : 'transparent',
+                            borderColor: selectedPendingAgencies.includes(agency.agencyId)
+                              ? '#2563eb'
+                              : '#d1d5db',
                           }}
                         >
                           {selectedPendingAgencies.includes(agency.agencyId) && (
@@ -2863,14 +3588,20 @@ export const AdminDashboard: React.FC = () => {
                           onClick={async () => {
                             setIsProcessing(true);
                             try {
-                              const agencyData = agencies.find(a => a.agencyId === agency.agencyId);
+                              const agencyData = agencies.find(
+                                (a) => a.agencyId === agency.agencyId
+                              );
                               if (agencyData) {
                                 // First ensure it's active
                                 if (!agencyData.is_active) {
                                   await toggleAgencyStatus(agency.agencyId);
                                 }
                                 // Update subscription status to ACTIVE (keep current plan)
-                                await updateAgencySubscription(agency.agencyId, 'ACTIVE', agencyData.subscriptionPlan || 'BASIC');
+                                await updateAgencySubscription(
+                                  agency.agencyId,
+                                  'ACTIVE',
+                                  agencyData.subscriptionPlan || 'BASIC'
+                                );
                               }
                               showToast(`Agência ${agency.name} aprovada!`, 'success');
                               await refreshData();
@@ -2895,10 +3626,10 @@ export const AdminDashboard: React.FC = () => {
                               variant: 'danger',
                               confirmText: 'Rejeitar',
                               onConfirm: async () => {
-                                setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+                                setConfirmDialog((prev) => ({ ...prev, isOpen: false }));
                                 await handleSoftDelete(agency.agencyId, 'agency', true); // Skip confirm since we already showed ConfirmDialog
                                 // handleSoftDelete already shows a toast, so we don't need to show another one
-                              }
+                              },
                             });
                           }}
                           disabled={isProcessing}
@@ -2923,14 +3654,18 @@ export const AdminDashboard: React.FC = () => {
                     Atividade Recente
                   </h3>
                   <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
-                    {filteredActivities.length} {filteredActivities.length === 1 ? 'evento' : 'eventos'}
+                    {filteredActivities.length}{' '}
+                    {filteredActivities.length === 1 ? 'evento' : 'eventos'}
                   </span>
                 </div>
 
                 {/* Search and Filters */}
                 <div className="mb-4 space-y-2">
                   <div className="relative">
-                    <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                    <Search
+                      size={16}
+                      className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                    />
                     <input
                       type="text"
                       placeholder="Buscar atividades..."
@@ -2942,46 +3677,51 @@ export const AdminDashboard: React.FC = () => {
                   <div className="flex gap-2 flex-wrap">
                     <button
                       onClick={() => setActivityFilter('all')}
-                      className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors ${activityFilter === 'all'
-                        ? 'bg-primary-600 text-white'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                        }`}
+                      className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors ${
+                        activityFilter === 'all'
+                          ? 'bg-primary-600 text-white'
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
                     >
                       Todas
                     </button>
                     <button
                       onClick={() => setActivityFilter('user')}
-                      className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1 ${activityFilter === 'user'
-                        ? 'bg-indigo-600 text-white'
-                        : 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100'
-                        }`}
+                      className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1 ${
+                        activityFilter === 'user'
+                          ? 'bg-indigo-600 text-white'
+                          : 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100'
+                      }`}
                     >
                       <Users size={12} /> Usuários
                     </button>
                     <button
                       onClick={() => setActivityFilter('agency')}
-                      className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1 ${activityFilter === 'agency'
-                        ? 'bg-purple-600 text-white'
-                        : 'bg-purple-50 text-purple-600 hover:bg-purple-100'
-                        }`}
+                      className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1 ${
+                        activityFilter === 'agency'
+                          ? 'bg-purple-600 text-white'
+                          : 'bg-purple-50 text-purple-600 hover:bg-purple-100'
+                      }`}
                     >
                       <Building2 size={12} /> Agências
                     </button>
                     <button
                       onClick={() => setActivityFilter('trip')}
-                      className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1 ${activityFilter === 'trip'
-                        ? 'bg-green-600 text-white'
-                        : 'bg-green-50 text-green-600 hover:bg-green-100'
-                        }`}
+                      className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1 ${
+                        activityFilter === 'trip'
+                          ? 'bg-green-600 text-white'
+                          : 'bg-green-50 text-green-600 hover:bg-green-100'
+                      }`}
                     >
                       <Package size={12} /> Viagens
                     </button>
                     <button
                       onClick={() => setActivityFilter('settings')}
-                      className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1 ${activityFilter === 'settings'
-                        ? 'bg-gray-600 text-white'
-                        : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
-                        }`}
+                      className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1 ${
+                        activityFilter === 'settings'
+                          ? 'bg-gray-600 text-white'
+                          : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+                      }`}
                     >
                       <Settings size={12} /> Config
                     </button>
@@ -2990,7 +3730,7 @@ export const AdminDashboard: React.FC = () => {
 
                 {filteredActivities.length > 0 ? (
                   <div className="space-y-3 max-h-[400px] overflow-y-auto scrollbar-thin">
-                    {filteredActivities.slice(0, 20).map(log => {
+                    {filteredActivities.slice(0, 20).map((log) => {
                       const activityInfo = getActivityInfo(log.action);
                       const Icon = activityInfo.icon;
                       const timeAgo = new Date(log.createdAt);
@@ -3005,32 +3745,52 @@ export const AdminDashboard: React.FC = () => {
                       else if (diffMins < 60) timeLabel = `${diffMins}min atrás`;
                       else if (diffHours < 24) timeLabel = `${diffHours}h atrás`;
                       else if (diffDays < 7) timeLabel = `${diffDays}d atrás`;
-                      else timeLabel = timeAgo.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
+                      else
+                        timeLabel = timeAgo.toLocaleDateString('pt-BR', {
+                          day: '2-digit',
+                          month: 'short',
+                        });
 
                       // Format action name for better readability
                       const formattedAction = log.action
                         .replace(/_/g, ' ')
-                        .replace(/\b\w/g, l => l.toUpperCase());
+                        .replace(/\b\w/g, (l) => l.toUpperCase());
 
                       return (
-                        <div key={log.id} className={`${activityInfo.bgColor} p-4 rounded-xl border ${activityInfo.borderColor} hover:shadow-md transition-all group cursor-pointer`}>
+                        <div
+                          key={log.id}
+                          className={`${activityInfo.bgColor} p-4 rounded-xl border ${activityInfo.borderColor} hover:shadow-md transition-all group cursor-pointer`}
+                        >
                           <div className="flex items-start gap-3">
-                            <div className={`${activityInfo.color} p-2 rounded-lg bg-white border ${activityInfo.borderColor} group-hover:scale-110 transition-transform flex-shrink-0`}>
+                            <div
+                              className={`${activityInfo.color} p-2 rounded-lg bg-white border ${activityInfo.borderColor} group-hover:scale-110 transition-transform flex-shrink-0`}
+                            >
                               <Icon size={18} />
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-bold text-gray-900 line-clamp-1 mb-1">{formattedAction}</p>
-                              <p className="text-xs text-gray-600 line-clamp-2 mb-2">{log.details}</p>
+                              <p className="text-sm font-bold text-gray-900 line-clamp-1 mb-1">
+                                {formattedAction}
+                              </p>
+                              <p className="text-xs text-gray-600 line-clamp-2 mb-2">
+                                {log.details}
+                              </p>
                               <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
-                                  <p className="text-[10px] text-gray-400 font-medium">{timeLabel}</p>
+                                  <p className="text-[10px] text-gray-400 font-medium">
+                                    {timeLabel}
+                                  </p>
                                   {log.adminEmail && (
                                     <span className="text-[10px] text-gray-400 bg-white px-1.5 py-0.5 rounded border border-gray-200">
                                       {log.adminEmail}
                                     </span>
                                   )}
                                 </div>
-                                <p className="text-[10px] text-gray-400">{timeAgo.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
+                                <p className="text-[10px] text-gray-400">
+                                  {timeAgo.toLocaleTimeString('pt-BR', {
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                  })}
+                                </p>
                               </div>
                             </div>
                           </div>
@@ -3081,14 +3841,19 @@ export const AdminDashboard: React.FC = () => {
                 </h3>
                 <p className="text-sm text-gray-600 mb-4">
                   Use para popular seu banco de dados de desenvolvimento com informações de exemplo.
-                  <br /><span className="text-red-600 font-semibold">(Não use em produção!)</span>
+                  <br />
+                  <span className="text-red-600 font-semibold">(Não use em produção!)</span>
                 </p>
                 <button
                   onClick={migrateData}
                   disabled={isProcessing}
                   className="w-full bg-primary-600 text-white py-3 rounded-lg font-bold hover:bg-primary-700 flex items-center justify-center gap-2 disabled:opacity-50 transition-colors mb-4"
                 >
-                  {isProcessing ? <Loader size={18} className="animate-spin" /> : <Sparkles size={18} />}
+                  {isProcessing ? (
+                    <Loader size={18} className="animate-spin" />
+                  ) : (
+                    <Sparkles size={18} />
+                  )}
                   Migrar Dados Mock
                 </button>
 
@@ -3105,16 +3870,26 @@ export const AdminDashboard: React.FC = () => {
                     disabled={isProcessing}
                     className="w-full bg-red-600 text-white py-3 rounded-lg font-bold hover:bg-red-700 flex items-center justify-center gap-2 disabled:opacity-50 transition-colors"
                   >
-                    {isProcessing ? <Loader size={18} className="animate-spin" /> : <Trash2 size={18} />}
+                    {isProcessing ? (
+                      <Loader size={18} className="animate-spin" />
+                    ) : (
+                      <Trash2 size={18} />
+                    )}
                     Limpar Todos os Dados
                   </button>
                   {isMaster && (
                     <div className="mt-3 space-y-2">
                       <button
                         onClick={() => {
-                          if (window.confirm('⚠️ Excluir TODOS os usuários (clientes)? Esta ação é irreversível!')) {
+                          if (
+                            window.confirm(
+                              '⚠️ Excluir TODOS os usuários (clientes)? Esta ação é irreversível!'
+                            )
+                          ) {
                             setIsProcessing(true);
-                            deleteMultipleUsers(clients.filter(c => c.role === UserRole.CLIENT).map(c => c.id))
+                            deleteMultipleUsers(
+                              clients.filter((c) => c.role === UserRole.CLIENT).map((c) => c.id)
+                            )
                               .then(() => {
                                 showToast('Todos os usuários foram excluídos.', 'success');
                                 refreshData();
@@ -3130,9 +3905,13 @@ export const AdminDashboard: React.FC = () => {
                       </button>
                       <button
                         onClick={() => {
-                          if (window.confirm('⚠️ Excluir TODAS as agências e viagens? Esta ação é irreversível!')) {
+                          if (
+                            window.confirm(
+                              '⚠️ Excluir TODAS as agências e viagens? Esta ação é irreversível!'
+                            )
+                          ) {
                             setIsProcessing(true);
-                            deleteMultipleAgencies(agencies.map(a => a.agencyId))
+                            deleteMultipleAgencies(agencies.map((a) => a.agencyId))
                               .then(() => {
                                 showToast('Todas as agências foram excluídas.', 'success');
                                 refreshData();
@@ -3225,7 +4004,10 @@ export const AdminDashboard: React.FC = () => {
               <div className="flex flex-wrap items-center gap-4 flex-1">
                 {/* Search */}
                 <div className="relative flex-1 min-w-[200px]">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                  <Search
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                    size={18}
+                  />
                   <input
                     type="text"
                     value={searchTerm}
@@ -3238,10 +4020,11 @@ export const AdminDashboard: React.FC = () => {
                 {/* Trash Toggle */}
                 <button
                   onClick={() => setShowUserTrash(!showUserTrash)}
-                  className={`px-4 py-2.5 rounded-lg font-bold text-sm transition-all flex items-center gap-2 ${showUserTrash
-                    ? 'bg-red-50 text-red-700 border-2 border-red-200'
-                    : 'bg-gray-50 text-gray-600 border-2 border-gray-200 hover:bg-gray-100'
-                    }`}
+                  className={`px-4 py-2.5 rounded-lg font-bold text-sm transition-all flex items-center gap-2 ${
+                    showUserTrash
+                      ? 'bg-red-50 text-red-700 border-2 border-red-200'
+                      : 'bg-gray-50 text-gray-600 border-2 border-gray-200 hover:bg-gray-100'
+                  }`}
                 >
                   {showUserTrash ? <ArchiveRestore size={16} /> : <Archive size={16} />}
                   {showUserTrash ? 'Ativos' : `Lixeira (${deletedUsers.length})`}
@@ -3254,10 +4037,11 @@ export const AdminDashboard: React.FC = () => {
                   onClick={() => {
                     handleSetUserView('cards');
                   }}
-                  className={`p-2 rounded-lg transition-all ${userView === 'cards'
-                    ? 'bg-white text-primary-600 shadow-sm'
-                    : 'text-gray-400 hover:text-gray-600'
-                    }`}
+                  className={`p-2 rounded-lg transition-all ${
+                    userView === 'cards'
+                      ? 'bg-white text-primary-600 shadow-sm'
+                      : 'text-gray-400 hover:text-gray-600'
+                  }`}
                   title="Visualização em Cards"
                 >
                   <LayoutGrid size={18} />
@@ -3266,10 +4050,11 @@ export const AdminDashboard: React.FC = () => {
                   onClick={() => {
                     handleSetUserView('list');
                   }}
-                  className={`p-2 rounded-lg transition-all ${userView === 'list'
-                    ? 'bg-white text-primary-600 shadow-sm'
-                    : 'text-gray-400 hover:text-gray-600'
-                    }`}
+                  className={`p-2 rounded-lg transition-all ${
+                    userView === 'list'
+                      ? 'bg-white text-primary-600 shadow-sm'
+                      : 'text-gray-400 hover:text-gray-600'
+                  }`}
                   title="Visualização em Lista"
                 >
                   <List size={18} />
@@ -3284,7 +4069,9 @@ export const AdminDashboard: React.FC = () => {
                   <input
                     type="checkbox"
                     onChange={handleToggleAllUsers}
-                    checked={selectedUsers.length === filteredUsers.length && filteredUsers.length > 0}
+                    checked={
+                      selectedUsers.length === filteredUsers.length && filteredUsers.length > 0
+                    }
                     className="h-5 w-5 rounded text-primary-600 border-gray-300 focus:ring-primary-500 cursor-pointer"
                   />
                   <label className="text-sm font-bold text-gray-700 cursor-pointer">
@@ -3292,15 +4079,21 @@ export const AdminDashboard: React.FC = () => {
                   </label>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                  {filteredUsers.map(c => (
-                    <div key={c.id} className={`bg-gradient-to-br from-white to-gray-50 rounded-3xl shadow-lg hover:shadow-2xl border-2 ${selectedUsers.includes(c.id) ? 'border-primary-500 ring-4 ring-primary-200 bg-gradient-to-br from-primary-50 to-white' : 'border-gray-200'} p-6 transition-all relative group overflow-hidden`}>
+                  {filteredUsers.map((c) => (
+                    <div
+                      key={c.id}
+                      className={`bg-gradient-to-br from-white to-gray-50 rounded-3xl shadow-lg hover:shadow-2xl border-2 ${selectedUsers.includes(c.id) ? 'border-primary-500 ring-4 ring-primary-200 bg-gradient-to-br from-primary-50 to-white' : 'border-gray-200'} p-6 transition-all relative group overflow-hidden`}
+                    >
                       {/* Premium gradient overlay on hover */}
                       <div className="absolute inset-0 bg-gradient-to-br from-primary-500/0 to-secondary-500/0 group-hover:from-primary-500/5 group-hover:to-secondary-500/5 transition-all duration-300 pointer-events-none"></div>
 
                       <input
                         type="checkbox"
                         checked={selectedUsers.includes(c.id)}
-                        onChange={(e) => { e.stopPropagation(); handleToggleUser(c.id); }}
+                        onChange={(e) => {
+                          e.stopPropagation();
+                          handleToggleUser(c.id);
+                        }}
                         onClick={(e) => e.stopPropagation()}
                         className="absolute top-5 left-5 h-6 w-6 rounded-md text-primary-600 border-2 border-gray-300 focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 cursor-pointer z-10 shadow-md hover:scale-110 transition-transform"
                       />
@@ -3318,7 +4111,9 @@ export const AdminDashboard: React.FC = () => {
                             )}
                           </div>
                         </div>
-                        <p className="font-extrabold text-gray-900 text-xl mb-1 group-hover:text-primary-600 transition-colors">{c.name}</p>
+                        <p className="font-extrabold text-gray-900 text-xl mb-1 group-hover:text-primary-600 transition-colors">
+                          {c.name}
+                        </p>
                         <p className="text-sm text-gray-500 mb-3 font-medium">{c.email}</p>
                         <div className="flex items-center gap-2 mb-4">
                           <Badge color={c.status === 'ACTIVE' ? 'green' : 'amber'}>
@@ -3327,11 +4122,17 @@ export const AdminDashboard: React.FC = () => {
                         </div>
                       </div>
                       {/* Action Buttons - Better Design */}
-                      <div className="absolute bottom-5 left-0 right-0 z-10 px-5" onClick={(e) => e.stopPropagation()}>
+                      <div
+                        className="absolute bottom-5 left-0 right-0 z-10 px-5"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         {showUserTrash ? (
                           <div className="flex gap-2">
                             <button
-                              onClick={(e) => { e.stopPropagation(); handleRestore(c.id, 'user'); }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleRestore(c.id, 'user');
+                              }}
                               className="flex-1 px-3 py-2.5 border border-slate-200 text-slate-600 rounded-lg font-semibold text-xs hover:bg-slate-50 hover:text-slate-900 transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-1.5"
                               title="Restaurar"
                             >
@@ -3339,7 +4140,10 @@ export const AdminDashboard: React.FC = () => {
                               Restaurar
                             </button>
                             <button
-                              onClick={(e) => { e.stopPropagation(); handlePermanentDelete(c.id, c.role); }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handlePermanentDelete(c.id, c.role);
+                              }}
                               className="flex-1 px-3 py-2.5 text-red-600 hover:bg-red-50 hover:border-red-200 border-transparent rounded-lg font-semibold text-xs transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-1.5"
                               title="Excluir Permanentemente"
                             >
@@ -3418,11 +4222,18 @@ export const AdminDashboard: React.FC = () => {
                                 className="px-3 py-2 text-amber-600 bg-amber-50 hover:bg-amber-100 border-transparent rounded-lg font-semibold text-xs transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-1.5 disabled:opacity-50"
                                 title={c.status === 'ACTIVE' ? 'Suspender' : 'Reativar'}
                               >
-                                {c.status === 'ACTIVE' ? <Ban size={14} /> : <UserCheck size={14} />}
+                                {c.status === 'ACTIVE' ? (
+                                  <Ban size={14} />
+                                ) : (
+                                  <UserCheck size={14} />
+                                )}
                                 {c.status === 'ACTIVE' ? 'Pausar' : 'Ativar'}
                               </button>
                               <button
-                                onClick={(e) => { e.stopPropagation(); handleViewClientDetails(c); }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleViewClientDetails(c);
+                                }}
                                 className="px-3 py-2 border border-slate-200 text-slate-600 rounded-lg font-semibold text-xs hover:bg-slate-50 hover:text-slate-900 transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-1.5"
                                 title="Ver Detalhes"
                               >
@@ -3456,14 +4267,20 @@ export const AdminDashboard: React.FC = () => {
               </>
             ) : (
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-
                 {/* Mobile Stacked Cards */}
                 <div className="md:hidden space-y-4 p-4">
-                  {filteredUsers.map(c => (
-                    <div key={c.id} className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm space-y-3">
+                  {filteredUsers.map((c) => (
+                    <div
+                      key={c.id}
+                      className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm space-y-3"
+                    >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                          <img src={c.avatar || `https://ui-avatars.com/api/?name=${c.name}`} className="w-10 h-10 rounded-full object-cover" alt="" />
+                          <img
+                            src={c.avatar || `https://ui-avatars.com/api/?name=${c.name}`}
+                            className="w-10 h-10 rounded-full object-cover"
+                            alt=""
+                          />
                           <div>
                             <p className="font-bold text-gray-900 text-sm">{c.name}</p>
                             <p className="text-xs text-gray-500">{c.email}</p>
@@ -3472,7 +4289,10 @@ export const AdminDashboard: React.FC = () => {
                         <input
                           type="checkbox"
                           checked={selectedUsers.includes(c.id)}
-                          onChange={(e) => { e.stopPropagation(); handleToggleUser(c.id); }}
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            handleToggleUser(c.id);
+                          }}
                           className="h-5 w-5 rounded text-primary-600 border-gray-300 focus:ring-primary-500"
                         />
                       </div>
@@ -3486,7 +4306,10 @@ export const AdminDashboard: React.FC = () => {
 
                       <div className="flex justify-between items-center bg-gray-50 p-2 rounded-lg gap-2">
                         <button
-                          onClick={(e) => { e.stopPropagation(); setClientDashboardPopup({ isOpen: true, clientId: c.id }); }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setClientDashboardPopup({ isOpen: true, clientId: c.id });
+                          }}
                           className="flex-1 py-1.5 text-xs font-bold text-center bg-white border border-gray-200 rounded-md text-gray-700 shadow-sm"
                         >
                           <LogIn size={14} className="inline mr-1" /> Painel
@@ -3524,18 +4347,29 @@ export const AdminDashboard: React.FC = () => {
                           <input
                             type="checkbox"
                             onChange={handleToggleAllUsers}
-                            checked={selectedUsers.length === filteredUsers.length && filteredUsers.length > 0}
+                            checked={
+                              selectedUsers.length === filteredUsers.length &&
+                              filteredUsers.length > 0
+                            }
                             className="h-4 w-4 rounded text-primary-600 border-gray-300 focus:ring-primary-500 cursor-pointer"
                           />
                         </th>
-                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Usuário</th>
-                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Email</th>
-                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Status</th>
-                        <th className="px-6 py-4 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">Ações</th>
+                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
+                          Usuário
+                        </th>
+                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
+                          Email
+                        </th>
+                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
+                          Status
+                        </th>
+                        <th className="px-6 py-4 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">
+                          Ações
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-100">
-                      {filteredUsers.map(c => (
+                      {filteredUsers.map((c) => (
                         <tr
                           key={c.id}
                           className="hover:bg-gray-50 transition-colors cursor-pointer group"
@@ -3547,7 +4381,10 @@ export const AdminDashboard: React.FC = () => {
                             <input
                               type="checkbox"
                               checked={selectedUsers.includes(c.id)}
-                              onChange={(e) => { e.stopPropagation(); handleToggleUser(c.id); }}
+                              onChange={(e) => {
+                                e.stopPropagation();
+                                handleToggleUser(c.id);
+                              }}
                               className="h-4 w-4 rounded text-primary-600 border-gray-300 focus:ring-primary-500 cursor-pointer"
                             />
                           </td>
@@ -3562,7 +4399,9 @@ export const AdminDashboard: React.FC = () => {
                               </div>
                               <div className="min-w-0">
                                 <p className="font-bold text-gray-900 text-sm">{c.name}</p>
-                                <p className="text-xs text-gray-500 mt-0.5">ID: {c.id.slice(0, 8)}...</p>
+                                <p className="text-xs text-gray-500 mt-0.5">
+                                  ID: {c.id.slice(0, 8)}...
+                                </p>
                               </div>
                             </div>
                           </td>
@@ -3575,18 +4414,27 @@ export const AdminDashboard: React.FC = () => {
                             </Badge>
                           </td>
                           <td className="px-6 py-4">
-                            <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
+                            <div
+                              className="flex items-center justify-end gap-2"
+                              onClick={(e) => e.stopPropagation()}
+                            >
                               {showUserTrash ? (
                                 <>
                                   <button
-                                    onClick={(e) => { e.stopPropagation(); handleRestore(c.id, 'user'); }}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleRestore(c.id, 'user');
+                                    }}
                                     className="p-2 border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-lg transition-colors"
                                     title="Restaurar"
                                   >
                                     <ArchiveRestore size={18} />
                                   </button>
                                   <button
-                                    onClick={(e) => { e.stopPropagation(); handlePermanentDelete(c.id, c.role); }}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handlePermanentDelete(c.id, c.role);
+                                    }}
                                     className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                                     title="Excluir Permanentemente"
                                   >
@@ -3647,12 +4495,16 @@ export const AdminDashboard: React.FC = () => {
                                       e.stopPropagation();
                                       if (isProcessing) return;
                                       const currentStatus = c.status || 'ACTIVE';
-                                      const newStatus = currentStatus === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE';
-                                      logger.log("[AdminDashboard] List view - Toggling user status:", {
-                                        userId: c.id,
-                                        currentStatus,
-                                        newStatus
-                                      });
+                                      const newStatus =
+                                        currentStatus === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE';
+                                      logger.log(
+                                        '[AdminDashboard] List view - Toggling user status:',
+                                        {
+                                          userId: c.id,
+                                          currentStatus,
+                                          newStatus,
+                                        }
+                                      );
                                       try {
                                         await handleUpdateUserStatus(c.id, newStatus);
                                       } catch (error) {
@@ -3663,17 +4515,27 @@ export const AdminDashboard: React.FC = () => {
                                     className="p-2 text-amber-600 hover:bg-amber-50 rounded-lg transition-colors disabled:opacity-50"
                                     title={c.status === 'ACTIVE' ? 'Suspender' : 'Ativar'}
                                   >
-                                    {c.status === 'ACTIVE' ? <Ban size={18} /> : <UserCheck size={18} />}
+                                    {c.status === 'ACTIVE' ? (
+                                      <Ban size={18} />
+                                    ) : (
+                                      <UserCheck size={18} />
+                                    )}
                                   </button>
                                   <button
-                                    onClick={(e) => { e.stopPropagation(); handleViewClientDetails(c); }}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleViewClientDetails(c);
+                                    }}
                                     className="p-2 border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-lg transition-colors shadow-sm"
                                     title="Ver Detalhes"
                                   >
                                     <Eye size={18} />
                                   </button>
                                   <button
-                                    onClick={(e) => { e.stopPropagation(); handleSoftDelete(c.id, 'user'); }}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleSoftDelete(c.id, 'user');
+                                    }}
                                     className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                                     title="Arquivar"
                                   >
@@ -3694,7 +4556,10 @@ export const AdminDashboard: React.FC = () => {
             {/* Detail Drawer */}
             <DetailDrawer
               isOpen={drawerOpen && drawerType === 'user'}
-              onClose={() => { setDrawerOpen(false); setDrawerItem(null); }}
+              onClose={() => {
+                setDrawerOpen(false);
+                setDrawerItem(null);
+              }}
               item={drawerItem as Client}
               type="user"
               onEdit={() => {
@@ -3712,12 +4577,16 @@ export const AdminDashboard: React.FC = () => {
                   setDrawerOpen(false);
                 }
               }}
-              onRestore={showUserTrash ? () => {
-                if (drawerItem) {
-                  handleRestore((drawerItem as Client).id, 'user');
-                  setDrawerOpen(false);
-                }
-              } : undefined}
+              onRestore={
+                showUserTrash
+                  ? () => {
+                      if (drawerItem) {
+                        handleRestore((drawerItem as Client).id, 'user');
+                        setDrawerOpen(false);
+                      }
+                    }
+                  : undefined
+              }
               onSuspend={() => {
                 if (drawerItem) {
                   handleUserStatusToggle(drawerItem as Client);
@@ -3769,7 +4638,7 @@ export const AdminDashboard: React.FC = () => {
                 />
                 <StatsRibbonCard
                   title="Total Ativas"
-                  value={activeAgencies.filter(a => a.subscriptionStatus === 'ACTIVE').length}
+                  value={activeAgencies.filter((a) => a.subscriptionStatus === 'ACTIVE').length}
                   icon={CheckCircle}
                   iconColor="bg-emerald-500"
                   onClick={() => handleAgencyFilterClick('active')}
@@ -3807,7 +4676,10 @@ export const AdminDashboard: React.FC = () => {
               <div className="flex flex-wrap items-center gap-4 flex-1">
                 {/* Search */}
                 <div className="relative flex-1 min-w-[200px]">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                  <Search
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                    size={18}
+                  />
                   <input
                     type="text"
                     value={searchTerm}
@@ -3820,10 +4692,11 @@ export const AdminDashboard: React.FC = () => {
                 {/* Trash Toggle */}
                 <button
                   onClick={() => setShowAgencyTrash(!showAgencyTrash)}
-                  className={`px-4 py-2.5 rounded-lg font-bold text-sm transition-all flex items-center gap-2 ${showAgencyTrash
-                    ? 'bg-red-50 text-red-700 border-2 border-red-200'
-                    : 'bg-gray-50 text-gray-600 border-2 border-gray-200 hover:bg-gray-100'
-                    }`}
+                  className={`px-4 py-2.5 rounded-lg font-bold text-sm transition-all flex items-center gap-2 ${
+                    showAgencyTrash
+                      ? 'bg-red-50 text-red-700 border-2 border-red-200'
+                      : 'bg-gray-50 text-gray-600 border-2 border-gray-200 hover:bg-gray-100'
+                  }`}
                 >
                   {showAgencyTrash ? <ArchiveRestore size={16} /> : <Archive size={16} />}
                   {showAgencyTrash ? 'Ativas' : `Lixeira (${deletedAgencies.length})`}
@@ -3836,10 +4709,11 @@ export const AdminDashboard: React.FC = () => {
                   onClick={() => {
                     handleSetAgencyView('cards');
                   }}
-                  className={`p-2 rounded-lg transition-all ${agencyView === 'cards'
-                    ? 'bg-white text-primary-600 shadow-sm'
-                    : 'text-gray-400 hover:text-gray-600'
-                    }`}
+                  className={`p-2 rounded-lg transition-all ${
+                    agencyView === 'cards'
+                      ? 'bg-white text-primary-600 shadow-sm'
+                      : 'text-gray-400 hover:text-gray-600'
+                  }`}
                   title="Visualização em Cards"
                 >
                   <LayoutGrid size={18} />
@@ -3848,10 +4722,11 @@ export const AdminDashboard: React.FC = () => {
                   onClick={() => {
                     handleSetAgencyView('list');
                   }}
-                  className={`p-2 rounded-lg transition-all ${agencyView === 'list'
-                    ? 'bg-white text-primary-600 shadow-sm'
-                    : 'text-gray-400 hover:text-gray-600'
-                    }`}
+                  className={`p-2 rounded-lg transition-all ${
+                    agencyView === 'list'
+                      ? 'bg-white text-primary-600 shadow-sm'
+                      : 'text-gray-400 hover:text-gray-600'
+                  }`}
                   title="Visualização em Lista"
                 >
                   <List size={18} />
@@ -3897,7 +4772,10 @@ export const AdminDashboard: React.FC = () => {
                   <input
                     type="checkbox"
                     onChange={handleToggleAllAgencies}
-                    checked={selectedAgencies.length === filteredAgencies.length && filteredAgencies.length > 0}
+                    checked={
+                      selectedAgencies.length === filteredAgencies.length &&
+                      filteredAgencies.length > 0
+                    }
                     className="h-5 w-5 rounded text-primary-600 border-gray-300 focus:ring-primary-500 cursor-pointer"
                   />
                   <label className="text-sm font-bold text-gray-700 cursor-pointer">
@@ -3905,17 +4783,26 @@ export const AdminDashboard: React.FC = () => {
                   </label>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                  {filteredAgencies.map(agency => {
-                    const daysLeft = Math.round((new Date(agency.subscriptionExpiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+                  {filteredAgencies.map((agency) => {
+                    const daysLeft = Math.round(
+                      (new Date(agency.subscriptionExpiresAt).getTime() - Date.now()) /
+                        (1000 * 60 * 60 * 24)
+                    );
                     return (
-                      <div key={agency.id} className={`bg-gradient-to-br from-white to-gray-50 rounded-3xl shadow-lg hover:shadow-2xl border-2 ${selectedAgencies.includes(agency.agencyId) ? 'border-primary-500 ring-4 ring-primary-200 bg-gradient-to-br from-primary-50 to-white' : 'border-gray-200'} p-6 transition-all relative group overflow-hidden`}>
+                      <div
+                        key={agency.id}
+                        className={`bg-gradient-to-br from-white to-gray-50 rounded-3xl shadow-lg hover:shadow-2xl border-2 ${selectedAgencies.includes(agency.agencyId) ? 'border-primary-500 ring-4 ring-primary-200 bg-gradient-to-br from-primary-50 to-white' : 'border-gray-200'} p-6 transition-all relative group overflow-hidden`}
+                      >
                         {/* Premium gradient overlay on hover */}
                         <div className="absolute inset-0 bg-gradient-to-br from-primary-500/0 to-secondary-500/0 group-hover:from-primary-500/5 group-hover:to-secondary-500/5 transition-all duration-300 pointer-events-none"></div>
 
                         <input
                           type="checkbox"
                           checked={selectedAgencies.includes(agency.agencyId)}
-                          onChange={(e) => { e.stopPropagation(); handleToggleAgency(agency.agencyId); }}
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            handleToggleAgency(agency.agencyId);
+                          }}
                           onClick={(e) => e.stopPropagation()}
                           className="absolute top-5 left-5 h-6 w-6 rounded-md text-primary-600 border-2 border-gray-300 focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 cursor-pointer z-10 shadow-md hover:scale-110 transition-transform"
                         />
@@ -3924,7 +4811,9 @@ export const AdminDashboard: React.FC = () => {
                           <div className="relative mb-4 flex items-center justify-center">
                             <div className="relative">
                               <img
-                                src={agency.logo || `https://ui-avatars.com/api/?name=${agency.name}`}
+                                src={
+                                  agency.logo || `https://ui-avatars.com/api/?name=${agency.name}`
+                                }
                                 className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-xl ring-4 ring-primary-100 group-hover:ring-primary-300 transition-all group-hover:scale-105"
                                 alt=""
                               />
@@ -3933,22 +4822,40 @@ export const AdminDashboard: React.FC = () => {
                               )}
                             </div>
                           </div>
-                          <p className="font-extrabold text-gray-900 text-xl mb-1 group-hover:text-primary-600 transition-colors">{agency.name}</p>
+                          <p className="font-extrabold text-gray-900 text-xl mb-1 group-hover:text-primary-600 transition-colors">
+                            {agency.name}
+                          </p>
                           <p className="text-sm text-gray-500 mb-3 font-mono font-medium">{`/${agency.slug}`}</p>
                           <div className="flex items-center gap-2 mb-3">
-                            <Badge color={agency.subscriptionPlan === 'PREMIUM' ? 'purple' : 'gray'}>{agency.subscriptionPlan}</Badge>
-                            <Badge color={agency.subscriptionStatus === 'ACTIVE' ? 'green' : 'amber'}>{agency.subscriptionStatus === 'ACTIVE' ? 'Ativo' : 'Inativo'}</Badge>
+                            <Badge
+                              color={agency.subscriptionPlan === 'PREMIUM' ? 'purple' : 'gray'}
+                            >
+                              {agency.subscriptionPlan}
+                            </Badge>
+                            <Badge
+                              color={agency.subscriptionStatus === 'ACTIVE' ? 'green' : 'amber'}
+                            >
+                              {agency.subscriptionStatus === 'ACTIVE' ? 'Ativo' : 'Inativo'}
+                            </Badge>
                           </div>
-                          <p className={`text-xs font-mono font-bold mb-4 ${daysLeft < 30 && daysLeft > 0 ? 'text-amber-600' : daysLeft <= 0 ? 'text-red-500' : 'text-gray-500'}`}>
+                          <p
+                            className={`text-xs font-mono font-bold mb-4 ${daysLeft < 30 && daysLeft > 0 ? 'text-amber-600' : daysLeft <= 0 ? 'text-red-500' : 'text-gray-500'}`}
+                          >
                             {daysLeft > 0 ? `Expira em ${daysLeft} dias` : 'Expirado'}
                           </p>
                         </div>
                         {/* Action Buttons - Better Design */}
-                        <div className="absolute bottom-5 left-0 right-0 z-10 px-5" onClick={(e) => e.stopPropagation()}>
+                        <div
+                          className="absolute bottom-5 left-0 right-0 z-10 px-5"
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           {showAgencyTrash ? (
                             <div className="flex gap-2">
                               <button
-                                onClick={(e) => { e.stopPropagation(); handleRestore(agency.agencyId, 'agency'); }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleRestore(agency.agencyId, 'agency');
+                                }}
                                 className="flex-1 px-3 py-2.5 border border-slate-200 text-slate-600 rounded-lg font-semibold text-xs hover:bg-slate-50 hover:text-slate-900 transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-1.5"
                                 title="Restaurar"
                               >
@@ -3956,7 +4863,10 @@ export const AdminDashboard: React.FC = () => {
                                 Restaurar
                               </button>
                               <button
-                                onClick={(e) => { e.stopPropagation(); handlePermanentDelete(agency.id, agency.role); }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handlePermanentDelete(agency.id, agency.role);
+                                }}
                                 className="flex-1 px-3 py-2.5 text-red-600 hover:bg-red-50 hover:border-red-200 border-transparent rounded-lg font-semibold text-xs transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-1.5"
                                 title="Excluir Permanentemente"
                               >
@@ -3985,7 +4895,10 @@ export const AdminDashboard: React.FC = () => {
                                   Gerenciar
                                 </button>
                                 <button
-                                  onClick={(e) => { e.stopPropagation(); window.open(`/#/${agency.slug}`, '_blank'); }}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    window.open(`/#/${agency.slug}`, '_blank');
+                                  }}
                                   className="flex-1 px-3 py-2.5 border border-slate-200 text-slate-600 rounded-lg font-semibold text-xs hover:bg-slate-50 hover:text-slate-900 transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-1.5"
                                   title="Ver Perfil Online"
                                 >
@@ -3993,7 +4906,10 @@ export const AdminDashboard: React.FC = () => {
                                   Ver Online
                                 </button>
                                 <button
-                                  onClick={(e) => { e.stopPropagation(); handleViewAgencyDetails(agency); }}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleViewAgencyDetails(agency);
+                                  }}
                                   className="flex-1 px-3 py-2.5 border border-slate-200 text-slate-600 rounded-lg font-semibold text-xs hover:bg-slate-50 hover:text-slate-900 transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-1.5"
                                   title="Ver Detalhes"
                                 >
@@ -4004,7 +4920,22 @@ export const AdminDashboard: React.FC = () => {
                               {/* Secondary Actions */}
                               <div className="grid grid-cols-2 gap-2">
                                 <button
-                                  onClick={(e) => { e.stopPropagation(); setSelectedItem(agency); setEditFormData({ name: agency.name, description: agency.description, cnpj: agency.cnpj, slug: agency.slug, phone: agency.phone, whatsapp: agency.whatsapp, website: agency.website, address: agency.address, bankInfo: agency.bankInfo }); setModalType('EDIT_AGENCY'); }}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSelectedItem(agency);
+                                    setEditFormData({
+                                      name: agency.name,
+                                      description: agency.description,
+                                      cnpj: agency.cnpj,
+                                      slug: agency.slug,
+                                      phone: agency.phone,
+                                      whatsapp: agency.whatsapp,
+                                      website: agency.website,
+                                      address: agency.address,
+                                      bankInfo: agency.bankInfo,
+                                    });
+                                    setModalType('EDIT_AGENCY');
+                                  }}
                                   className="px-3 py-2 border border-slate-200 text-slate-600 rounded-lg font-semibold text-xs hover:bg-slate-50 hover:text-slate-900 transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-1.5"
                                   title="Editar Dados"
                                 >
@@ -4012,7 +4943,11 @@ export const AdminDashboard: React.FC = () => {
                                   Editar
                                 </button>
                                 <button
-                                  onClick={(e) => { e.stopPropagation(); setSelectedItem(agency); setModalType('CHANGE_PLAN'); }}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSelectedItem(agency);
+                                    setModalType('CHANGE_PLAN');
+                                  }}
                                   className="px-3 py-2 border border-slate-200 text-slate-600 rounded-lg font-semibold text-xs hover:bg-slate-50 hover:text-slate-900 transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-1.5"
                                   title="Mudar Plano"
                                 >
@@ -4020,18 +4955,33 @@ export const AdminDashboard: React.FC = () => {
                                   Plano
                                 </button>
                                 <button
-                                  onClick={(e) => { e.stopPropagation(); adminSuspendAgency(agency.agencyId); }}
-                                  className={`px-3 py-2 text-amber-600 bg-amber-50 hover:bg-amber-100 border-transparent rounded-lg font-semibold text-xs transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-1.5 ${agency.subscriptionStatus === 'ACTIVE'
-                                    ? ''
-                                    : 'text-emerald-600 bg-emerald-50 hover:bg-emerald-100'
-                                    }`}
-                                  title={agency.subscriptionStatus === 'ACTIVE' ? 'Suspender' : 'Reativar'}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    adminSuspendAgency(agency.agencyId);
+                                  }}
+                                  className={`px-3 py-2 text-amber-600 bg-amber-50 hover:bg-amber-100 border-transparent rounded-lg font-semibold text-xs transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-1.5 ${
+                                    agency.subscriptionStatus === 'ACTIVE'
+                                      ? ''
+                                      : 'text-emerald-600 bg-emerald-50 hover:bg-emerald-100'
+                                  }`}
+                                  title={
+                                    agency.subscriptionStatus === 'ACTIVE'
+                                      ? 'Suspender'
+                                      : 'Reativar'
+                                  }
                                 >
-                                  {agency.subscriptionStatus === 'ACTIVE' ? <Ban size={14} /> : <CheckCircle size={14} />}
+                                  {agency.subscriptionStatus === 'ACTIVE' ? (
+                                    <Ban size={14} />
+                                  ) : (
+                                    <CheckCircle size={14} />
+                                  )}
                                   {agency.subscriptionStatus === 'ACTIVE' ? 'Pausar' : 'Ativar'}
                                 </button>
                                 <button
-                                  onClick={(e) => { e.stopPropagation(); handleSoftDelete(agency.agencyId, 'agency'); }}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleSoftDelete(agency.agencyId, 'agency');
+                                  }}
                                   className="px-3 py-2 text-red-600 hover:bg-red-50 hover:border-red-200 border-transparent rounded-lg font-semibold text-xs transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-1.5"
                                   title="Arquivar"
                                 >
@@ -4049,22 +4999,31 @@ export const AdminDashboard: React.FC = () => {
               </>
             ) : (
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-
                 {/* Mobile Stacked Cards */}
                 <div className="md:hidden space-y-4 p-4">
-                  {filteredAgencies.map(agency => {
-                    const daysLeft = Math.round((new Date(agency.subscriptionExpiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-                    const agencyBookings = bookings.filter(b => {
-                      const trip = trips.find(t => t.id === b.tripId);
+                  {filteredAgencies.map((agency) => {
+                    const daysLeft = Math.round(
+                      (new Date(agency.subscriptionExpiresAt).getTime() - Date.now()) /
+                        (1000 * 60 * 60 * 24)
+                    );
+                    const agencyBookings = bookings.filter((b) => {
+                      const trip = trips.find((t) => t.id === b.tripId);
                       return trip && trip.agencyId === agency.agencyId;
                     });
                     const totalSales = agencyBookings.reduce((sum, b) => sum + b.totalPrice, 0);
 
                     return (
-                      <div key={agency.id} className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm space-y-3">
+                      <div
+                        key={agency.id}
+                        className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm space-y-3"
+                      >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
-                            <img src={agency.logo || `https://ui-avatars.com/api/?name=${agency.name}`} className="w-10 h-10 rounded-lg object-cover" alt="" />
+                            <img
+                              src={agency.logo || `https://ui-avatars.com/api/?name=${agency.name}`}
+                              className="w-10 h-10 rounded-lg object-cover"
+                              alt=""
+                            />
                             <div>
                               <p className="font-bold text-gray-900 text-sm">{agency.name}</p>
                               <p className="text-xs text-gray-500 font-mono">/{agency.slug}</p>
@@ -4073,7 +5032,10 @@ export const AdminDashboard: React.FC = () => {
                           <input
                             type="checkbox"
                             checked={selectedAgencies.includes(agency.agencyId)}
-                            onChange={(e) => { e.stopPropagation(); handleToggleAgency(agency.agencyId); }}
+                            onChange={(e) => {
+                              e.stopPropagation();
+                              handleToggleAgency(agency.agencyId);
+                            }}
                             className="h-5 w-5 rounded text-primary-600 border-gray-300 focus:ring-primary-500"
                           />
                         </div>
@@ -4087,21 +5049,45 @@ export const AdminDashboard: React.FC = () => {
                           </div>
                           <div className="bg-gray-50 p-2 rounded-lg text-center">
                             <div className="text-gray-500 mb-1">Plano</div>
-                            <Badge color={agency.subscriptionPlan === 'PREMIUM' ? 'purple' : agency.subscriptionPlan === 'BASIC' ? 'blue' : 'gray'}>
-                              {agency.subscriptionPlan === 'PREMIUM' ? 'Premium' : agency.subscriptionPlan === 'BASIC' ? 'Básico' : 'Starter'}
+                            <Badge
+                              color={
+                                agency.subscriptionPlan === 'PREMIUM'
+                                  ? 'purple'
+                                  : agency.subscriptionPlan === 'BASIC'
+                                    ? 'blue'
+                                    : 'gray'
+                              }
+                            >
+                              {agency.subscriptionPlan === 'PREMIUM'
+                                ? 'Premium'
+                                : agency.subscriptionPlan === 'BASIC'
+                                  ? 'Básico'
+                                  : 'Starter'}
                             </Badge>
                           </div>
                         </div>
 
                         <div className="flex justify-between items-center text-xs text-gray-600 border-t border-gray-100 pt-2">
-                          <span>Vendas: <b>R$ {totalSales.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}</b></span>
-                          <span className={daysLeft < 30 ? 'text-amber-600 font-bold' : 'text-green-600'}>
+                          <span>
+                            Vendas:{' '}
+                            <b>
+                              R$ {totalSales.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}
+                            </b>
+                          </span>
+                          <span
+                            className={
+                              daysLeft < 30 ? 'text-amber-600 font-bold' : 'text-green-600'
+                            }
+                          >
                             {daysLeft > 0 ? `${daysLeft} dias` : 'Expirado'}
                           </span>
                         </div>
 
                         <button
-                          onClick={(e) => { e.stopPropagation(); handleViewAgencyDetails(agency); }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleViewAgencyDetails(agency);
+                          }}
                           className="w-full py-2 text-xs font-bold text-center bg-gray-50 border border-gray-200 rounded-lg text-gray-700 mt-2"
                         >
                           Ver Detalhes
@@ -4119,27 +5105,47 @@ export const AdminDashboard: React.FC = () => {
                           <input
                             type="checkbox"
                             onChange={handleToggleAllAgencies}
-                            checked={selectedAgencies.length === filteredAgencies.length && filteredAgencies.length > 0}
+                            checked={
+                              selectedAgencies.length === filteredAgencies.length &&
+                              filteredAgencies.length > 0
+                            }
                             className="h-4 w-4 rounded text-primary-600 border-gray-300 focus:ring-primary-500 cursor-pointer"
                           />
                         </th>
-                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Agência</th>
-                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Status</th>
-                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Plano</th>
-                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Dias Restantes</th>
-                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Vendas</th>
-                        <th className="px-6 py-4 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">Ações</th>
+                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
+                          Agência
+                        </th>
+                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
+                          Status
+                        </th>
+                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
+                          Plano
+                        </th>
+                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
+                          Dias Restantes
+                        </th>
+                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
+                          Vendas
+                        </th>
+                        <th className="px-6 py-4 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">
+                          Ações
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-100">
-                      {filteredAgencies.map(agency => {
-                        const daysLeft = Math.round((new Date(agency.subscriptionExpiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-                        const agencyBookings = bookings.filter(b => {
-                          const trip = trips.find(t => t.id === b.tripId);
+                      {filteredAgencies.map((agency) => {
+                        const daysLeft = Math.round(
+                          (new Date(agency.subscriptionExpiresAt).getTime() - Date.now()) /
+                            (1000 * 60 * 60 * 24)
+                        );
+                        const agencyBookings = bookings.filter((b) => {
+                          const trip = trips.find((t) => t.id === b.tripId);
                           return trip && trip.agencyId === agency.agencyId;
                         });
                         const totalSales = agencyBookings.reduce((sum, b) => sum + b.totalPrice, 0);
-                        const createdAt = agency.createdAt ? new Date(agency.createdAt).toLocaleDateString('pt-BR') : 'N/A';
+                        const createdAt = agency.createdAt
+                          ? new Date(agency.createdAt).toLocaleDateString('pt-BR')
+                          : 'N/A';
 
                         return (
                           <tr
@@ -4153,7 +5159,10 @@ export const AdminDashboard: React.FC = () => {
                               <input
                                 type="checkbox"
                                 checked={selectedAgencies.includes(agency.agencyId)}
-                                onChange={(e) => { e.stopPropagation(); handleToggleAgency(agency.agencyId); }}
+                                onChange={(e) => {
+                                  e.stopPropagation();
+                                  handleToggleAgency(agency.agencyId);
+                                }}
                                 className="h-4 w-4 rounded text-primary-600 border-gray-300 focus:ring-primary-500 cursor-pointer"
                               />
                             </td>
@@ -4161,7 +5170,10 @@ export const AdminDashboard: React.FC = () => {
                               <div className="flex items-center gap-3">
                                 <div className="w-14 h-14 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0 ring-2 ring-gray-200 group-hover:ring-primary-300 transition-all">
                                   <img
-                                    src={agency.logo || `https://ui-avatars.com/api/?name=${agency.name}`}
+                                    src={
+                                      agency.logo ||
+                                      `https://ui-avatars.com/api/?name=${agency.name}`
+                                    }
                                     className="w-full h-full object-cover"
                                     alt=""
                                   />
@@ -4173,60 +5185,79 @@ export const AdminDashboard: React.FC = () => {
                                   >
                                     {agency.name}
                                   </p>
-                                  <p className="text-xs text-gray-500 mt-0.5 font-mono">/{agency.slug}</p>
+                                  <p className="text-xs text-gray-500 mt-0.5 font-mono">
+                                    /{agency.slug}
+                                  </p>
                                 </div>
                               </div>
                             </td>
                             <td className="px-6 py-4">
-                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${agency.subscriptionStatus === 'ACTIVE'
-                                ? 'bg-green-50 text-green-700'
-                                : 'bg-red-50 text-red-700'
-                                }`}>
+                              <span
+                                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+                                  agency.subscriptionStatus === 'ACTIVE'
+                                    ? 'bg-green-50 text-green-700'
+                                    : 'bg-red-50 text-red-700'
+                                }`}
+                              >
                                 {agency.subscriptionStatus === 'ACTIVE' ? 'Ativo' : 'Inativo'}
                               </span>
                             </td>
                             <td className="px-6 py-4">
-                              <Badge color={agency.subscriptionPlan === 'PREMIUM' ? 'purple' : agency.subscriptionPlan === 'BASIC' ? 'blue' : 'gray'}>
-                                {agency.subscriptionPlan === 'PREMIUM' ? '⭐ Premium' : agency.subscriptionPlan === 'BASIC' ? '📦 Básico' : agency.subscriptionPlan || 'Starter'}
+                              <Badge
+                                color={
+                                  agency.subscriptionPlan === 'PREMIUM'
+                                    ? 'purple'
+                                    : agency.subscriptionPlan === 'BASIC'
+                                      ? 'blue'
+                                      : 'gray'
+                                }
+                              >
+                                {agency.subscriptionPlan === 'PREMIUM'
+                                  ? '⭐ Premium'
+                                  : agency.subscriptionPlan === 'BASIC'
+                                    ? '📦 Básico'
+                                    : agency.subscriptionPlan || 'Starter'}
                               </Badge>
                             </td>
                             <td className="px-6 py-4">
-                              {agency.subscriptionExpiresAt ? (() => {
-                                const expiryDate = new Date(agency.subscriptionExpiresAt);
-                                const now = new Date();
-                                const diffTime = expiryDate.getTime() - now.getTime();
-                                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                              {agency.subscriptionExpiresAt ? (
+                                (() => {
+                                  const expiryDate = new Date(agency.subscriptionExpiresAt);
+                                  const now = new Date();
+                                  const diffTime = expiryDate.getTime() - now.getTime();
+                                  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-                                if (diffDays < 0) {
-                                  return (
-                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-700 border border-red-300">
-                                      <XCircle size={12} className="mr-1" />
-                                      Expirado
-                                    </span>
-                                  );
-                                } else if (diffDays <= 7) {
-                                  return (
-                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-700 border border-red-300">
-                                      <AlertCircle size={12} className="mr-1" />
-                                      {diffDays} {diffDays === 1 ? 'dia' : 'dias'}
-                                    </span>
-                                  );
-                                } else if (diffDays <= 30) {
-                                  return (
-                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-700 border border-amber-300">
-                                      <AlertCircle size={12} className="mr-1" />
-                                      {diffDays} {diffDays === 1 ? 'dia' : 'dias'}
-                                    </span>
-                                  );
-                                } else {
-                                  return (
-                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-700 border border-green-300">
-                                      <CheckCircle size={12} className="mr-1" />
-                                      {diffDays} {diffDays === 1 ? 'dia' : 'dias'}
-                                    </span>
-                                  );
-                                }
-                              })() : (
+                                  if (diffDays < 0) {
+                                    return (
+                                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-700 border border-red-300">
+                                        <XCircle size={12} className="mr-1" />
+                                        Expirado
+                                      </span>
+                                    );
+                                  } else if (diffDays <= 7) {
+                                    return (
+                                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-700 border border-red-300">
+                                        <AlertCircle size={12} className="mr-1" />
+                                        {diffDays} {diffDays === 1 ? 'dia' : 'dias'}
+                                      </span>
+                                    );
+                                  } else if (diffDays <= 30) {
+                                    return (
+                                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-700 border border-amber-300">
+                                        <AlertCircle size={12} className="mr-1" />
+                                        {diffDays} {diffDays === 1 ? 'dia' : 'dias'}
+                                      </span>
+                                    );
+                                  } else {
+                                    return (
+                                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-700 border border-green-300">
+                                        <CheckCircle size={12} className="mr-1" />
+                                        {diffDays} {diffDays === 1 ? 'dia' : 'dias'}
+                                      </span>
+                                    );
+                                  }
+                                })()
+                              ) : (
                                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 border border-gray-300">
                                   N/A
                                 </span>
@@ -4234,22 +5265,35 @@ export const AdminDashboard: React.FC = () => {
                             </td>
                             <td className="px-6 py-4">
                               <p className="text-sm font-semibold text-gray-900">
-                                R$ {totalSales.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                R${' '}
+                                {totalSales.toLocaleString('pt-BR', {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                })}
                               </p>
                             </td>
                             <td className="px-6 py-4">
-                              <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
+                              <div
+                                className="flex items-center justify-end gap-2"
+                                onClick={(e) => e.stopPropagation()}
+                              >
                                 {showAgencyTrash ? (
                                   <>
                                     <button
-                                      onClick={(e) => { e.stopPropagation(); handleRestore(agency.agencyId, 'agency'); }}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleRestore(agency.agencyId, 'agency');
+                                      }}
                                       className="p-2 border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-lg transition-colors"
                                       title="Restaurar"
                                     >
                                       <ArchiveRestore size={18} />
                                     </button>
                                     <button
-                                      onClick={(e) => { e.stopPropagation(); handlePermanentDelete(agency.id, agency.role); }}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handlePermanentDelete(agency.id, agency.role);
+                                      }}
                                       className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                                       title="Excluir Permanentemente"
                                     >
@@ -4274,45 +5318,85 @@ export const AdminDashboard: React.FC = () => {
                                       <UserCog size={18} />
                                     </button>
                                     <button
-                                      onClick={(e) => { e.stopPropagation(); window.open(`/#/${agency.slug}`, '_blank'); }}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        window.open(`/#/${agency.slug}`, '_blank');
+                                      }}
                                       className="p-2 border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-lg transition-colors shadow-sm"
                                       title="Ver Perfil Online"
                                     >
                                       <ExternalLink size={18} />
                                     </button>
                                     <button
-                                      onClick={(e) => { e.stopPropagation(); handleViewAgencyDetails(agency); }}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleViewAgencyDetails(agency);
+                                      }}
                                       className="p-2 border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-lg transition-colors shadow-sm"
                                       title="Ver Detalhes"
                                     >
                                       <Eye size={18} />
                                     </button>
                                     <button
-                                      onClick={(e) => { e.stopPropagation(); setSelectedItem(agency); setEditFormData({ name: agency.name, description: agency.description, cnpj: agency.cnpj, slug: agency.slug, phone: agency.phone, whatsapp: agency.whatsapp, website: agency.website, address: agency.address, bankInfo: agency.bankInfo }); setModalType('EDIT_AGENCY'); }}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setSelectedItem(agency);
+                                        setEditFormData({
+                                          name: agency.name,
+                                          description: agency.description,
+                                          cnpj: agency.cnpj,
+                                          slug: agency.slug,
+                                          phone: agency.phone,
+                                          whatsapp: agency.whatsapp,
+                                          website: agency.website,
+                                          address: agency.address,
+                                          bankInfo: agency.bankInfo,
+                                        });
+                                        setModalType('EDIT_AGENCY');
+                                      }}
                                       className="p-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-colors"
                                       title="Editar Detalhes"
                                     >
                                       <Edit3 size={18} />
                                     </button>
                                     <button
-                                      onClick={(e) => { e.stopPropagation(); setSelectedItem(agency); setModalType('CHANGE_PLAN'); }}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setSelectedItem(agency);
+                                        setModalType('CHANGE_PLAN');
+                                      }}
                                       className="p-2 border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-lg transition-colors shadow-sm"
                                       title="Mudar Plano"
                                     >
                                       <CreditCard size={18} />
                                     </button>
                                     <button
-                                      onClick={(e) => { e.stopPropagation(); adminSuspendAgency(agency.agencyId); }}
-                                      className={`p-2 text-amber-600 hover:bg-amber-50 rounded-lg transition-colors ${agency.subscriptionStatus === 'ACTIVE'
-                                        ? ''
-                                        : 'text-emerald-600 hover:bg-emerald-50'
-                                        }`}
-                                      title={agency.subscriptionStatus === 'ACTIVE' ? 'Suspender' : 'Reativar'}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        adminSuspendAgency(agency.agencyId);
+                                      }}
+                                      className={`p-2 text-amber-600 hover:bg-amber-50 rounded-lg transition-colors ${
+                                        agency.subscriptionStatus === 'ACTIVE'
+                                          ? ''
+                                          : 'text-emerald-600 hover:bg-emerald-50'
+                                      }`}
+                                      title={
+                                        agency.subscriptionStatus === 'ACTIVE'
+                                          ? 'Suspender'
+                                          : 'Reativar'
+                                      }
                                     >
-                                      {agency.subscriptionStatus === 'ACTIVE' ? <Ban size={18} /> : <CheckCircle size={18} />}
+                                      {agency.subscriptionStatus === 'ACTIVE' ? (
+                                        <Ban size={18} />
+                                      ) : (
+                                        <CheckCircle size={18} />
+                                      )}
                                     </button>
                                     <button
-                                      onClick={(e) => { e.stopPropagation(); handleSoftDelete(agency.agencyId, 'agency'); }}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleSoftDelete(agency.agencyId, 'agency');
+                                      }}
                                       className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                                       title="Arquivar"
                                     >
@@ -4334,14 +5418,27 @@ export const AdminDashboard: React.FC = () => {
             {/* Detail Drawer */}
             <DetailDrawer
               isOpen={drawerOpen && drawerType === 'agency'}
-              onClose={() => { setDrawerOpen(false); setDrawerItem(null); }}
+              onClose={() => {
+                setDrawerOpen(false);
+                setDrawerItem(null);
+              }}
               item={drawerItem as Agency}
               type="agency"
               onEdit={() => {
                 if (drawerItem) {
                   const agency = drawerItem as Agency;
                   setSelectedItem(agency);
-                  setEditFormData({ name: agency.name, description: agency.description, cnpj: agency.cnpj, slug: agency.slug, phone: agency.phone, whatsapp: agency.whatsapp, website: agency.website, address: agency.address, bankInfo: agency.bankInfo });
+                  setEditFormData({
+                    name: agency.name,
+                    description: agency.description,
+                    cnpj: agency.cnpj,
+                    slug: agency.slug,
+                    phone: agency.phone,
+                    whatsapp: agency.whatsapp,
+                    website: agency.website,
+                    address: agency.address,
+                    bankInfo: agency.bankInfo,
+                  });
                   setModalType('EDIT_AGENCY');
                   setDrawerOpen(false);
                 }
@@ -4352,12 +5449,16 @@ export const AdminDashboard: React.FC = () => {
                   setDrawerOpen(false);
                 }
               }}
-              onRestore={showAgencyTrash ? () => {
-                if (drawerItem) {
-                  handleRestore((drawerItem as Agency).agencyId, 'agency');
-                  setDrawerOpen(false);
-                }
-              } : undefined}
+              onRestore={
+                showAgencyTrash
+                  ? () => {
+                      if (drawerItem) {
+                        handleRestore((drawerItem as Agency).agencyId, 'agency');
+                        setDrawerOpen(false);
+                      }
+                    }
+                  : undefined
+              }
               onSuspend={() => {
                 if (drawerItem) {
                   adminSuspendAgency((drawerItem as Agency).agencyId);
@@ -4378,8 +5479,14 @@ export const AdminDashboard: React.FC = () => {
                     className="w-5 h-5 rounded border-2 flex items-center justify-center cursor-pointer transition-colors"
                     onClick={handleToggleAllTrips}
                     style={{
-                      backgroundColor: selectedTrips.length === filteredTrips.length && filteredTrips.length > 0 ? '#2563eb' : 'transparent',
-                      borderColor: selectedTrips.length === filteredTrips.length && filteredTrips.length > 0 ? '#2563eb' : '#d1d5db'
+                      backgroundColor:
+                        selectedTrips.length === filteredTrips.length && filteredTrips.length > 0
+                          ? '#2563eb'
+                          : 'transparent',
+                      borderColor:
+                        selectedTrips.length === filteredTrips.length && filteredTrips.length > 0
+                          ? '#2563eb'
+                          : '#d1d5db',
                     }}
                   >
                     {selectedTrips.length === filteredTrips.length && filteredTrips.length > 0 && (
@@ -4392,17 +5499,18 @@ export const AdminDashboard: React.FC = () => {
                 </div>
               )}
 
-              {filteredTrips.map(trip => {
-                const agency = agencies.find(a => a.agencyId === trip.agencyId);
-                const tripBookings = bookings.filter(b => b.tripId === trip.id);
+              {filteredTrips.map((trip) => {
+                const agency = agencies.find((a) => a.agencyId === trip.agencyId);
+                const tripBookings = bookings.filter((b) => b.tripId === trip.id);
                 const tripRevenue = tripBookings.reduce((sum, b) => sum + b.totalPrice, 0);
                 const isSelected = selectedTrips.includes(trip.id);
 
                 return (
                   <div
                     key={trip.id}
-                    className={`bg-white rounded-2xl shadow-sm border-2 transition-all hover:shadow-lg ${isSelected ? 'border-primary-500 ring-2 ring-primary-200' : 'border-gray-100'
-                      }`}
+                    className={`bg-white rounded-2xl shadow-sm border-2 transition-all hover:shadow-lg ${
+                      isSelected ? 'border-primary-500 ring-2 ring-primary-200' : 'border-gray-100'
+                    }`}
                   >
                     {/* Checkbox */}
                     <div className="p-4 pb-2 flex items-start justify-between">
@@ -4411,21 +5519,30 @@ export const AdminDashboard: React.FC = () => {
                         onClick={() => handleToggleTrip(trip.id)}
                         style={{
                           backgroundColor: isSelected ? '#2563eb' : 'transparent',
-                          borderColor: isSelected ? '#2563eb' : '#d1d5db'
+                          borderColor: isSelected ? '#2563eb' : '#d1d5db',
                         }}
                       >
                         {isSelected && <Check size={14} className="text-white" strokeWidth={3} />}
                       </div>
                       <div className="flex gap-1">
-                        {trip.featured && <Badge color="amber" className="text-xs">DESTAQUE</Badge>}
-                        <Badge color={trip.is_active ? 'green' : 'gray'} className="text-xs">{trip.is_active ? 'ATIVO' : 'INATIVO'}</Badge>
+                        {trip.featured && (
+                          <Badge color="amber" className="text-xs">
+                            DESTAQUE
+                          </Badge>
+                        )}
+                        <Badge color={trip.is_active ? 'green' : 'gray'} className="text-xs">
+                          {trip.is_active ? 'ATIVO' : 'INATIVO'}
+                        </Badge>
                       </div>
                     </div>
 
                     {/* Image */}
                     <div className="relative h-48 w-full overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
                       <img
-                        src={trip.images?.[0] || 'https://placehold.co/400x300/e2e8f0/94a3b8?text=Sem+Imagem'}
+                        src={
+                          trip.images?.[0] ||
+                          'https://placehold.co/400x300/e2e8f0/94a3b8?text=Sem+Imagem'
+                        }
                         className="w-full h-full object-cover"
                         alt={trip.title}
                       />
@@ -4441,7 +5558,9 @@ export const AdminDashboard: React.FC = () => {
                     <div className="p-4 space-y-3">
                       {/* Title & Destination */}
                       <div>
-                        <h3 className="font-bold text-gray-900 text-lg line-clamp-2 mb-1">{trip.title}</h3>
+                        <h3 className="font-bold text-gray-900 text-lg line-clamp-2 mb-1">
+                          {trip.title}
+                        </h3>
                         <div className="flex items-center gap-1 text-xs text-gray-500">
                           <MapPin size={12} />
                           <span>{trip.destination}</span>
@@ -4452,7 +5571,11 @@ export const AdminDashboard: React.FC = () => {
                       {agency && (
                         <div className="flex items-center gap-2 text-sm">
                           <span className="text-gray-500">Agência:</span>
-                          <Link to={`/#/${agency.slug}`} target="_blank" className="text-primary-600 hover:underline font-medium truncate flex items-center gap-1">
+                          <Link
+                            to={`/#/${agency.slug}`}
+                            target="_blank"
+                            className="text-primary-600 hover:underline font-medium truncate flex items-center gap-1"
+                          >
                             {agency.name}
                             <ExternalLink size={12} />
                           </Link>
@@ -4463,20 +5586,28 @@ export const AdminDashboard: React.FC = () => {
                       <div className="grid grid-cols-2 gap-2 text-xs">
                         <div className="bg-gray-50 p-2 rounded-lg">
                           <div className="text-gray-500 mb-0.5">Categoria</div>
-                          <div className="font-semibold text-gray-900">{trip.category || 'N/A'}</div>
+                          <div className="font-semibold text-gray-900">
+                            {trip.category || 'N/A'}
+                          </div>
                         </div>
                         <div className="bg-gray-50 p-2 rounded-lg">
                           <div className="text-gray-500 mb-0.5">Duração</div>
-                          <div className="font-semibold text-gray-900">{trip.durationDays || 'N/A'} {trip.durationDays === 1 ? 'dia' : 'dias'}</div>
+                          <div className="font-semibold text-gray-900">
+                            {trip.durationDays || 'N/A'} {trip.durationDays === 1 ? 'dia' : 'dias'}
+                          </div>
                         </div>
                         <div className="bg-gray-50 p-2 rounded-lg">
                           <div className="text-gray-500 mb-0.5">Preço</div>
-                          <div className="font-bold text-primary-600">R$ {trip.price.toLocaleString('pt-BR')}</div>
+                          <div className="font-bold text-primary-600">
+                            R$ {trip.price.toLocaleString('pt-BR')}
+                          </div>
                         </div>
                         <div className="bg-gray-50 p-2 rounded-lg">
                           <div className="text-gray-500 mb-0.5">Data Início</div>
                           <div className="font-semibold text-gray-900">
-                            {trip.startDate ? new Date(trip.startDate).toLocaleDateString('pt-BR') : 'N/A'}
+                            {trip.startDate
+                              ? new Date(trip.startDate).toLocaleDateString('pt-BR')
+                              : 'N/A'}
                           </div>
                         </div>
                       </div>
@@ -4495,7 +5626,9 @@ export const AdminDashboard: React.FC = () => {
                           {trip.tripRating && (
                             <div className="flex items-center text-amber-600" title="Avaliação">
                               <Star size={14} className="mr-1 fill-amber-400" />
-                              <span className="font-semibold">{(trip.tripRating as number).toFixed(1)}</span>
+                              <span className="font-semibold">
+                                {(trip.tripRating as number).toFixed(1)}
+                              </span>
                             </div>
                           )}
                         </div>
@@ -4505,7 +5638,9 @@ export const AdminDashboard: React.FC = () => {
                       {tripRevenue > 0 && (
                         <div className="bg-green-50 border border-green-200 rounded-lg p-2">
                           <div className="text-xs text-green-600 font-semibold">Receita Total</div>
-                          <div className="text-lg font-bold text-green-700">R$ {tripRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                          <div className="text-lg font-bold text-green-700">
+                            R$ {tripRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          </div>
                         </div>
                       )}
 
@@ -4533,9 +5668,21 @@ export const AdminDashboard: React.FC = () => {
                               let recalculatedDuration = trip.durationDays || 1;
                               if (formattedStartDate && formattedEndDate) {
                                 try {
-                                  const [startYear, startMonth, startDay] = formattedStartDate.split('-').map(Number);
-                                  const [endYear, endMonth, endDay] = formattedEndDate.split('-').map(Number);
-                                  const start = new Date(startYear, startMonth - 1, startDay, 0, 0, 0, 0);
+                                  const [startYear, startMonth, startDay] = formattedStartDate
+                                    .split('-')
+                                    .map(Number);
+                                  const [endYear, endMonth, endDay] = formattedEndDate
+                                    .split('-')
+                                    .map(Number);
+                                  const start = new Date(
+                                    startYear,
+                                    startMonth - 1,
+                                    startDay,
+                                    0,
+                                    0,
+                                    0,
+                                    0
+                                  );
                                   const end = new Date(endYear, endMonth - 1, endDay, 0, 0, 0, 0);
                                   const diffTime = end.getTime() - start.getTime();
                                   const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
@@ -4560,7 +5707,7 @@ export const AdminDashboard: React.FC = () => {
                                 startDate: formattedStartDate,
                                 endDate: formattedEndDate,
                                 durationDays: recalculatedDuration,
-                                categories: initialCategories
+                                categories: initialCategories,
                               });
                               if (trip.latitude && trip.longitude) {
                                 setLocationCoords({ lat: trip.latitude, lng: trip.longitude });
@@ -4594,10 +5741,11 @@ export const AdminDashboard: React.FC = () => {
                               e.stopPropagation();
                               toggleTripStatus(trip.id);
                             }}
-                            className={`flex-1 px-3 py-2 rounded-lg text-xs font-bold transition-colors flex items-center justify-center gap-1.5 min-w-[100px] ${trip.is_active
-                              ? 'bg-amber-50 text-amber-600 hover:bg-amber-100'
-                              : 'bg-green-50 text-green-600 hover:bg-green-100'
-                              }`}
+                            className={`flex-1 px-3 py-2 rounded-lg text-xs font-bold transition-colors flex items-center justify-center gap-1.5 min-w-[100px] ${
+                              trip.is_active
+                                ? 'bg-amber-50 text-amber-600 hover:bg-amber-100'
+                                : 'bg-green-50 text-green-600 hover:bg-green-100'
+                            }`}
                             title={trip.is_active ? 'Pausar' : 'Publicar'}
                           >
                             {trip.is_active ? <PauseCircle size={14} /> : <PlayCircle size={14} />}
@@ -4608,10 +5756,11 @@ export const AdminDashboard: React.FC = () => {
                               e.stopPropagation();
                               toggleTripFeatureStatus(trip.id);
                             }}
-                            className={`flex-1 px-3 py-2 rounded-lg text-xs font-bold transition-colors flex items-center justify-center gap-1.5 min-w-[100px] ${trip.featured
-                              ? 'bg-purple-50 text-purple-600 hover:bg-purple-100'
-                              : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
-                              }`}
+                            className={`flex-1 px-3 py-2 rounded-lg text-xs font-bold transition-colors flex items-center justify-center gap-1.5 min-w-[100px] ${
+                              trip.featured
+                                ? 'bg-purple-50 text-purple-600 hover:bg-purple-100'
+                                : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+                            }`}
                             title={trip.featured ? 'Remover Destaque' : 'Destacar'}
                           >
                             <Sparkles size={14} />
@@ -4641,21 +5790,29 @@ export const AdminDashboard: React.FC = () => {
         // List View
         return (
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden animate-[fadeIn_0.3s]">
-
             {/* Mobile Stacked Cards */}
             <div className="md:hidden space-y-4 p-4">
-              {filteredTrips.map(trip => {
-                const tripBookings = bookings.filter(b => b.tripId === trip.id);
+              {filteredTrips.map((trip) => {
+                const tripBookings = bookings.filter((b) => b.tripId === trip.id);
                 const tripRevenue = tripBookings.reduce((sum, b) => sum + b.totalPrice, 0);
                 const isSelected = selectedTrips.includes(trip.id);
 
                 return (
-                  <div key={trip.id} className={`bg-white border rounded-xl p-4 shadow-sm space-y-3 ${isSelected ? 'border-primary-500 bg-primary-50/10' : 'border-gray-200'}`}>
+                  <div
+                    key={trip.id}
+                    className={`bg-white border rounded-xl p-4 shadow-sm space-y-3 ${isSelected ? 'border-primary-500 bg-primary-50/10' : 'border-gray-200'}`}
+                  >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-center gap-3">
-                        <img src={trip.images?.[0] || 'https://placehold.co/100x100/e2e8f0/e2e8f0'} className="w-12 h-12 rounded-lg object-cover" alt="" />
+                        <img
+                          src={trip.images?.[0] || 'https://placehold.co/100x100/e2e8f0/e2e8f0'}
+                          className="w-12 h-12 rounded-lg object-cover"
+                          alt=""
+                        />
                         <div>
-                          <p className="font-bold text-gray-900 text-sm line-clamp-1">{trip.title}</p>
+                          <p className="font-bold text-gray-900 text-sm line-clamp-1">
+                            {trip.title}
+                          </p>
                           <div className="flex items-center gap-1 text-xs text-gray-500">
                             <MapPin size={10} />
                             <span className="truncate max-w-[150px]">{trip.destination}</span>
@@ -4667,7 +5824,7 @@ export const AdminDashboard: React.FC = () => {
                         onClick={() => handleToggleTrip(trip.id)}
                         style={{
                           backgroundColor: isSelected ? '#2563eb' : 'transparent',
-                          borderColor: isSelected ? '#2563eb' : '#d1d5db'
+                          borderColor: isSelected ? '#2563eb' : '#d1d5db',
                         }}
                       >
                         {isSelected && <Check size={14} className="text-white" strokeWidth={3} />}
@@ -4677,20 +5834,36 @@ export const AdminDashboard: React.FC = () => {
                     <div className="grid grid-cols-2 gap-2 text-xs">
                       <div className="bg-gray-50 p-2 rounded-lg">
                         <div className="text-gray-500 mb-0.5">Preço</div>
-                        <div className="font-bold text-gray-900">R$ {trip.price.toLocaleString('pt-BR')}</div>
+                        <div className="font-bold text-gray-900">
+                          R$ {trip.price.toLocaleString('pt-BR')}
+                        </div>
                       </div>
                       <div className="bg-gray-50 p-2 rounded-lg">
                         <div className="text-gray-500 mb-0.5">Status</div>
-                        <Badge color={trip.is_active ? 'green' : 'gray'}>{trip.is_active ? 'ATIVO' : 'PAUSADO'}</Badge>
+                        <Badge color={trip.is_active ? 'green' : 'gray'}>
+                          {trip.is_active ? 'ATIVO' : 'PAUSADO'}
+                        </Badge>
                       </div>
                     </div>
 
                     <div className="flex items-center justify-between text-xs text-gray-500 border-t border-gray-100 pt-2">
                       <div className="flex items-center gap-3">
-                        <span className="flex items-center gap-1"><Eye size={12} /> {trip.views || 0}</span>
-                        <span className="flex items-center gap-1"><ShoppingBag size={12} /> {trip.sales || 0}</span>
+                        <span className="flex items-center gap-1">
+                          <Eye size={12} /> {trip.views || 0}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <ShoppingBag size={12} /> {trip.sales || 0}
+                        </span>
                       </div>
-                      {tripRevenue > 0 && <span className="font-bold text-green-600">R$ {tripRevenue.toLocaleString('pt-BR', { compactDisplay: 'short', notation: 'compact' })}</span>}
+                      {tripRevenue > 0 && (
+                        <span className="font-bold text-green-600">
+                          R${' '}
+                          {tripRevenue.toLocaleString('pt-BR', {
+                            compactDisplay: 'short',
+                            notation: 'compact',
+                          })}
+                        </span>
+                      )}
                     </div>
                   </div>
                 );
@@ -4706,54 +5879,94 @@ export const AdminDashboard: React.FC = () => {
                         className="w-5 h-5 rounded border-2 flex items-center justify-center cursor-pointer transition-colors"
                         onClick={handleToggleAllTrips}
                         style={{
-                          backgroundColor: selectedTrips.length === filteredTrips.length && filteredTrips.length > 0 ? '#2563eb' : 'transparent',
-                          borderColor: selectedTrips.length === filteredTrips.length && filteredTrips.length > 0 ? '#2563eb' : '#d1d5db'
+                          backgroundColor:
+                            selectedTrips.length === filteredTrips.length &&
+                            filteredTrips.length > 0
+                              ? '#2563eb'
+                              : 'transparent',
+                          borderColor:
+                            selectedTrips.length === filteredTrips.length &&
+                            filteredTrips.length > 0
+                              ? '#2563eb'
+                              : '#d1d5db',
                         }}
                       >
-                        {selectedTrips.length === filteredTrips.length && filteredTrips.length > 0 && (
-                          <Check size={14} className="text-white" strokeWidth={3} />
-                        )}
+                        {selectedTrips.length === filteredTrips.length &&
+                          filteredTrips.length > 0 && (
+                            <Check size={14} className="text-white" strokeWidth={3} />
+                          )}
                       </div>
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Pacote</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Agência</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Categoria</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Preço</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Duração</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Status</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Destaque</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Performance</th>
-                    <th className="px-6 py-4 text-right text-xs font-bold text-gray-400 uppercase tracking-wider">Ações</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">
+                      Pacote
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">
+                      Agência
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">
+                      Categoria
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">
+                      Preço
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">
+                      Duração
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">
+                      Destaque
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">
+                      Performance
+                    </th>
+                    <th className="px-6 py-4 text-right text-xs font-bold text-gray-400 uppercase tracking-wider">
+                      Ações
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 bg-white">
-                  {filteredTrips.map(trip => {
-                    const agency = agencies.find(a => a.agencyId === trip.agencyId);
-                    const tripBookings = bookings.filter(b => b.tripId === trip.id);
+                  {filteredTrips.map((trip) => {
+                    const agency = agencies.find((a) => a.agencyId === trip.agencyId);
+                    const tripBookings = bookings.filter((b) => b.tripId === trip.id);
                     const tripRevenue = tripBookings.reduce((sum, b) => sum + b.totalPrice, 0);
                     const isSelected = selectedTrips.includes(trip.id);
 
                     return (
-                      <tr key={trip.id} className={`hover:bg-gray-50 transition-colors ${isSelected ? 'bg-primary-50/30' : ''}`}>
+                      <tr
+                        key={trip.id}
+                        className={`hover:bg-gray-50 transition-colors ${isSelected ? 'bg-primary-50/30' : ''}`}
+                      >
                         <td className="px-6 py-4">
                           <div
                             className="w-5 h-5 rounded border-2 flex items-center justify-center cursor-pointer transition-colors"
                             onClick={() => handleToggleTrip(trip.id)}
                             style={{
                               backgroundColor: isSelected ? '#2563eb' : 'transparent',
-                              borderColor: isSelected ? '#2563eb' : '#d1d5db'
+                              borderColor: isSelected ? '#2563eb' : '#d1d5db',
                             }}
                           >
-                            {isSelected && <Check size={14} className="text-white" strokeWidth={3} />}
+                            {isSelected && (
+                              <Check size={14} className="text-white" strokeWidth={3} />
+                            )}
                           </div>
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
                             <div className="w-20 h-14 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
-                              <img src={trip.images?.[0] || 'https://placehold.co/100x100/e2e8f0/e2e8f0'} className="w-full h-full object-cover" alt={trip.title} />
+                              <img
+                                src={
+                                  trip.images?.[0] || 'https://placehold.co/100x100/e2e8f0/e2e8f0'
+                                }
+                                className="w-full h-full object-cover"
+                                alt={trip.title}
+                              />
                             </div>
                             <div className="min-w-0">
-                              <p className="font-bold text-gray-900 text-sm line-clamp-1 max-w-[250px]">{trip.title}</p>
+                              <p className="font-bold text-gray-900 text-sm line-clamp-1 max-w-[250px]">
+                                {trip.title}
+                              </p>
                               <div className="flex items-center gap-1 text-xs text-gray-500 mt-0.5">
                                 <MapPin size={12} />
                                 <span className="truncate">{trip.destination}</span>
@@ -4768,30 +5981,48 @@ export const AdminDashboard: React.FC = () => {
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-700">
                           {agency ? (
-                            <Link to={`/#/${agency.slug}`} target="_blank" className="flex items-center hover:underline max-w-[150px] truncate">
-                              {agency.name} <ExternalLink size={10} className="ml-1 flex-shrink-0" />
+                            <Link
+                              to={`/#/${agency.slug}`}
+                              target="_blank"
+                              className="flex items-center hover:underline max-w-[150px] truncate"
+                            >
+                              {agency.name}{' '}
+                              <ExternalLink size={10} className="ml-1 flex-shrink-0" />
                             </Link>
-                          ) : 'N/A'}
+                          ) : (
+                            'N/A'
+                          )}
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-700">
-                          <Badge color="blue" className="text-xs">{trip.category || 'N/A'}</Badge>
+                          <Badge color="blue" className="text-xs">
+                            {trip.category || 'N/A'}
+                          </Badge>
                         </td>
                         <td className="px-6 py-4">
-                          <div className="text-sm font-bold text-gray-700">R$ {trip.price.toLocaleString('pt-BR')}</div>
+                          <div className="text-sm font-bold text-gray-700">
+                            R$ {trip.price.toLocaleString('pt-BR')}
+                          </div>
                           {tripRevenue > 0 && (
                             <div className="text-xs text-green-600 font-semibold mt-0.5">
-                              Receita: R$ {tripRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                              Receita: R${' '}
+                              {tripRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                             </div>
                           )}
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-700">
-                          {trip.durationDays ? `${trip.durationDays} ${trip.durationDays === 1 ? 'dia' : 'dias'}` : 'N/A'}
+                          {trip.durationDays
+                            ? `${trip.durationDays} ${trip.durationDays === 1 ? 'dia' : 'dias'}`
+                            : 'N/A'}
                         </td>
                         <td className="px-6 py-4">
-                          <Badge color={trip.is_active ? 'green' : 'gray'}>{trip.is_active ? 'ATIVO' : 'INATIVO'}</Badge>
+                          <Badge color={trip.is_active ? 'green' : 'gray'}>
+                            {trip.is_active ? 'ATIVO' : 'INATIVO'}
+                          </Badge>
                         </td>
                         <td className="px-6 py-4">
-                          <Badge color={trip.featured ? 'amber' : 'gray'}>{trip.featured ? 'SIM' : 'NÃO'}</Badge>
+                          <Badge color={trip.featured ? 'amber' : 'gray'}>
+                            {trip.featured ? 'SIM' : 'NÃO'}
+                          </Badge>
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex flex-col gap-1 text-xs font-medium text-gray-500">
@@ -4799,17 +6030,22 @@ export const AdminDashboard: React.FC = () => {
                               <Eye size={14} className="mr-1.5 text-blue-400" /> {trip.views || 0}
                             </div>
                             <div className="flex items-center" title="Vendas">
-                              <ShoppingBag size={14} className="mr-1.5 text-green-500" /> {trip.sales || 0}
+                              <ShoppingBag size={14} className="mr-1.5 text-green-500" />{' '}
+                              {trip.sales || 0}
                             </div>
                             {trip.tripRating && (
                               <div className="flex items-center" title="Avaliação">
-                                <Star size={14} className="mr-1.5 text-amber-400 fill-amber-400" /> {(trip.tripRating as number).toFixed(1)}
+                                <Star size={14} className="mr-1.5 text-amber-400 fill-amber-400" />{' '}
+                                {(trip.tripRating as number).toFixed(1)}
                               </div>
                             )}
                           </div>
                         </td>
                         <td className="px-6 py-4 text-right">
-                          <div className="flex justify-end items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                          <div
+                            className="flex justify-end items-center gap-2"
+                            onClick={(e) => e.stopPropagation()}
+                          >
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -4821,9 +6057,21 @@ export const AdminDashboard: React.FC = () => {
                                 let recalculatedDuration = trip.durationDays || 1;
                                 if (formattedStartDate && formattedEndDate) {
                                   try {
-                                    const [startYear, startMonth, startDay] = formattedStartDate.split('-').map(Number);
-                                    const [endYear, endMonth, endDay] = formattedEndDate.split('-').map(Number);
-                                    const start = new Date(startYear, startMonth - 1, startDay, 0, 0, 0, 0);
+                                    const [startYear, startMonth, startDay] = formattedStartDate
+                                      .split('-')
+                                      .map(Number);
+                                    const [endYear, endMonth, endDay] = formattedEndDate
+                                      .split('-')
+                                      .map(Number);
+                                    const start = new Date(
+                                      startYear,
+                                      startMonth - 1,
+                                      startDay,
+                                      0,
+                                      0,
+                                      0,
+                                      0
+                                    );
                                     const end = new Date(endYear, endMonth - 1, endDay, 0, 0, 0, 0);
                                     const diffTime = end.getTime() - start.getTime();
                                     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
@@ -4848,7 +6096,7 @@ export const AdminDashboard: React.FC = () => {
                                   startDate: formattedStartDate,
                                   endDate: formattedEndDate,
                                   durationDays: recalculatedDuration,
-                                  categories: initialCategories
+                                  categories: initialCategories,
                                 });
                                 if (trip.latitude && trip.longitude) {
                                   setLocationCoords({ lat: trip.latitude, lng: trip.longitude });
@@ -4867,23 +6115,29 @@ export const AdminDashboard: React.FC = () => {
                                 e.stopPropagation();
                                 toggleTripStatus(trip.id);
                               }}
-                              className={`p-2 rounded-lg transition-colors ${trip.is_active
-                                ? 'text-amber-600 hover:text-amber-700 hover:bg-amber-50'
-                                : 'text-green-600 hover:text-green-700 hover:bg-green-50'
-                                }`}
+                              className={`p-2 rounded-lg transition-colors ${
+                                trip.is_active
+                                  ? 'text-amber-600 hover:text-amber-700 hover:bg-amber-50'
+                                  : 'text-green-600 hover:text-green-700 hover:bg-green-50'
+                              }`}
                               title={trip.is_active ? 'Pausar' : 'Publicar'}
                             >
-                              {trip.is_active ? <PauseCircle size={18} /> : <PlayCircle size={18} />}
+                              {trip.is_active ? (
+                                <PauseCircle size={18} />
+                              ) : (
+                                <PlayCircle size={18} />
+                              )}
                             </button>
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
                                 toggleTripFeatureStatus(trip.id);
                               }}
-                              className={`p-2 rounded-lg transition-colors ${trip.featured
-                                ? 'text-purple-600 hover:text-purple-700 hover:bg-purple-50'
-                                : 'text-gray-600 hover:text-gray-700 hover:bg-gray-50'
-                                }`}
+                              className={`p-2 rounded-lg transition-colors ${
+                                trip.featured
+                                  ? 'text-purple-600 hover:text-purple-700 hover:bg-purple-50'
+                                  : 'text-gray-600 hover:text-gray-700 hover:bg-gray-50'
+                              }`}
                               title={trip.featured ? 'Remover Destaque' : 'Destacar'}
                             >
                               <Sparkles size={18} />
@@ -4911,11 +6165,13 @@ export const AdminDashboard: React.FC = () => {
       case 'REVIEWS':
         return (
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden animate-[fadeIn_0.3s]">
-
             {/* Mobile Stacked Cards */}
             <div className="md:hidden space-y-4 p-4">
-              {filteredReviews.map(review => (
-                <div key={review.id} className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm space-y-3">
+              {filteredReviews.map((review) => (
+                <div
+                  key={review.id}
+                  className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm space-y-3"
+                >
                   <div className="flex justify-between items-start">
                     <div>
                       <p className="font-bold text-sm text-gray-900">{review.agencyName}</p>
@@ -4933,7 +6189,11 @@ export const AdminDashboard: React.FC = () => {
 
                   <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
                     <button
-                      onClick={() => { setSelectedItem(review); setEditFormData(review); setModalType('EDIT_REVIEW'); }}
+                      onClick={() => {
+                        setSelectedItem(review);
+                        setEditFormData(review);
+                        setModalType('EDIT_REVIEW');
+                      }}
                       className="p-2 text-blue-600 bg-blue-50 rounded-lg"
                     >
                       <Edit3 size={16} />
@@ -4953,23 +6213,45 @@ export const AdminDashboard: React.FC = () => {
               <table className="min-w-full divide-y divide-gray-100">
                 <thead className="bg-gray-50/50">
                   <tr>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Agência</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Cliente</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Pacote</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Avaliação</th>
-                    <th className="px-6 py-4 text-right text-xs font-bold text-gray-400 uppercase tracking-wider">Ações</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">
+                      Agência
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">
+                      Cliente
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">
+                      Pacote
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">
+                      Avaliação
+                    </th>
+                    <th className="px-6 py-4 text-right text-xs font-bold text-gray-400 uppercase tracking-wider">
+                      Ações
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 bg-white">
-                  {filteredReviews.map(review => (
+                  {filteredReviews.map((review) => (
                     <tr key={review.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-6 py-4 text-sm font-bold text-gray-900">{review.agencyName}</td>
+                      <td className="px-6 py-4 text-sm font-bold text-gray-900">
+                        {review.agencyName}
+                      </td>
                       <td className="px-6 py-4 text-sm text-gray-700">{review.clientName}</td>
-                      <td className="px-6 py-4 text-sm text-gray-700">{review.tripTitle || 'N/A'}</td>
+                      <td className="px-6 py-4 text-sm text-gray-700">
+                        {review.tripTitle || 'N/A'}
+                      </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-1">
                           {[...Array(5)].map((_, i) => (
-                            <Star key={i} size={14} className={i < review.rating ? 'fill-amber-400 text-amber-400' : 'text-gray-300'} />
+                            <Star
+                              key={i}
+                              size={14}
+                              className={
+                                i < review.rating
+                                  ? 'fill-amber-400 text-amber-400'
+                                  : 'text-gray-300'
+                              }
+                            />
                           ))}
                           <span className="text-xs text-gray-500">({review.rating})</span>
                         </div>
@@ -4978,7 +6260,11 @@ export const AdminDashboard: React.FC = () => {
                       <td className="px-6 py-4 text-right">
                         <div className="flex justify-end items-center gap-2">
                           <button
-                            onClick={() => { setSelectedItem(review); setEditFormData(review); setModalType('EDIT_REVIEW'); }}
+                            onClick={() => {
+                              setSelectedItem(review);
+                              setEditFormData(review);
+                              setModalType('EDIT_REVIEW');
+                            }}
                             className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
                             title="Editar"
                           >
@@ -5021,7 +6307,7 @@ export const AdminDashboard: React.FC = () => {
                   <div>
                     <p className="text-sm text-gray-500 font-medium mb-1">Guias Ativos</p>
                     <p className="text-3xl font-extrabold text-gray-900">
-                      {allGuides.filter(g => g.subscriptionStatus === 'ACTIVE').length}
+                      {allGuides.filter((g) => g.subscriptionStatus === 'ACTIVE').length}
                     </p>
                   </div>
                   <div className="p-3 bg-green-50 rounded-xl">
@@ -5034,7 +6320,7 @@ export const AdminDashboard: React.FC = () => {
                   <div>
                     <p className="text-sm text-gray-500 font-medium mb-1">Guias Premium</p>
                     <p className="text-3xl font-extrabold text-gray-900">
-                      {allGuides.filter(g => g.subscriptionPlan === 'PREMIUM').length}
+                      {allGuides.filter((g) => g.subscriptionPlan === 'PREMIUM').length}
                     </p>
                   </div>
                   <div className="p-3 bg-purple-50 rounded-xl">
@@ -5047,7 +6333,10 @@ export const AdminDashboard: React.FC = () => {
             {/* Search Bar */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
               <div className="relative">
-                <Search size={20} className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <Search
+                  size={20}
+                  className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"
+                />
                 <input
                   type="text"
                   placeholder="Buscar guias por nome, email, cidade..."
@@ -5064,11 +6353,21 @@ export const AdminDashboard: React.FC = () => {
                 <table className="min-w-full divide-y divide-gray-100">
                   <thead className="bg-gray-50/50">
                     <tr>
-                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Guia</th>
-                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Localização</th>
-                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Plano</th>
-                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Status</th>
-                      <th className="px-6 py-4 text-right text-xs font-bold text-gray-400 uppercase tracking-wider">Ações</th>
+                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">
+                        Guia
+                      </th>
+                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">
+                        Localização
+                      </th>
+                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">
+                        Plano
+                      </th>
+                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">
+                        Status
+                      </th>
+                      <th className="px-6 py-4 text-right text-xs font-bold text-gray-400 uppercase tracking-wider">
+                        Ações
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100 bg-white">
@@ -5078,12 +6377,14 @@ export const AdminDashboard: React.FC = () => {
                           <BookOpen size={48} className="mx-auto mb-3 text-gray-300" />
                           <p className="text-gray-500 font-medium">Nenhum guia encontrado</p>
                           <p className="text-sm text-gray-400 mt-1">
-                            {searchTerm ? 'Tente ajustar sua busca' : 'Não há guias cadastrados no sistema'}
+                            {searchTerm
+                              ? 'Tente ajustar sua busca'
+                              : 'Não há guias cadastrados no sistema'}
                           </p>
                         </td>
                       </tr>
                     ) : (
-                      filteredGuides.map(guide => (
+                      filteredGuides.map((guide) => (
                         <tr key={guide.agencyId} className="hover:bg-gray-50 transition-colors">
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-3">
@@ -5104,18 +6405,24 @@ export const AdminDashboard: React.FC = () => {
                               : guide.address?.city || guide.address?.state || 'Não informado'}
                           </td>
                           <td className="px-6 py-4">
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${guide.subscriptionPlan === 'PREMIUM'
-                              ? 'bg-purple-100 text-purple-700'
-                              : 'bg-gray-100 text-gray-700'
-                              }`}>
+                            <span
+                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                                guide.subscriptionPlan === 'PREMIUM'
+                                  ? 'bg-purple-100 text-purple-700'
+                                  : 'bg-gray-100 text-gray-700'
+                              }`}
+                            >
                               {guide.subscriptionPlan === 'PREMIUM' ? 'Premium' : 'Basic'}
                             </span>
                           </td>
                           <td className="px-6 py-4">
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${guide.subscriptionStatus === 'ACTIVE'
-                              ? 'bg-green-100 text-green-700'
-                              : 'bg-red-100 text-red-700'
-                              }`}>
+                            <span
+                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                                guide.subscriptionStatus === 'ACTIVE'
+                                  ? 'bg-green-100 text-green-700'
+                                  : 'bg-red-100 text-red-700'
+                              }`}
+                            >
                               {guide.subscriptionStatus === 'ACTIVE' ? 'Ativo' : 'Inativo'}
                             </span>
                           </td>
@@ -5129,7 +6436,18 @@ export const AdminDashboard: React.FC = () => {
                                 <Eye size={18} />
                               </button>
                               <button
-                                onClick={() => { setSelectedItem(guide); setEditFormData({ name: guide.name, description: guide.description, email: guide.email, phone: guide.phone, whatsapp: guide.whatsapp, address: guide.address }); setModalType('EDIT_AGENCY'); }}
+                                onClick={() => {
+                                  setSelectedItem(guide);
+                                  setEditFormData({
+                                    name: guide.name,
+                                    description: guide.description,
+                                    email: guide.email,
+                                    phone: guide.phone,
+                                    whatsapp: guide.whatsapp,
+                                    address: guide.address,
+                                  });
+                                  setModalType('EDIT_AGENCY');
+                                }}
                                 className="p-2 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 rounded-lg transition-colors"
                                 title="Editar"
                               >
@@ -5159,7 +6477,7 @@ export const AdminDashboard: React.FC = () => {
                     <p className="text-gray-500 font-medium">Nenhum guia encontrado</p>
                   </div>
                 ) : (
-                  filteredGuides.map(guide => (
+                  filteredGuides.map((guide) => (
                     <div key={guide.agencyId} className="p-4 space-y-3">
                       <div className="flex items-center gap-3">
                         <img
@@ -5171,17 +6489,22 @@ export const AdminDashboard: React.FC = () => {
                           <p className="text-sm font-bold text-gray-900 truncate">{guide.name}</p>
                           <p className="text-xs text-gray-500 truncate">{guide.email}</p>
                         </div>
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${guide.subscriptionStatus === 'ACTIVE'
-                          ? 'bg-green-100 text-green-700'
-                          : 'bg-red-100 text-red-700'
-                          }`}>
+                        <span
+                          className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                            guide.subscriptionStatus === 'ACTIVE'
+                              ? 'bg-green-100 text-green-700'
+                              : 'bg-red-100 text-red-700'
+                          }`}
+                        >
                           {guide.subscriptionStatus === 'ACTIVE' ? 'Ativo' : 'Inativo'}
                         </span>
                       </div>
 
                       <div className="flex justify-between items-center text-xs text-gray-600 bg-gray-50 p-2 rounded-lg">
                         <span>{guide.address?.city || 'Localização n/a'}</span>
-                        <span className={`font-bold ${guide.subscriptionPlan === 'PREMIUM' ? 'text-purple-600' : 'text-gray-600'}`}>
+                        <span
+                          className={`font-bold ${guide.subscriptionPlan === 'PREMIUM' ? 'text-purple-600' : 'text-gray-600'}`}
+                        >
                           {guide.subscriptionPlan === 'PREMIUM' ? 'Premium' : 'Basic'}
                         </span>
                       </div>
@@ -5194,7 +6517,18 @@ export const AdminDashboard: React.FC = () => {
                           <Eye size={14} /> Ver
                         </button>
                         <button
-                          onClick={() => { setSelectedItem(guide); setEditFormData({ name: guide.name, description: guide.description, email: guide.email, phone: guide.phone, whatsapp: guide.whatsapp, address: guide.address }); setModalType('EDIT_AGENCY'); }}
+                          onClick={() => {
+                            setSelectedItem(guide);
+                            setEditFormData({
+                              name: guide.name,
+                              description: guide.description,
+                              email: guide.email,
+                              phone: guide.phone,
+                              whatsapp: guide.whatsapp,
+                              address: guide.address,
+                            });
+                            setModalType('EDIT_AGENCY');
+                          }}
                           className="flex-1 py-2 bg-indigo-50 text-indigo-700 text-xs font-bold rounded-lg hover:bg-indigo-100 flex items-center justify-center gap-1"
                         >
                           <Edit3 size={14} /> Editar
@@ -5233,12 +6567,24 @@ export const AdminDashboard: React.FC = () => {
                 <table className="min-w-full divide-y divide-gray-200 font-mono text-xs">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Data/Hora</th>
-                      <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Ator</th>
-                      <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Ação</th>
-                      <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Alvo</th>
-                      <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">IP</th>
-                      <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Detalhes</th>
+                      <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                        Data/Hora
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                        Ator
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                        Ação
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                        Alvo
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                        IP
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                        Detalhes
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
@@ -5252,23 +6598,33 @@ export const AdminDashboard: React.FC = () => {
                       enhancedAuditLogs.map((log: any) => {
                         const date = new Date(log.createdAt);
                         const severityColor =
-                          log.severity === 'high' ? 'text-red-600 bg-red-50 border-red-200' :
-                            log.severity === 'medium' ? 'text-amber-600 bg-amber-50 border-amber-200' :
-                              'text-blue-600 bg-blue-50 border-blue-200';
+                          log.severity === 'high'
+                            ? 'text-red-600 bg-red-50 border-red-200'
+                            : log.severity === 'medium'
+                              ? 'text-amber-600 bg-amber-50 border-amber-200'
+                              : 'text-blue-600 bg-blue-50 border-blue-200';
 
                         return (
                           <tr key={log.id} className="hover:bg-gray-50 transition-colors">
                             <td className="px-4 py-3 text-gray-900">
                               <div className="flex flex-col">
-                                <span className="font-semibold">{date.toLocaleDateString('pt-BR')}</span>
-                                <span className="text-gray-500">{date.toLocaleTimeString('pt-BR')}</span>
+                                <span className="font-semibold">
+                                  {date.toLocaleDateString('pt-BR')}
+                                </span>
+                                <span className="text-gray-500">
+                                  {date.toLocaleTimeString('pt-BR')}
+                                </span>
                               </div>
                             </td>
                             <td className="px-4 py-3">
-                              <span className="text-gray-900 font-semibold">{log.adminEmail || 'Sistema'}</span>
+                              <span className="text-gray-900 font-semibold">
+                                {log.adminEmail || 'Sistema'}
+                              </span>
                             </td>
                             <td className="px-4 py-3">
-                              <span className={`inline-flex items-center px-2 py-1 rounded border font-semibold ${severityColor}`}>
+                              <span
+                                className={`inline-flex items-center px-2 py-1 rounded border font-semibold ${severityColor}`}
+                              >
                                 {log.action}
                               </span>
                             </td>
@@ -5283,7 +6639,9 @@ export const AdminDashboard: React.FC = () => {
                               </code>
                             </td>
                             <td className="px-4 py-3 text-gray-600 max-w-md">
-                              <p className="truncate" title={log.details}>{log.details}</p>
+                              <p className="truncate" title={log.details}>
+                                {log.details}
+                              </p>
                             </td>
                           </tr>
                         );
@@ -5303,22 +6661,28 @@ export const AdminDashboard: React.FC = () => {
                   enhancedAuditLogs.map((log: any) => {
                     const date = new Date(log.createdAt);
                     const severityColor =
-                      log.severity === 'high' ? 'text-red-600 bg-red-50 border-red-200' :
-                        log.severity === 'medium' ? 'text-amber-600 bg-amber-50 border-amber-200' :
-                          'text-blue-600 bg-blue-50 border-blue-200';
+                      log.severity === 'high'
+                        ? 'text-red-600 bg-red-50 border-red-200'
+                        : log.severity === 'medium'
+                          ? 'text-amber-600 bg-amber-50 border-amber-200'
+                          : 'text-blue-600 bg-blue-50 border-blue-200';
 
                     return (
                       <div key={log.id} className="p-4 space-y-2">
                         <div className="flex justify-between items-start">
                           <div>
-                            <span className={`inline-flex items-center px-2 py-0.5 rounded border text-xs font-bold ${severityColor}`}>
+                            <span
+                              className={`inline-flex items-center px-2 py-0.5 rounded border text-xs font-bold ${severityColor}`}
+                            >
                               {log.action}
                             </span>
                             <p className="text-xs text-gray-500 mt-1">
                               {date.toLocaleDateString('pt-BR')} {date.toLocaleTimeString('pt-BR')}
                             </p>
                           </div>
-                          <span className="text-sm font-bold text-gray-900">{log.adminEmail || 'Sistema'}</span>
+                          <span className="text-sm font-bold text-gray-900">
+                            {log.adminEmail || 'Sistema'}
+                          </span>
                         </div>
                         <div className="bg-gray-50 p-2 rounded text-xs font-mono text-gray-600 break-all">
                           Target: {log.targetId}
@@ -5342,23 +6706,31 @@ export const AdminDashboard: React.FC = () => {
                 <Shield size={24} className="text-primary-600" />
                 Configurações Globais da Plataforma
               </h2>
-              <p className="text-gray-600 mb-8">Personalize o nome e logo da plataforma. As alterações serão aplicadas em todo o sistema.</p>
+              <p className="text-gray-600 mb-8">
+                Personalize o nome e logo da plataforma. As alterações serão aplicadas em todo o
+                sistema.
+              </p>
 
-              <form onSubmit={async (e) => {
-                e.preventDefault();
-                setIsProcessing(true);
-                try {
-                  await updatePlatformSettings(platformSettingsForm);
-                  showToast('Configurações salvas com sucesso!', 'success');
-                } catch (error: any) {
-                  showToast(`Erro ao salvar: ${error.message}`, 'error');
-                } finally {
-                  setIsProcessing(false);
-                }
-              }} className="space-y-8">
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  setIsProcessing(true);
+                  try {
+                    await updatePlatformSettings(platformSettingsForm);
+                    showToast('Configurações salvas com sucesso!', 'success');
+                  } catch (error: any) {
+                    showToast(`Erro ao salvar: ${error.message}`, 'error');
+                  } finally {
+                    setIsProcessing(false);
+                  }
+                }}
+                className="space-y-8"
+              >
                 {/* Identidade */}
                 <div className="space-y-6">
-                  <h3 className="text-lg font-bold text-gray-900 border-b border-gray-200 pb-3">Identidade da Plataforma</h3>
+                  <h3 className="text-lg font-bold text-gray-900 border-b border-gray-200 pb-3">
+                    Identidade da Plataforma
+                  </h3>
 
                   <div>
                     <label className="block text-sm font-bold text-gray-700 mb-2">
@@ -5367,12 +6739,19 @@ export const AdminDashboard: React.FC = () => {
                     <input
                       type="text"
                       value={platformSettingsForm.platform_name}
-                      onChange={(e) => setPlatformSettingsForm({ ...platformSettingsForm, platform_name: e.target.value })}
+                      onChange={(e) =>
+                        setPlatformSettingsForm({
+                          ...platformSettingsForm,
+                          platform_name: e.target.value,
+                        })
+                      }
                       className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all"
                       placeholder="SouNativo"
                       required
                     />
-                    <p className="text-xs text-gray-500 mt-2">Este nome aparecerá no header, footer e título da página.</p>
+                    <p className="text-xs text-gray-500 mt-2">
+                      Este nome aparecerá no header, footer e título da página.
+                    </p>
                   </div>
 
                   <div>
@@ -5391,7 +6770,10 @@ export const AdminDashboard: React.FC = () => {
                             type="button"
                             onClick={() => {
                               setLogoPreview('');
-                              setPlatformSettingsForm({ ...platformSettingsForm, platform_logo_url: '' });
+                              setPlatformSettingsForm({
+                                ...platformSettingsForm,
+                                platform_logo_url: '',
+                              });
                             }}
                             className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
                           >
@@ -5417,7 +6799,10 @@ export const AdminDashboard: React.FC = () => {
                                 const url = await uploadPlatformLogo(file);
                                 if (url) {
                                   setLogoPreview(url);
-                                  setPlatformSettingsForm({ ...platformSettingsForm, platform_logo_url: url });
+                                  setPlatformSettingsForm({
+                                    ...platformSettingsForm,
+                                    platform_logo_url: url,
+                                  });
                                   showToast('Logo enviado com sucesso!', 'success');
                                 }
                               } catch (error: any) {
@@ -5454,7 +6839,10 @@ export const AdminDashboard: React.FC = () => {
                                 type="button"
                                 onClick={() => {
                                   setLogoPreview('');
-                                  setPlatformSettingsForm({ ...platformSettingsForm, platform_logo_url: '' });
+                                  setPlatformSettingsForm({
+                                    ...platformSettingsForm,
+                                    platform_logo_url: '',
+                                  });
                                 }}
                                 className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-colors"
                               >
@@ -5463,7 +6851,10 @@ export const AdminDashboard: React.FC = () => {
                             )}
                           </div>
                         </label>
-                        <p className="text-xs text-gray-500">Formato: PNG, JPG ou WEBP. Tamanho máximo: 5MB. Recomendado: PNG com fundo transparente, mínimo 200x200px</p>
+                        <p className="text-xs text-gray-500">
+                          Formato: PNG, JPG ou WEBP. Tamanho máximo: 5MB. Recomendado: PNG com fundo
+                          transparente, mínimo 200x200px
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -5471,7 +6862,9 @@ export const AdminDashboard: React.FC = () => {
 
                 {/* Personalização de Layout */}
                 <div className="space-y-6 pt-6 border-t border-gray-200">
-                  <h3 className="text-lg font-bold text-gray-900 border-b border-gray-200 pb-3">Personalização de Layout</h3>
+                  <h3 className="text-lg font-bold text-gray-900 border-b border-gray-200 pb-3">
+                    Personalização de Layout
+                  </h3>
 
                   <div>
                     <label className="block text-sm font-bold text-gray-700 mb-2">
@@ -5482,17 +6875,34 @@ export const AdminDashboard: React.FC = () => {
                         <button
                           key={style}
                           type="button"
-                          onClick={() => setPlatformSettingsForm({ ...platformSettingsForm, layout_style: style })}
-                          className={`p-4 border-2 rounded-xl transition-all ${platformSettingsForm.layout_style === style
-                            ? 'border-primary-600 bg-primary-50 ring-2 ring-primary-200'
-                            : 'border-gray-200 hover:border-gray-300'
-                            }`}
+                          onClick={() =>
+                            setPlatformSettingsForm({
+                              ...platformSettingsForm,
+                              layout_style: style,
+                            })
+                          }
+                          className={`p-4 border-2 rounded-xl transition-all ${
+                            platformSettingsForm.layout_style === style
+                              ? 'border-primary-600 bg-primary-50 ring-2 ring-primary-200'
+                              : 'border-gray-200 hover:border-gray-300'
+                          }`}
                         >
-                          <div className={`w-full h-16 mb-2 ${style === 'rounded' ? 'rounded-2xl' :
-                            style === 'square' ? 'rounded-none' :
-                              'rounded-sm'
-                            } bg-gradient-to-br from-primary-400 to-secondary-400`}></div>
-                          <p className="text-xs font-semibold text-gray-700 capitalize">{style === 'rounded' ? 'Arredondado' : style === 'square' ? 'Quadrado' : 'Minimal'}</p>
+                          <div
+                            className={`w-full h-16 mb-2 ${
+                              style === 'rounded'
+                                ? 'rounded-2xl'
+                                : style === 'square'
+                                  ? 'rounded-none'
+                                  : 'rounded-sm'
+                            } bg-gradient-to-br from-primary-400 to-secondary-400`}
+                          ></div>
+                          <p className="text-xs font-semibold text-gray-700 capitalize">
+                            {style === 'rounded'
+                              ? 'Arredondado'
+                              : style === 'square'
+                                ? 'Quadrado'
+                                : 'Minimal'}
+                          </p>
                         </button>
                       ))}
                     </div>
@@ -5506,13 +6916,23 @@ export const AdminDashboard: React.FC = () => {
                       <input
                         type="color"
                         value={platformSettingsForm.background_color}
-                        onChange={(e) => setPlatformSettingsForm({ ...platformSettingsForm, background_color: e.target.value })}
+                        onChange={(e) =>
+                          setPlatformSettingsForm({
+                            ...platformSettingsForm,
+                            background_color: e.target.value,
+                          })
+                        }
                         className="w-16 h-16 rounded-lg border-2 border-gray-300 cursor-pointer"
                       />
                       <input
                         type="text"
                         value={platformSettingsForm.background_color}
-                        onChange={(e) => setPlatformSettingsForm({ ...platformSettingsForm, background_color: e.target.value })}
+                        onChange={(e) =>
+                          setPlatformSettingsForm({
+                            ...platformSettingsForm,
+                            background_color: e.target.value,
+                          })
+                        }
                         className="flex-1 border-2 border-gray-300 rounded-xl px-4 py-3 text-gray-900 font-mono text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
                         placeholder="#ffffff"
                       />
@@ -5524,13 +6944,20 @@ export const AdminDashboard: React.FC = () => {
                       <label className="block text-sm font-bold text-gray-900 mb-1">
                         Efeito Blur no Fundo
                       </label>
-                      <p className="text-xs text-gray-600">Aplica um efeito de desfoque no fundo da plataforma.</p>
+                      <p className="text-xs text-gray-600">
+                        Aplica um efeito de desfoque no fundo da plataforma.
+                      </p>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input
                         type="checkbox"
                         checked={platformSettingsForm.background_blur}
-                        onChange={(e) => setPlatformSettingsForm({ ...platformSettingsForm, background_blur: e.target.checked })}
+                        onChange={(e) =>
+                          setPlatformSettingsForm({
+                            ...platformSettingsForm,
+                            background_blur: e.target.checked,
+                          })
+                        }
                         className="sr-only peer"
                       />
                       <div className="w-14 h-7 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-primary-600"></div>
@@ -5539,7 +6966,8 @@ export const AdminDashboard: React.FC = () => {
 
                   <div>
                     <label className="block text-sm font-bold text-gray-700 mb-2">
-                      Transparência do Fundo: {Math.round(platformSettingsForm.background_transparency * 100)}%
+                      Transparência do Fundo:{' '}
+                      {Math.round(platformSettingsForm.background_transparency * 100)}%
                     </label>
                     <input
                       type="range"
@@ -5547,7 +6975,12 @@ export const AdminDashboard: React.FC = () => {
                       max="1"
                       step="0.1"
                       value={platformSettingsForm.background_transparency}
-                      onChange={(e) => setPlatformSettingsForm({ ...platformSettingsForm, background_transparency: parseFloat(e.target.value) })}
+                      onChange={(e) =>
+                        setPlatformSettingsForm({
+                          ...platformSettingsForm,
+                          background_transparency: parseFloat(e.target.value),
+                        })
+                      }
                       className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary-600"
                     />
                     <div className="flex justify-between text-xs text-gray-500 mt-1">
@@ -5559,20 +6992,30 @@ export const AdminDashboard: React.FC = () => {
 
                 {/* Sistema */}
                 <div className="space-y-6 pt-6 border-t border-gray-200">
-                  <h3 className="text-lg font-bold text-gray-900 border-b border-gray-200 pb-3">Sistema</h3>
+                  <h3 className="text-lg font-bold text-gray-900 border-b border-gray-200 pb-3">
+                    Sistema
+                  </h3>
 
                   <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-200">
                     <div>
                       <label className="block text-sm font-bold text-gray-900 mb-1">
                         Modo Manutenção
                       </label>
-                      <p className="text-xs text-gray-600">Bloqueia o acesso público à plataforma. Apenas administradores poderão acessar.</p>
+                      <p className="text-xs text-gray-600">
+                        Bloqueia o acesso público à plataforma. Apenas administradores poderão
+                        acessar.
+                      </p>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input
                         type="checkbox"
                         checked={platformSettingsForm.maintenance_mode}
-                        onChange={(e) => setPlatformSettingsForm({ ...platformSettingsForm, maintenance_mode: e.target.checked })}
+                        onChange={(e) =>
+                          setPlatformSettingsForm({
+                            ...platformSettingsForm,
+                            maintenance_mode: e.target.checked,
+                          })
+                        }
                         className="sr-only peer"
                       />
                       <div className="w-14 h-7 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-primary-600"></div>
@@ -5585,7 +7028,11 @@ export const AdminDashboard: React.FC = () => {
                   <button
                     type="button"
                     onClick={async () => {
-                      if (window.confirm('Tem certeza que deseja restaurar todas as configurações para o padrão? Esta ação não pode ser desfeita.')) {
+                      if (
+                        window.confirm(
+                          'Tem certeza que deseja restaurar todas as configurações para o padrão? Esta ação não pode ser desfeita.'
+                        )
+                      ) {
                         setIsProcessing(true);
                         try {
                           await restoreDefaultSettings();
@@ -5628,7 +7075,10 @@ export const AdminDashboard: React.FC = () => {
         return (
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 animate-[fadeIn_0.3s]">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Configurações de Tema</h2>
-            <p className="text-gray-600 mb-8">Personalize a aparência da plataforma. O tema ativo será aplicado para todos os usuários.</p>
+            <p className="text-gray-600 mb-8">
+              Personalize a aparência da plataforma. O tema ativo será aplicado para todos os
+              usuários.
+            </p>
 
             {/* Add New Theme Form */}
             <div className="bg-gray-50 border border-gray-100 rounded-xl p-6 mb-8">
@@ -5636,25 +7086,68 @@ export const AdminDashboard: React.FC = () => {
               <form onSubmit={handleAddTheme} className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
                   <label className="block text-sm font-bold text-gray-700 mb-2">Nome do Tema</label>
-                  <input value={newThemeForm.name} onChange={e => setNewThemeForm({ ...newThemeForm, name: e.target.value })} className="w-full border p-2.5 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none" required placeholder="Ex: Verão Vibrante" />
+                  <input
+                    value={newThemeForm.name}
+                    onChange={(e) => setNewThemeForm({ ...newThemeForm, name: e.target.value })}
+                    className="w-full border p-2.5 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
+                    required
+                    placeholder="Ex: Verão Vibrante"
+                  />
                 </div>
                 <div>
                   <label className="block text-sm font-bold text-gray-700 mb-2">Cor Primária</label>
                   <div className="flex gap-2 items-center">
-                    <input type="color" value={newThemeForm.primary} onChange={e => setNewThemeForm({ ...newThemeForm, primary: e.target.value })} className="w-10 h-10 rounded-lg border cursor-pointer" />
-                    <input value={newThemeForm.primary} onChange={e => setNewThemeForm({ ...newThemeForm, primary: e.target.value })} className="flex-1 border p-2.5 rounded-lg text-sm font-mono focus:ring-2 focus:ring-primary-500 outline-none" />
+                    <input
+                      type="color"
+                      value={newThemeForm.primary}
+                      onChange={(e) =>
+                        setNewThemeForm({ ...newThemeForm, primary: e.target.value })
+                      }
+                      className="w-10 h-10 rounded-lg border cursor-pointer"
+                    />
+                    <input
+                      value={newThemeForm.primary}
+                      onChange={(e) =>
+                        setNewThemeForm({ ...newThemeForm, primary: e.target.value })
+                      }
+                      className="flex-1 border p-2.5 rounded-lg text-sm font-mono focus:ring-2 focus:ring-primary-500 outline-none"
+                    />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Cor Secundária</label>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">
+                    Cor Secundária
+                  </label>
                   <div className="flex gap-2 items-center">
-                    <input type="color" value={newThemeForm.secondary} onChange={e => setNewThemeForm({ ...newThemeForm, secondary: e.target.value })} className="w-10 h-10 rounded-lg border cursor-pointer" />
-                    <input value={newThemeForm.secondary} onChange={e => setNewThemeForm({ ...newThemeForm, secondary: e.target.value })} className="flex-1 border p-2.5 rounded-lg text-sm font-mono focus:ring-2 focus:ring-primary-500 outline-none" />
+                    <input
+                      type="color"
+                      value={newThemeForm.secondary}
+                      onChange={(e) =>
+                        setNewThemeForm({ ...newThemeForm, secondary: e.target.value })
+                      }
+                      className="w-10 h-10 rounded-lg border cursor-pointer"
+                    />
+                    <input
+                      value={newThemeForm.secondary}
+                      onChange={(e) =>
+                        setNewThemeForm({ ...newThemeForm, secondary: e.target.value })
+                      }
+                      className="flex-1 border p-2.5 rounded-lg text-sm font-mono focus:ring-2 focus:ring-primary-500 outline-none"
+                    />
                   </div>
                 </div>
                 <div className="md:col-span-3">
-                  <button type="submit" disabled={isThemeProcessing} className="w-full bg-primary-600 text-white py-3 rounded-lg font-bold hover:bg-primary-700 flex items-center justify-center gap-2 disabled:opacity-50 transition-colors">
-                    {isThemeProcessing ? <Loader size={18} className="animate-spin" /> : <Palette size={18} />} Adicionar Tema
+                  <button
+                    type="submit"
+                    disabled={isThemeProcessing}
+                    className="w-full bg-primary-600 text-white py-3 rounded-lg font-bold hover:bg-primary-700 flex items-center justify-center gap-2 disabled:opacity-50 transition-colors"
+                  >
+                    {isThemeProcessing ? (
+                      <Loader size={18} className="animate-spin" />
+                    ) : (
+                      <Palette size={18} />
+                    )}{' '}
+                    Adicionar Tema
                   </button>
                 </div>
               </form>
@@ -5662,28 +7155,56 @@ export const AdminDashboard: React.FC = () => {
 
             {/* Theme List */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {themes.map(theme => (
-                <div key={theme.id} className={`bg-white p-6 rounded-2xl shadow-sm border ${activeTheme.id === theme.id ? 'border-primary-600 ring-2 ring-primary-200' : 'border-gray-100'} relative transition-all`}>
-                  <h3 className="font-bold text-gray-900 text-lg mb-3 truncate" title={theme.name}>{theme.name}</h3>
+              {themes.map((theme) => (
+                <div
+                  key={theme.id}
+                  className={`bg-white p-6 rounded-2xl shadow-sm border ${activeTheme.id === theme.id ? 'border-primary-600 ring-2 ring-primary-200' : 'border-gray-100'} relative transition-all`}
+                >
+                  <h3 className="font-bold text-gray-900 text-lg mb-3 truncate" title={theme.name}>
+                    {theme.name}
+                  </h3>
                   <div className="flex gap-3 mb-4">
-                    <div className="w-10 h-10 rounded-full shadow border" style={{ backgroundColor: theme.colors.primary }}></div>
-                    <div className="w-10 h-10 rounded-full shadow border" style={{ backgroundColor: theme.colors.secondary }}></div>
+                    <div
+                      className="w-10 h-10 rounded-full shadow border"
+                      style={{ backgroundColor: theme.colors.primary }}
+                    ></div>
+                    <div
+                      className="w-10 h-10 rounded-full shadow border"
+                      style={{ backgroundColor: theme.colors.secondary }}
+                    ></div>
                   </div>
                   <div className="flex items-center gap-2 text-sm text-gray-500 mb-6">
                     {theme.isDefault && <Badge color="blue">Padrão</Badge>}
                     {theme.isActive && <Badge color="green">Ativo</Badge>}
                   </div>
                   <div className="flex flex-col gap-2">
-                    <button onClick={() => handleSetTheme(theme.id)} disabled={activeTheme.id === theme.id || isThemeProcessing} className="w-full bg-primary-50 text-primary-700 px-4 py-2 rounded-lg text-sm font-bold hover:bg-primary-100 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
-                      {activeTheme.id === theme.id ? <CheckCircle2 size={16} /> : <Palette size={16} />}
+                    <button
+                      onClick={() => handleSetTheme(theme.id)}
+                      disabled={activeTheme.id === theme.id || isThemeProcessing}
+                      className="w-full bg-primary-50 text-primary-700 px-4 py-2 rounded-lg text-sm font-bold hover:bg-primary-100 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                      {activeTheme.id === theme.id ? (
+                        <CheckCircle2 size={16} />
+                      ) : (
+                        <Palette size={16} />
+                      )}
                       {activeTheme.id === theme.id ? 'Aplicado' : 'Aplicar Tema'}
                     </button>
                     <div className="flex gap-2">
-                      <button onClick={() => previewTheme(theme)} onMouseLeave={resetPreview} disabled={isThemeProcessing} className="flex-1 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-sm font-bold hover:bg-gray-200 disabled:opacity-50 flex items-center justify-center gap-2">
+                      <button
+                        onClick={() => previewTheme(theme)}
+                        onMouseLeave={resetPreview}
+                        disabled={isThemeProcessing}
+                        className="flex-1 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-sm font-bold hover:bg-gray-200 disabled:opacity-50 flex items-center justify-center gap-2"
+                      >
                         <Eye size={16} /> Prévia
                       </button>
                       {!theme.isDefault && (
-                        <button onClick={() => handleDeleteTheme(theme.id)} disabled={isThemeProcessing || theme.isActive} className="bg-red-50 text-red-700 p-2 rounded-lg hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <button
+                          onClick={() => handleDeleteTheme(theme.id)}
+                          disabled={isThemeProcessing || theme.isActive}
+                          className="bg-red-50 text-red-700 p-2 rounded-lg hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
                           <Trash2 size={16} />
                         </button>
                       )}
@@ -5695,12 +7216,12 @@ export const AdminDashboard: React.FC = () => {
           </div>
         );
       case 'BROADCASTS':
-        const activeGuides = agencies.filter(a => a.isGuide === true);
+        const activeGuides = agencies.filter((a) => a.isGuide === true);
         const totalRecipients = {
           ALL: activeAgencies.length + activeUsers.length + activeGuides.length,
           AGENCY: activeAgencies.length,
           CLIENT: activeUsers.length,
-          GUIDE: activeGuides.length
+          GUIDE: activeGuides.length,
         };
 
         // Filter broadcasts by date
@@ -5710,18 +7231,18 @@ export const AdminDashboard: React.FC = () => {
 
           if (dateFilter === 'today') {
             const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-            filtered = filtered.filter(b => new Date(b.created_at) >= today);
+            filtered = filtered.filter((b) => new Date(b.created_at) >= today);
           } else if (dateFilter === 'week') {
             const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-            filtered = filtered.filter(b => new Date(b.created_at) >= weekAgo);
+            filtered = filtered.filter((b) => new Date(b.created_at) >= weekAgo);
           } else if (dateFilter === 'month') {
             const monthAgo = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
-            filtered = filtered.filter(b => new Date(b.created_at) >= monthAgo);
+            filtered = filtered.filter((b) => new Date(b.created_at) >= monthAgo);
           } else if (dateFilter === 'custom' && customDateStart && customDateEnd) {
             const start = new Date(customDateStart);
             const end = new Date(customDateEnd);
             end.setHours(23, 59, 59, 999);
-            filtered = filtered.filter(b => {
+            filtered = filtered.filter((b) => {
               const created = new Date(b.created_at);
               return created >= start && created <= end;
             });
@@ -5748,11 +7269,23 @@ export const AdminDashboard: React.FC = () => {
             y += 8;
 
             doc.setFontSize(10);
-            doc.text(`Enviado em: ${new Date(broadcast.created_at).toLocaleDateString('pt-BR')}`, 20, y);
+            doc.text(
+              `Enviado em: ${new Date(broadcast.created_at).toLocaleDateString('pt-BR')}`,
+              20,
+              y
+            );
             y += 6;
-            doc.text(`Público: ${broadcast.target_role === 'ALL' ? 'Todos' : broadcast.target_role === 'CLIENT' ? 'Clientes' : broadcast.target_role === 'AGENCY' ? 'Agências' : 'Guias'}`, 20, y);
+            doc.text(
+              `Público: ${broadcast.target_role === 'ALL' ? 'Todos' : broadcast.target_role === 'CLIENT' ? 'Clientes' : broadcast.target_role === 'AGENCY' ? 'Agências' : 'Guias'}`,
+              20,
+              y
+            );
             y += 6;
-            doc.text(`Vistos: ${broadcast.read_count || 0} | Curtidas: ${broadcast.liked_count || 0}`, 20, y);
+            doc.text(
+              `Vistos: ${broadcast.read_count || 0} | Curtidas: ${broadcast.liked_count || 0}`,
+              20,
+              y
+            );
             y += 8;
 
             const messageLines = doc.splitTextToSize(broadcast.message, 170);
@@ -5766,29 +7299,46 @@ export const AdminDashboard: React.FC = () => {
 
         // Export to CSV
         const exportBroadcastsToCSV = (broadcasts: BroadcastWithInteractions[]) => {
-          const headers = ['Título', 'Mensagem', 'Público', 'Data Envio', 'Vistos', 'Curtidas', 'Taxa Leitura %'];
-          const rows = broadcasts.map(b => [
+          const headers = [
+            'Título',
+            'Mensagem',
+            'Público',
+            'Data Envio',
+            'Vistos',
+            'Curtidas',
+            'Taxa Leitura %',
+          ];
+          const rows = broadcasts.map((b) => [
             b.title,
             b.message.replace(/\n/g, ' ').replace(/,/g, ';'),
-            b.target_role === 'ALL' ? 'Todos' : b.target_role === 'CLIENT' ? 'Clientes' : b.target_role === 'AGENCY' ? 'Agências' : 'Guias',
+            b.target_role === 'ALL'
+              ? 'Todos'
+              : b.target_role === 'CLIENT'
+                ? 'Clientes'
+                : b.target_role === 'AGENCY'
+                  ? 'Agências'
+                  : 'Guias',
             new Date(b.created_at).toLocaleDateString('pt-BR'),
             (b.read_count || 0).toString(),
             (b.liked_count || 0).toString(),
             b.total_recipients && b.total_recipients > 0
-              ? Math.round((b.read_count || 0) / b.total_recipients * 100).toString()
-              : '0'
+              ? Math.round(((b.read_count || 0) / b.total_recipients) * 100).toString()
+              : '0',
           ]);
 
           const csvContent = [
             headers.join(','),
-            ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+            ...rows.map((row) => row.map((cell) => `"${cell}"`).join(',')),
           ].join('\n');
 
           const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
           const link = document.createElement('a');
           const url = URL.createObjectURL(blob);
           link.setAttribute('href', url);
-          link.setAttribute('download', `comunicados-${new Date().toISOString().split('T')[0]}.csv`);
+          link.setAttribute(
+            'download',
+            `comunicados-${new Date().toISOString().split('T')[0]}.csv`
+          );
           link.style.visibility = 'hidden';
           document.body.appendChild(link);
           link.click();
@@ -5806,7 +7356,7 @@ export const AdminDashboard: React.FC = () => {
             await sendBroadcast({
               title: broadcastForm.title,
               message: broadcastForm.message,
-              target_role: broadcastForm.target_role
+              target_role: broadcastForm.target_role,
             });
             setBroadcastForm({ title: '', message: '', target_role: 'ALL' });
             // Refresh history if on Reports tab
@@ -5827,40 +7377,44 @@ export const AdminDashboard: React.FC = () => {
             <div className="flex border-b border-gray-200 bg-white rounded-t-xl">
               <button
                 onClick={() => setBroadcastSubTab('compose')}
-                className={`flex items-center gap-2 py-3 px-6 font-semibold text-sm border-b-2 transition-colors ${broadcastSubTab === 'compose'
-                  ? 'border-slate-900 text-slate-900 bg-slate-50'
-                  : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-                  }`}
+                className={`flex items-center gap-2 py-3 px-6 font-semibold text-sm border-b-2 transition-colors ${
+                  broadcastSubTab === 'compose'
+                    ? 'border-slate-900 text-slate-900 bg-slate-50'
+                    : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                }`}
               >
                 <Edit3 size={16} />
                 Nova Mensagem
               </button>
               <button
                 onClick={() => setBroadcastSubTab('reports')}
-                className={`flex items-center gap-2 py-3 px-6 font-semibold text-sm border-b-2 transition-colors ${broadcastSubTab === 'reports'
-                  ? 'border-slate-900 text-slate-900 bg-slate-50'
-                  : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-                  }`}
+                className={`flex items-center gap-2 py-3 px-6 font-semibold text-sm border-b-2 transition-colors ${
+                  broadcastSubTab === 'reports'
+                    ? 'border-slate-900 text-slate-900 bg-slate-50'
+                    : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                }`}
               >
                 <BarChart3 size={16} />
                 Histórico e Métricas
               </button>
               <button
                 onClick={() => setBroadcastSubTab('templates')}
-                className={`flex items-center gap-2 py-3 px-6 font-semibold text-sm border-b-2 transition-colors ${broadcastSubTab === 'templates'
-                  ? 'border-slate-900 text-slate-900 bg-slate-50'
-                  : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-                  }`}
+                className={`flex items-center gap-2 py-3 px-6 font-semibold text-sm border-b-2 transition-colors ${
+                  broadcastSubTab === 'templates'
+                    ? 'border-slate-900 text-slate-900 bg-slate-50'
+                    : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                }`}
               >
                 <FileText size={16} />
                 Templates
               </button>
               <button
                 onClick={() => setBroadcastSubTab('scheduled')}
-                className={`flex items-center gap-2 py-3 px-6 font-semibold text-sm border-b-2 transition-colors ${broadcastSubTab === 'scheduled'
-                  ? 'border-slate-900 text-slate-900 bg-slate-50'
-                  : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-                  }`}
+                className={`flex items-center gap-2 py-3 px-6 font-semibold text-sm border-b-2 transition-colors ${
+                  broadcastSubTab === 'scheduled'
+                    ? 'border-slate-900 text-slate-900 bg-slate-50'
+                    : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                }`}
               >
                 <Clock size={16} />
                 Agendados
@@ -5876,11 +7430,19 @@ export const AdminDashboard: React.FC = () => {
                   </div>
                   <div>
                     <h2 className="text-2xl font-semibold text-slate-900">Enviar Comunicado</h2>
-                    <p className="text-sm text-slate-600">Envie uma mensagem para clientes, agências ou guias de turismo</p>
+                    <p className="text-sm text-slate-600">
+                      Envie uma mensagem para clientes, agências ou guias de turismo
+                    </p>
                   </div>
                 </div>
 
-                <form onSubmit={(e) => { e.preventDefault(); handleSendBroadcast(); }} className="space-y-6">
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    handleSendBroadcast();
+                  }}
+                  className="space-y-6"
+                >
                   <div>
                     <label className="block text-sm font-semibold text-slate-700 mb-2">
                       Título do Comunicado
@@ -5888,7 +7450,9 @@ export const AdminDashboard: React.FC = () => {
                     <input
                       type="text"
                       value={broadcastForm.title}
-                      onChange={(e) => setBroadcastForm({ ...broadcastForm, title: e.target.value })}
+                      onChange={(e) =>
+                        setBroadcastForm({ ...broadcastForm, title: e.target.value })
+                      }
                       placeholder="Ex: Manutenção Programada"
                       className="w-full border-2 border-slate-200 rounded-xl px-4 py-3 text-slate-900 focus:ring-2 focus:ring-slate-500 focus:border-slate-500 outline-none transition-all"
                       required
@@ -5901,7 +7465,9 @@ export const AdminDashboard: React.FC = () => {
                     </label>
                     <textarea
                       value={broadcastForm.message}
-                      onChange={(e) => setBroadcastForm({ ...broadcastForm, message: e.target.value })}
+                      onChange={(e) =>
+                        setBroadcastForm({ ...broadcastForm, message: e.target.value })
+                      }
                       placeholder="Digite sua mensagem aqui..."
                       rows={6}
                       className="w-full border-2 border-slate-200 rounded-xl px-4 py-3 text-slate-900 focus:ring-2 focus:ring-slate-500 focus:border-slate-500 outline-none transition-all resize-none"
@@ -5920,12 +7486,19 @@ export const AdminDashboard: React.FC = () => {
                           name="target_role"
                           value="ALL"
                           checked={broadcastForm.target_role === 'ALL'}
-                          onChange={(e) => setBroadcastForm({ ...broadcastForm, target_role: e.target.value as BroadcastTargetRole })}
+                          onChange={(e) =>
+                            setBroadcastForm({
+                              ...broadcastForm,
+                              target_role: e.target.value as BroadcastTargetRole,
+                            })
+                          }
                           className="text-slate-600"
                         />
                         <div className="flex-1">
                           <p className="font-semibold text-slate-900">Todos</p>
-                          <p className="text-xs text-slate-600">{totalRecipients.ALL} destinatários receberão o comunicado</p>
+                          <p className="text-xs text-slate-600">
+                            {totalRecipients.ALL} destinatários receberão o comunicado
+                          </p>
                         </div>
                       </label>
                       <label className="flex items-center gap-3 p-3 border-2 border-slate-200 rounded-xl cursor-pointer hover:border-slate-300 transition-colors">
@@ -5934,12 +7507,19 @@ export const AdminDashboard: React.FC = () => {
                           name="target_role"
                           value="CLIENT"
                           checked={broadcastForm.target_role === 'CLIENT'}
-                          onChange={(e) => setBroadcastForm({ ...broadcastForm, target_role: e.target.value as BroadcastTargetRole })}
+                          onChange={(e) =>
+                            setBroadcastForm({
+                              ...broadcastForm,
+                              target_role: e.target.value as BroadcastTargetRole,
+                            })
+                          }
                           className="text-slate-600"
                         />
                         <div className="flex-1">
                           <p className="font-semibold text-slate-900">Todos os Clientes</p>
-                          <p className="text-xs text-slate-600">{totalRecipients.CLIENT} clientes receberão o comunicado</p>
+                          <p className="text-xs text-slate-600">
+                            {totalRecipients.CLIENT} clientes receberão o comunicado
+                          </p>
                         </div>
                       </label>
                       <label className="flex items-center gap-3 p-3 border-2 border-slate-200 rounded-xl cursor-pointer hover:border-slate-300 transition-colors">
@@ -5948,12 +7528,19 @@ export const AdminDashboard: React.FC = () => {
                           name="target_role"
                           value="AGENCY"
                           checked={broadcastForm.target_role === 'AGENCY'}
-                          onChange={(e) => setBroadcastForm({ ...broadcastForm, target_role: e.target.value as BroadcastTargetRole })}
+                          onChange={(e) =>
+                            setBroadcastForm({
+                              ...broadcastForm,
+                              target_role: e.target.value as BroadcastTargetRole,
+                            })
+                          }
                           className="text-slate-600"
                         />
                         <div className="flex-1">
                           <p className="font-semibold text-slate-900">Todas as Agências</p>
-                          <p className="text-xs text-slate-600">{totalRecipients.AGENCY} agências receberão o comunicado</p>
+                          <p className="text-xs text-slate-600">
+                            {totalRecipients.AGENCY} agências receberão o comunicado
+                          </p>
                         </div>
                       </label>
                       <label className="flex items-center gap-3 p-3 border-2 border-slate-200 rounded-xl cursor-pointer hover:border-slate-300 transition-colors">
@@ -5962,12 +7549,19 @@ export const AdminDashboard: React.FC = () => {
                           name="target_role"
                           value="GUIDE"
                           checked={broadcastForm.target_role === 'GUIDE'}
-                          onChange={(e) => setBroadcastForm({ ...broadcastForm, target_role: e.target.value as BroadcastTargetRole })}
+                          onChange={(e) =>
+                            setBroadcastForm({
+                              ...broadcastForm,
+                              target_role: e.target.value as BroadcastTargetRole,
+                            })
+                          }
                           className="text-slate-600"
                         />
                         <div className="flex-1">
                           <p className="font-semibold text-slate-900">Guias de Turismo</p>
-                          <p className="text-xs text-slate-600">{totalRecipients.GUIDE} guias receberão o comunicado</p>
+                          <p className="text-xs text-slate-600">
+                            {totalRecipients.GUIDE} guias receberão o comunicado
+                          </p>
                         </div>
                       </label>
                     </div>
@@ -5976,7 +7570,9 @@ export const AdminDashboard: React.FC = () => {
                   <div className="flex gap-3 pt-4">
                     <button
                       type="button"
-                      onClick={() => setBroadcastForm({ title: '', message: '', target_role: 'ALL' })}
+                      onClick={() =>
+                        setBroadcastForm({ title: '', message: '', target_role: 'ALL' })
+                      }
                       className="flex-1 px-6 py-3 border border-slate-200 text-slate-600 rounded-xl font-semibold hover:bg-slate-50 hover:text-slate-900 transition-all"
                     >
                       Limpar
@@ -6011,7 +7607,9 @@ export const AdminDashboard: React.FC = () => {
                   <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
                     {/* Date Filters */}
                     <div className="flex flex-wrap items-center gap-3">
-                      <label className="text-sm font-semibold text-slate-700">Filtrar por data:</label>
+                      <label className="text-sm font-semibold text-slate-700">
+                        Filtrar por data:
+                      </label>
                       <select
                         value={dateFilter}
                         onChange={(e) => {
@@ -6084,7 +7682,9 @@ export const AdminDashboard: React.FC = () => {
                   <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-12 text-center">
                     <Megaphone size={48} className="mx-auto mb-4 text-slate-300" />
                     <p className="text-slate-600 font-semibold">Nenhum comunicado enviado</p>
-                    <p className="text-sm text-slate-500 mt-1">Os comunicados enviados aparecerão aqui</p>
+                    <p className="text-sm text-slate-500 mt-1">
+                      Os comunicados enviados aparecerão aqui
+                    </p>
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -6092,17 +7692,25 @@ export const AdminDashboard: React.FC = () => {
                       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-12 text-center">
                         <Filter size={48} className="mx-auto mb-4 text-slate-300" />
                         <p className="text-slate-600 font-semibold">Nenhum comunicado encontrado</p>
-                        <p className="text-sm text-slate-500 mt-1">Tente ajustar os filtros de data</p>
+                        <p className="text-sm text-slate-500 mt-1">
+                          Tente ajustar os filtros de data
+                        </p>
                       </div>
                     ) : (
                       <>
                         {getFilteredBroadcasts().map((broadcast) => {
-                          const readPercentage = broadcast.total_recipients && broadcast.total_recipients > 0
-                            ? Math.round((broadcast.read_count || 0) / broadcast.total_recipients * 100)
-                            : 0;
-                          const likedPercentage = broadcast.total_recipients && broadcast.total_recipients > 0
-                            ? Math.round((broadcast.liked_count || 0) / broadcast.total_recipients * 100)
-                            : 0;
+                          const readPercentage =
+                            broadcast.total_recipients && broadcast.total_recipients > 0
+                              ? Math.round(
+                                  ((broadcast.read_count || 0) / broadcast.total_recipients) * 100
+                                )
+                              : 0;
+                          const likedPercentage =
+                            broadcast.total_recipients && broadcast.total_recipients > 0
+                              ? Math.round(
+                                  ((broadcast.liked_count || 0) / broadcast.total_recipients) * 100
+                                )
+                              : 0;
 
                           return (
                             <div
@@ -6111,25 +7719,54 @@ export const AdminDashboard: React.FC = () => {
                             >
                               <div
                                 className="p-6 cursor-pointer hover:bg-slate-50 transition-colors"
-                                onClick={() => setExpandedBroadcastId(expandedBroadcastId === broadcast.id ? null : broadcast.id)}
+                                onClick={() =>
+                                  setExpandedBroadcastId(
+                                    expandedBroadcastId === broadcast.id ? null : broadcast.id
+                                  )
+                                }
                               >
                                 <div className="flex items-start justify-between gap-4">
                                   <div className="flex-1">
                                     <div className="flex items-center gap-3 mb-2">
-                                      <h3 className="text-lg font-semibold text-slate-900">{broadcast.title}</h3>
-                                      <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${broadcast.target_role === 'ALL' ? 'bg-purple-100 text-purple-700' :
-                                        broadcast.target_role === 'CLIENT' ? 'bg-blue-100 text-blue-700' :
-                                          broadcast.target_role === 'AGENCY' ? 'bg-amber-100 text-amber-700' :
-                                            'bg-green-100 text-green-700'
-                                        }`}>
-                                        {broadcast.target_role === 'ALL' ? 'Todos' :
-                                          broadcast.target_role === 'CLIENT' ? 'Clientes' :
-                                            broadcast.target_role === 'AGENCY' ? 'Agências' : 'Guias'}
+                                      <h3 className="text-lg font-semibold text-slate-900">
+                                        {broadcast.title}
+                                      </h3>
+                                      <span
+                                        className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+                                          broadcast.target_role === 'ALL'
+                                            ? 'bg-purple-100 text-purple-700'
+                                            : broadcast.target_role === 'CLIENT'
+                                              ? 'bg-blue-100 text-blue-700'
+                                              : broadcast.target_role === 'AGENCY'
+                                                ? 'bg-amber-100 text-amber-700'
+                                                : 'bg-green-100 text-green-700'
+                                        }`}
+                                      >
+                                        {broadcast.target_role === 'ALL'
+                                          ? 'Todos'
+                                          : broadcast.target_role === 'CLIENT'
+                                            ? 'Clientes'
+                                            : broadcast.target_role === 'AGENCY'
+                                              ? 'Agências'
+                                              : 'Guias'}
                                       </span>
                                     </div>
-                                    <p className="text-sm text-slate-600 mb-4 line-clamp-2">{broadcast.message}</p>
+                                    <p className="text-sm text-slate-600 mb-4 line-clamp-2">
+                                      {broadcast.message}
+                                    </p>
                                     <div className="flex items-center gap-6 text-sm text-slate-500">
-                                      <span>{new Date(broadcast.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                                      <span>
+                                        {new Date(broadcast.created_at).toLocaleDateString(
+                                          'pt-BR',
+                                          {
+                                            day: '2-digit',
+                                            month: 'short',
+                                            year: 'numeric',
+                                            hour: '2-digit',
+                                            minute: '2-digit',
+                                          }
+                                        )}
+                                      </span>
                                       <span className="flex items-center gap-1">
                                         <Eye size={14} />
                                         {broadcast.read_count || 0} vistos
@@ -6169,15 +7806,21 @@ export const AdminDashboard: React.FC = () => {
                                         <Eye size={18} className="text-blue-600" />
                                         <h4 className="font-semibold text-slate-900">Visto por</h4>
                                       </div>
-                                      <p className="text-2xl font-bold text-slate-900">{broadcast.read_count || 0}</p>
+                                      <p className="text-2xl font-bold text-slate-900">
+                                        {broadcast.read_count || 0}
+                                      </p>
                                       <p className="text-xs text-slate-600 mt-1">usuários</p>
                                     </div>
                                     <div className="bg-white p-4 rounded-xl border border-slate-200">
                                       <div className="flex items-center gap-2 mb-2">
                                         <ThumbsUp size={18} className="text-green-600" />
-                                        <h4 className="font-semibold text-slate-900">Curtido por</h4>
+                                        <h4 className="font-semibold text-slate-900">
+                                          Curtido por
+                                        </h4>
                                       </div>
-                                      <p className="text-2xl font-bold text-slate-900">{broadcast.liked_count || 0}</p>
+                                      <p className="text-2xl font-bold text-slate-900">
+                                        {broadcast.liked_count || 0}
+                                      </p>
                                       <p className="text-xs text-slate-600 mt-1">usuários</p>
                                     </div>
                                   </div>
@@ -6185,28 +7828,51 @@ export const AdminDashboard: React.FC = () => {
                                   {/* Detailed Interactions List */}
                                   {broadcast.interactions && broadcast.interactions.length > 0 ? (
                                     <div>
-                                      <h4 className="font-semibold text-slate-900 mb-4">Detalhes das Interações</h4>
+                                      <h4 className="font-semibold text-slate-900 mb-4">
+                                        Detalhes das Interações
+                                      </h4>
                                       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
                                         <table className="min-w-full divide-y divide-slate-200">
                                           <thead className="bg-slate-50">
                                             <tr>
-                                              <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Usuário</th>
-                                              <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Data Leitura</th>
-                                              <th className="px-4 py-3 text-center text-xs font-semibold text-slate-600 uppercase">Curtiu?</th>
+                                              <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">
+                                                Usuário
+                                              </th>
+                                              <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">
+                                                Data Leitura
+                                              </th>
+                                              <th className="px-4 py-3 text-center text-xs font-semibold text-slate-600 uppercase">
+                                                Curtiu?
+                                              </th>
                                             </tr>
                                           </thead>
                                           <tbody className="divide-y divide-slate-200">
                                             {broadcast.interactions.map((interaction) => (
-                                              <tr key={interaction.id} className="hover:bg-slate-50">
+                                              <tr
+                                                key={interaction.id}
+                                                className="hover:bg-slate-50"
+                                              >
                                                 <td className="px-4 py-3">
                                                   <div>
-                                                    <p className="text-sm font-medium text-slate-900">{interaction.user_name || 'N/A'}</p>
-                                                    <p className="text-xs text-slate-500">{interaction.user_email || 'N/A'}</p>
+                                                    <p className="text-sm font-medium text-slate-900">
+                                                      {interaction.user_name || 'N/A'}
+                                                    </p>
+                                                    <p className="text-xs text-slate-500">
+                                                      {interaction.user_email || 'N/A'}
+                                                    </p>
                                                   </div>
                                                 </td>
                                                 <td className="px-4 py-3 text-sm text-slate-600">
                                                   {interaction.read_at
-                                                    ? new Date(interaction.read_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+                                                    ? new Date(
+                                                        interaction.read_at
+                                                      ).toLocaleDateString('pt-BR', {
+                                                        day: '2-digit',
+                                                        month: 'short',
+                                                        year: 'numeric',
+                                                        hour: '2-digit',
+                                                        minute: '2-digit',
+                                                      })
                                                     : 'Não lido'}
                                                 </td>
                                                 <td className="px-4 py-3 text-center">
@@ -6226,7 +7892,9 @@ export const AdminDashboard: React.FC = () => {
                                       </div>
                                     </div>
                                   ) : (
-                                    <p className="text-sm text-slate-500 text-center py-4">Nenhuma interação registrada ainda.</p>
+                                    <p className="text-sm text-slate-500 text-center py-4">
+                                      Nenhuma interação registrada ainda.
+                                    </p>
                                   )}
                                 </div>
                               )}
@@ -6246,8 +7914,12 @@ export const AdminDashboard: React.FC = () => {
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
                   <div className="flex items-center justify-between mb-6">
                     <div>
-                      <h2 className="text-2xl font-semibold text-slate-900">Templates de Mensagens</h2>
-                      <p className="text-sm text-slate-600 mt-1">Salve templates para reutilizar em comunicados futuros</p>
+                      <h2 className="text-2xl font-semibold text-slate-900">
+                        Templates de Mensagens
+                      </h2>
+                      <p className="text-sm text-slate-600 mt-1">
+                        Salve templates para reutilizar em comunicados futuros
+                      </p>
                     </div>
                     <button
                       onClick={() => {
@@ -6256,10 +7928,13 @@ export const AdminDashboard: React.FC = () => {
                           name: `Template ${broadcastTemplates.length + 1}`,
                           title: broadcastForm.title || '',
                           message: broadcastForm.message || '',
-                          target_role: broadcastForm.target_role
+                          target_role: broadcastForm.target_role,
                         };
                         setBroadcastTemplates([...broadcastTemplates, newTemplate]);
-                        localStorage.setItem('broadcastTemplates', JSON.stringify([...broadcastTemplates, newTemplate]));
+                        localStorage.setItem(
+                          'broadcastTemplates',
+                          JSON.stringify([...broadcastTemplates, newTemplate])
+                        );
                         showToast('Template salvo com sucesso!', 'success');
                       }}
                       disabled={!broadcastForm.title || !broadcastForm.message}
@@ -6274,7 +7949,9 @@ export const AdminDashboard: React.FC = () => {
                     <div className="text-center py-12">
                       <FileText size={48} className="mx-auto mb-4 text-slate-300" />
                       <p className="text-slate-600 font-semibold">Nenhum template salvo</p>
-                      <p className="text-sm text-slate-500 mt-1">Crie um template a partir do formulário de envio</p>
+                      <p className="text-sm text-slate-500 mt-1">
+                        Crie um template a partir do formulário de envio
+                      </p>
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -6288,7 +7965,7 @@ export const AdminDashboard: React.FC = () => {
                               title: template.title,
                               message: template.message,
                               target_role: template.target_role,
-                              template_id: template.id
+                              template_id: template.id,
                             });
                             setBroadcastSubTab('compose');
                             showToast('Template aplicado!', 'success');
@@ -6296,17 +7973,29 @@ export const AdminDashboard: React.FC = () => {
                         >
                           <div className="flex items-start justify-between mb-2">
                             <h3 className="font-semibold text-slate-900">{template.name}</h3>
-                            <span className={`px-2 py-0.5 rounded text-xs font-semibold ${template.target_role === 'ALL' ? 'bg-purple-100 text-purple-700' :
-                              template.target_role === 'CLIENT' ? 'bg-blue-100 text-blue-700' :
-                                template.target_role === 'AGENCY' ? 'bg-amber-100 text-amber-700' :
-                                  'bg-green-100 text-green-700'
-                              }`}>
-                              {template.target_role === 'ALL' ? 'Todos' :
-                                template.target_role === 'CLIENT' ? 'Clientes' :
-                                  template.target_role === 'AGENCY' ? 'Agências' : 'Guias'}
+                            <span
+                              className={`px-2 py-0.5 rounded text-xs font-semibold ${
+                                template.target_role === 'ALL'
+                                  ? 'bg-purple-100 text-purple-700'
+                                  : template.target_role === 'CLIENT'
+                                    ? 'bg-blue-100 text-blue-700'
+                                    : template.target_role === 'AGENCY'
+                                      ? 'bg-amber-100 text-amber-700'
+                                      : 'bg-green-100 text-green-700'
+                              }`}
+                            >
+                              {template.target_role === 'ALL'
+                                ? 'Todos'
+                                : template.target_role === 'CLIENT'
+                                  ? 'Clientes'
+                                  : template.target_role === 'AGENCY'
+                                    ? 'Agências'
+                                    : 'Guias'}
                             </span>
                           </div>
-                          <p className="text-sm font-semibold text-slate-700 mb-1">{template.title}</p>
+                          <p className="text-sm font-semibold text-slate-700 mb-1">
+                            {template.title}
+                          </p>
                           <p className="text-xs text-slate-600 line-clamp-2">{template.message}</p>
                         </div>
                       ))}
@@ -6325,7 +8014,9 @@ export const AdminDashboard: React.FC = () => {
                   </div>
                   <div>
                     <h2 className="text-2xl font-semibold text-slate-900">Agendamento de Envios</h2>
-                    <p className="text-sm text-slate-600">Programe comunicados para serem enviados no futuro</p>
+                    <p className="text-sm text-slate-600">
+                      Programe comunicados para serem enviados no futuro
+                    </p>
                   </div>
                 </div>
 
@@ -6334,10 +8025,12 @@ export const AdminDashboard: React.FC = () => {
                     <div className="flex items-start gap-3">
                       <AlertTriangle size={20} className="text-amber-600 mt-0.5" />
                       <div>
-                        <p className="font-semibold text-amber-900 text-sm">Funcionalidade em Desenvolvimento</p>
+                        <p className="font-semibold text-amber-900 text-sm">
+                          Funcionalidade em Desenvolvimento
+                        </p>
                         <p className="text-xs text-amber-700 mt-1">
-                          O agendamento de envios requer configuração de jobs/cron no servidor.
-                          Por enquanto, você pode usar a opção de agendamento manual abaixo.
+                          O agendamento de envios requer configuração de jobs/cron no servidor. Por
+                          enquanto, você pode usar a opção de agendamento manual abaixo.
                         </p>
                       </div>
                     </div>
@@ -6353,12 +8046,15 @@ export const AdminDashboard: React.FC = () => {
                         <input
                           type="datetime-local"
                           value={broadcastForm.scheduled_at || ''}
-                          onChange={(e) => setBroadcastForm({ ...broadcastForm, scheduled_at: e.target.value })}
+                          onChange={(e) =>
+                            setBroadcastForm({ ...broadcastForm, scheduled_at: e.target.value })
+                          }
                           min={new Date().toISOString().slice(0, 16)}
                           className="w-full border-2 border-slate-200 rounded-xl px-4 py-3 text-slate-900 focus:ring-2 focus:ring-slate-500 focus:border-slate-500 outline-none transition-all"
                         />
                         <p className="text-xs text-slate-500 mt-1">
-                          Selecione uma data futura. Você precisará enviar manualmente neste horário.
+                          Selecione uma data futura. Você precisará enviar manualmente neste
+                          horário.
                         </p>
                       </div>
                     </div>
@@ -6372,10 +8068,34 @@ export const AdminDashboard: React.FC = () => {
         return (
           <div className="space-y-8 animate-[fadeIn_0.3s]">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <StatCard title="Receita Total" value={`R$ ${(platformRevenue || 0).toLocaleString()}`} subtitle="Receita bruta da plataforma" icon={DollarSign} color="green" />
-              <StatCard title="Agências Ativas" value={activeAgencies.length} subtitle="Parceiros verificados" icon={Briefcase} color="blue" />
-              <StatCard title="Usuários Ativos" value={activeUsers.length} subtitle="Clientes da plataforma" icon={Users} color="purple" />
-              <StatCard title="Pacotes Ativos" value={trips.length} subtitle="Viagens disponíveis" icon={Plane} color="amber" />
+              <StatCard
+                title="Receita Total"
+                value={`R$ ${(platformRevenue || 0).toLocaleString()}`}
+                subtitle="Receita bruta da plataforma"
+                icon={DollarSign}
+                color="green"
+              />
+              <StatCard
+                title="Agências Ativas"
+                value={activeAgencies.length}
+                subtitle="Parceiros verificados"
+                icon={Briefcase}
+                color="blue"
+              />
+              <StatCard
+                title="Usuários Ativos"
+                value={activeUsers.length}
+                subtitle="Clientes da plataforma"
+                icon={Users}
+                color="purple"
+              />
+              <StatCard
+                title="Pacotes Ativos"
+                value={trips.length}
+                subtitle="Viagens disponíveis"
+                icon={Plane}
+                color="amber"
+              />
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -6387,14 +8107,18 @@ export const AdminDashboard: React.FC = () => {
                     Atividade Recente
                   </h3>
                   <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
-                    {filteredActivities.length} {filteredActivities.length === 1 ? 'evento' : 'eventos'}
+                    {filteredActivities.length}{' '}
+                    {filteredActivities.length === 1 ? 'evento' : 'eventos'}
                   </span>
                 </div>
 
                 {/* Search and Filters */}
                 <div className="mb-4 space-y-2">
                   <div className="relative">
-                    <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                    <Search
+                      size={16}
+                      className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                    />
                     <input
                       type="text"
                       placeholder="Buscar atividades..."
@@ -6406,46 +8130,51 @@ export const AdminDashboard: React.FC = () => {
                   <div className="flex gap-2 flex-wrap">
                     <button
                       onClick={() => setActivityFilter('all')}
-                      className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors ${activityFilter === 'all'
-                        ? 'bg-primary-600 text-white'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                        }`}
+                      className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors ${
+                        activityFilter === 'all'
+                          ? 'bg-primary-600 text-white'
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
                     >
                       Todas
                     </button>
                     <button
                       onClick={() => setActivityFilter('user')}
-                      className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1 ${activityFilter === 'user'
-                        ? 'bg-indigo-600 text-white'
-                        : 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100'
-                        }`}
+                      className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1 ${
+                        activityFilter === 'user'
+                          ? 'bg-indigo-600 text-white'
+                          : 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100'
+                      }`}
                     >
                       <Users size={12} /> Usuários
                     </button>
                     <button
                       onClick={() => setActivityFilter('agency')}
-                      className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1 ${activityFilter === 'agency'
-                        ? 'bg-purple-600 text-white'
-                        : 'bg-purple-50 text-purple-600 hover:bg-purple-100'
-                        }`}
+                      className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1 ${
+                        activityFilter === 'agency'
+                          ? 'bg-purple-600 text-white'
+                          : 'bg-purple-50 text-purple-600 hover:bg-purple-100'
+                      }`}
                     >
                       <Building2 size={12} /> Agências
                     </button>
                     <button
                       onClick={() => setActivityFilter('trip')}
-                      className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1 ${activityFilter === 'trip'
-                        ? 'bg-green-600 text-white'
-                        : 'bg-green-50 text-green-600 hover:bg-green-100'
-                        }`}
+                      className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1 ${
+                        activityFilter === 'trip'
+                          ? 'bg-green-600 text-white'
+                          : 'bg-green-50 text-green-600 hover:bg-green-100'
+                      }`}
                     >
                       <Package size={12} /> Viagens
                     </button>
                     <button
                       onClick={() => setActivityFilter('settings')}
-                      className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1 ${activityFilter === 'settings'
-                        ? 'bg-gray-600 text-white'
-                        : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
-                        }`}
+                      className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1 ${
+                        activityFilter === 'settings'
+                          ? 'bg-gray-600 text-white'
+                          : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+                      }`}
                     >
                       <Settings size={12} /> Config
                     </button>
@@ -6454,7 +8183,7 @@ export const AdminDashboard: React.FC = () => {
 
                 {filteredActivities.length > 0 ? (
                   <div className="space-y-3 max-h-[400px] overflow-y-auto scrollbar-thin">
-                    {filteredActivities.slice(0, 20).map(log => {
+                    {filteredActivities.slice(0, 20).map((log) => {
                       const activityInfo = getActivityInfo(log.action);
                       const Icon = activityInfo.icon;
                       const timeAgo = new Date(log.createdAt);
@@ -6469,32 +8198,52 @@ export const AdminDashboard: React.FC = () => {
                       else if (diffMins < 60) timeLabel = `${diffMins}min atrás`;
                       else if (diffHours < 24) timeLabel = `${diffHours}h atrás`;
                       else if (diffDays < 7) timeLabel = `${diffDays}d atrás`;
-                      else timeLabel = timeAgo.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
+                      else
+                        timeLabel = timeAgo.toLocaleDateString('pt-BR', {
+                          day: '2-digit',
+                          month: 'short',
+                        });
 
                       // Format action name for better readability
                       const formattedAction = log.action
                         .replace(/_/g, ' ')
-                        .replace(/\b\w/g, l => l.toUpperCase());
+                        .replace(/\b\w/g, (l) => l.toUpperCase());
 
                       return (
-                        <div key={log.id} className={`${activityInfo.bgColor} p-4 rounded-xl border ${activityInfo.borderColor} hover:shadow-md transition-all group cursor-pointer`}>
+                        <div
+                          key={log.id}
+                          className={`${activityInfo.bgColor} p-4 rounded-xl border ${activityInfo.borderColor} hover:shadow-md transition-all group cursor-pointer`}
+                        >
                           <div className="flex items-start gap-3">
-                            <div className={`${activityInfo.color} p-2 rounded-lg bg-white border ${activityInfo.borderColor} group-hover:scale-110 transition-transform flex-shrink-0`}>
+                            <div
+                              className={`${activityInfo.color} p-2 rounded-lg bg-white border ${activityInfo.borderColor} group-hover:scale-110 transition-transform flex-shrink-0`}
+                            >
                               <Icon size={18} />
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-bold text-gray-900 line-clamp-1 mb-1">{formattedAction}</p>
-                              <p className="text-xs text-gray-600 line-clamp-2 mb-2">{log.details}</p>
+                              <p className="text-sm font-bold text-gray-900 line-clamp-1 mb-1">
+                                {formattedAction}
+                              </p>
+                              <p className="text-xs text-gray-600 line-clamp-2 mb-2">
+                                {log.details}
+                              </p>
                               <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
-                                  <p className="text-[10px] text-gray-400 font-medium">{timeLabel}</p>
+                                  <p className="text-[10px] text-gray-400 font-medium">
+                                    {timeLabel}
+                                  </p>
                                   {log.adminEmail && (
                                     <span className="text-[10px] text-gray-400 bg-white px-1.5 py-0.5 rounded border border-gray-200">
                                       {log.adminEmail}
                                     </span>
                                   )}
                                 </div>
-                                <p className="text-[10px] text-gray-400">{timeAgo.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
+                                <p className="text-[10px] text-gray-400">
+                                  {timeAgo.toLocaleTimeString('pt-BR', {
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                  })}
+                                </p>
                               </div>
                             </div>
                           </div>
@@ -6539,27 +8288,54 @@ export const AdminDashboard: React.FC = () => {
 
               {/* Migrar Dados Mock */}
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center"><Database size={20} className="mr-2 text-primary-600" /> Ferramentas de Dados</h3>
+                <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
+                  <Database size={20} className="mr-2 text-primary-600" /> Ferramentas de Dados
+                </h3>
                 <p className="text-sm text-gray-600 mb-4">
                   Use para popular seu banco de dados de desenvolvimento com informações de exemplo.
-                  <br />(Não use em produção!)
+                  <br />
+                  (Não use em produção!)
                 </p>
                 <button
                   onClick={migrateData}
                   disabled={isProcessing}
                   className="w-full bg-primary-600 text-white py-3 rounded-lg font-bold hover:bg-primary-700 flex items-center justify-center gap-2 disabled:opacity-50"
                 >
-                  {isProcessing ? <Loader size={18} className="animate-spin" /> : <Sparkles size={18} />} Migrar Dados Mock
+                  {isProcessing ? (
+                    <Loader size={18} className="animate-spin" />
+                  ) : (
+                    <Sparkles size={18} />
+                  )}{' '}
+                  Migrar Dados Mock
                 </button>
                 {isMaster && (
                   <div className="mt-4">
-                    <h4 className="text-sm font-bold text-red-600 flex items-center mb-2"><AlertOctagon size={16} className="mr-2" /> Ferramentas de Limpeza (Master Admin)</h4>
+                    <h4 className="text-sm font-bold text-red-600 flex items-center mb-2">
+                      <AlertOctagon size={16} className="mr-2" /> Ferramentas de Limpeza (Master
+                      Admin)
+                    </h4>
                     <p className="text-xs text-gray-500 mb-3">
                       CUIDADO! Estas ações são irreversíveis e APAGAM DADOS DO BANCO.
                     </p>
                     <div className="space-y-2">
-                      <button onClick={() => { if (window.confirm('Excluir TODOS os usuários (clientes e agências)?')) deleteMultipleUsers(clients.map(c => c.id)); }} className="w-full bg-red-50 text-red-700 px-4 py-2 rounded-lg text-sm font-bold hover:bg-red-100">Excluir Todos os Usuários</button>
-                      <button onClick={() => { if (window.confirm('Excluir TODAS as agências e viagens?')) deleteMultipleAgencies(agencies.map(a => a.agencyId)); }} className="w-full bg-red-50 text-red-700 px-4 py-2 rounded-lg text-sm font-bold hover:bg-red-100">Excluir Todas as Agências</button>
+                      <button
+                        onClick={() => {
+                          if (window.confirm('Excluir TODOS os usuários (clientes e agências)?'))
+                            deleteMultipleUsers(clients.map((c) => c.id));
+                        }}
+                        className="w-full bg-red-50 text-red-700 px-4 py-2 rounded-lg text-sm font-bold hover:bg-red-100"
+                      >
+                        Excluir Todos os Usuários
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (window.confirm('Excluir TODAS as agências e viagens?'))
+                            deleteMultipleAgencies(agencies.map((a) => a.agencyId));
+                        }}
+                        className="w-full bg-red-50 text-red-700 px-4 py-2 rounded-lg text-sm font-bold hover:bg-red-100"
+                      >
+                        Excluir Todas as Agências
+                      </button>
                     </div>
                   </div>
                 )}
@@ -6589,13 +8365,30 @@ export const AdminDashboard: React.FC = () => {
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
             <h1 className="text-3xl font-bold text-gray-900">Painel Master</h1>
             <div className="flex flex-wrap gap-3">
-              <button onClick={handleRefresh} disabled={isProcessing} className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg font-bold flex items-center hover:bg-gray-200 transition-colors disabled:opacity-50">
-                {isProcessing ? <Loader size={18} className="animate-spin mr-2" /> : <RefreshCw size={18} className="mr-2" />}
+              <button
+                onClick={handleRefresh}
+                disabled={isProcessing}
+                className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg font-bold flex items-center hover:bg-gray-200 transition-colors disabled:opacity-50"
+              >
+                {isProcessing ? (
+                  <Loader size={18} className="animate-spin mr-2" />
+                ) : (
+                  <RefreshCw size={18} className="mr-2" />
+                )}
                 Atualizar Dados
               </button>
               <div className="relative">
-                <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                <input type="text" placeholder="Buscar..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:ring-primary-500 focus:border-primary-500 outline-none" />
+                <Search
+                  size={18}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                />
+                <input
+                  type="text"
+                  placeholder="Buscar..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:ring-primary-500 focus:border-primary-500 outline-none"
+                />
               </div>
             </div>
           </div>
@@ -6614,19 +8407,43 @@ export const AdminDashboard: React.FC = () => {
                   </div>
 
                   <div className="w-48">
-                    <select value={agencyFilter} onChange={e => setAgencyFilter(e.target.value)} className="w-full border border-gray-200 rounded-lg text-sm p-2.5 outline-none focus:ring-primary-500 focus:border-primary-500 bg-gray-50">
+                    <select
+                      value={agencyFilter}
+                      onChange={(e) => setAgencyFilter(e.target.value)}
+                      className="w-full border border-gray-200 rounded-lg text-sm p-2.5 outline-none focus:ring-primary-500 focus:border-primary-500 bg-gray-50"
+                    >
                       <option value="">Todas as Agências</option>
-                      {activeAgencies.map(agency => <option key={agency.id} value={agency.agencyId}>{agency.name}</option>)}
+                      {activeAgencies.map((agency) => (
+                        <option key={agency.id} value={agency.agencyId}>
+                          {agency.name}
+                        </option>
+                      ))}
                     </select>
                   </div>
                   <div className="w-48">
-                    <select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)} className="w-full border border-gray-200 rounded-lg text-sm p-2.5 outline-none focus:ring-primary-500 focus:border-primary-500 bg-gray-50">
+                    <select
+                      value={categoryFilter}
+                      onChange={(e) => setCategoryFilter(e.target.value)}
+                      className="w-full border border-gray-200 rounded-lg text-sm p-2.5 outline-none focus:ring-primary-500 focus:border-primary-500 bg-gray-50"
+                    >
                       <option value="">Todas as Categorias</option>
-                      {tripCategories.map(category => <option key={category as string} value={category as string}>{(category as string).replace('_', ' ')}</option>)}
+                      {tripCategories.map((category) => (
+                        <option key={category as string} value={category as string}>
+                          {(category as string).replace('_', ' ')}
+                        </option>
+                      ))}
                     </select>
                   </div>
                   {(agencyFilter || categoryFilter) && (
-                    <button onClick={() => { setAgencyFilter(''); setCategoryFilter(''); }} className="text-sm font-bold text-red-500 hover:underline">Limpar Filtros</button>
+                    <button
+                      onClick={() => {
+                        setAgencyFilter('');
+                        setCategoryFilter('');
+                      }}
+                      className="text-sm font-bold text-red-500 hover:underline"
+                    >
+                      Limpar Filtros
+                    </button>
                   )}
                 </div>
 
@@ -6635,20 +8452,22 @@ export const AdminDashboard: React.FC = () => {
                   <div className="flex items-center gap-1 bg-gray-50 rounded-xl p-1 border border-gray-200">
                     <button
                       onClick={() => handleSetTripView('list')}
-                      className={`p-2.5 rounded-lg transition-all ${tripView === 'list'
-                        ? 'bg-white text-primary-600 shadow-sm border border-primary-100'
-                        : 'text-gray-500 hover:text-gray-700'
-                        }`}
+                      className={`p-2.5 rounded-lg transition-all ${
+                        tripView === 'list'
+                          ? 'bg-white text-primary-600 shadow-sm border border-primary-100'
+                          : 'text-gray-500 hover:text-gray-700'
+                      }`}
                       title="Visualização em lista"
                     >
                       <List size={18} />
                     </button>
                     <button
                       onClick={() => handleSetTripView('cards')}
-                      className={`p-2.5 rounded-lg transition-all ${tripView === 'cards'
-                        ? 'bg-white text-primary-600 shadow-sm border border-primary-100'
-                        : 'text-gray-500 hover:text-gray-700'
-                        }`}
+                      className={`p-2.5 rounded-lg transition-all ${
+                        tripView === 'cards'
+                          ? 'bg-white text-primary-600 shadow-sm border border-primary-100'
+                          : 'text-gray-500 hover:text-gray-700'
+                      }`}
                       title="Visualização em cards"
                     >
                       <LayoutGrid size={18} />
@@ -6687,34 +8506,89 @@ export const AdminDashboard: React.FC = () => {
 
           {modalType === 'EDIT_USER' && selectedItem && currentUser && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-[fadeIn_0.2s]">
-              <div className="bg-white rounded-2xl max-w-lg w-full p-8 shadow-2xl relative max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-                <button onClick={() => { setModalType(null); setSelectedItem(null); setEditFormData({}); }} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 bg-gray-100 p-2 rounded-full"><X size={20} /></button>
+              <div
+                className="bg-white rounded-2xl max-w-lg w-full p-8 shadow-2xl relative max-h-[90vh] overflow-y-auto"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <button
+                  onClick={() => {
+                    setModalType(null);
+                    setSelectedItem(null);
+                    setEditFormData({});
+                  }}
+                  className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 bg-gray-100 p-2 rounded-full"
+                >
+                  <X size={20} />
+                </button>
                 <h2 className="text-2xl font-bold text-gray-900 mb-6">Editar Usuário</h2>
 
                 <div className="flex border-b border-gray-200 mb-6">
-                  <button onClick={() => setModalTab('PROFILE')} className={`flex-1 py-3 text-sm font-bold border-b-2 ${modalTab === 'PROFILE' ? 'border-primary-600 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>Perfil</button>
-                  <button onClick={() => setModalTab('SECURITY')} className={`flex-1 py-3 text-sm font-bold border-b-2 ${modalTab === 'SECURITY' ? 'border-primary-600 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>Segurança</button>
-                  <button onClick={() => setModalTab('HISTORY')} className={`flex-1 py-3 text-sm font-bold border-b-2 ${modalTab === 'HISTORY' ? 'border-primary-600 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>Histórico</button>
+                  <button
+                    onClick={() => setModalTab('PROFILE')}
+                    className={`flex-1 py-3 text-sm font-bold border-b-2 ${modalTab === 'PROFILE' ? 'border-primary-600 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+                  >
+                    Perfil
+                  </button>
+                  <button
+                    onClick={() => setModalTab('SECURITY')}
+                    className={`flex-1 py-3 text-sm font-bold border-b-2 ${modalTab === 'SECURITY' ? 'border-primary-600 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+                  >
+                    Segurança
+                  </button>
+                  <button
+                    onClick={() => setModalTab('HISTORY')}
+                    className={`flex-1 py-3 text-sm font-bold border-b-2 ${modalTab === 'HISTORY' ? 'border-primary-600 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+                  >
+                    Histórico
+                  </button>
                 </div>
 
                 {modalTab === 'PROFILE' && (
-                  <form onSubmit={(e) => { e.preventDefault(); handleUserUpdate(e); }} className="space-y-6">
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      handleUserUpdate(e);
+                    }}
+                    className="space-y-6"
+                  >
                     <div className="flex flex-col items-center gap-4 mb-6">
                       <div className="relative w-24 h-24 rounded-full group">
-                        <img src={editFormData.avatar || currentUser?.avatar || `https://ui-avatars.com/api/?name=${editFormData.name || currentUser?.name || 'Usuário'}`} alt="" className="w-full h-full object-cover rounded-full border-4 border-gray-200" />
+                        <img
+                          src={
+                            editFormData.avatar ||
+                            currentUser?.avatar ||
+                            `https://ui-avatars.com/api/?name=${editFormData.name || currentUser?.name || 'Usuário'}`
+                          }
+                          alt=""
+                          className="w-full h-full object-cover rounded-full border-4 border-gray-200"
+                        />
                         <label className="absolute bottom-0 right-0 bg-primary-600 text-white p-2 rounded-full cursor-pointer hover:bg-primary-700 shadow-md transition-transform hover:scale-110">
-                          {isUploadingAvatar ? <Loader className="animate-spin" size={20} /> : <Camera size={20} />}
-                          <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} disabled={isUploadingAvatar} />
+                          {isUploadingAvatar ? (
+                            <Loader className="animate-spin" size={20} />
+                          ) : (
+                            <Camera size={20} />
+                          )}
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={handleAvatarUpload}
+                            disabled={isUploadingAvatar}
+                          />
                         </label>
                       </div>
-                      <h3 className="text-xl font-bold text-gray-900">{editFormData.name || currentUser?.name || 'Usuário'}</h3>
+                      <h3 className="text-xl font-bold text-gray-900">
+                        {editFormData.name || currentUser?.name || 'Usuário'}
+                      </h3>
                     </div>
 
                     <div>
-                      <label className="block text-sm font-bold text-gray-700 mb-1">Nome Completo</label>
+                      <label className="block text-sm font-bold text-gray-700 mb-1">
+                        Nome Completo
+                      </label>
                       <input
                         value={editFormData.name || currentUser?.name || ''}
-                        onChange={e => setEditFormData({ ...editFormData, name: e.target.value })}
+                        onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
                         className="w-full border border-gray-300 !bg-white !text-gray-900 p-2.5 rounded-lg outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-gray-100 disabled:text-gray-500"
                         placeholder="Nome completo do usuário"
                         style={{ backgroundColor: '#ffffff', color: '#111827' }}
@@ -6725,7 +8599,9 @@ export const AdminDashboard: React.FC = () => {
                       <input
                         type="email"
                         value={editFormData.email || currentUser?.email || ''}
-                        onChange={e => setEditFormData({ ...editFormData, email: e.target.value })}
+                        onChange={(e) =>
+                          setEditFormData({ ...editFormData, email: e.target.value })
+                        }
                         className="w-full border border-gray-300 !bg-white !text-gray-900 p-2.5 rounded-lg outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-gray-100 disabled:text-gray-500"
                         placeholder="email@exemplo.com"
                         style={{ backgroundColor: '#ffffff', color: '#111827' }}
@@ -6735,7 +8611,9 @@ export const AdminDashboard: React.FC = () => {
                       <label className="block text-sm font-bold text-gray-700 mb-1">Telefone</label>
                       <input
                         value={editFormData.phone || currentUser?.phone || ''}
-                        onChange={e => setEditFormData({ ...editFormData, phone: e.target.value })}
+                        onChange={(e) =>
+                          setEditFormData({ ...editFormData, phone: e.target.value })
+                        }
                         className="w-full border border-gray-300 !bg-white !text-gray-900 p-2.5 rounded-lg outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-gray-100 disabled:text-gray-500"
                         placeholder="(00) 00000-0000"
                         style={{ backgroundColor: '#ffffff', color: '#111827' }}
@@ -6745,155 +8623,223 @@ export const AdminDashboard: React.FC = () => {
                       <label className="block text-sm font-bold text-gray-700 mb-1">CPF</label>
                       <input
                         value={editFormData.cpf || currentUser?.cpf || ''}
-                        onChange={e => setEditFormData({ ...editFormData, cpf: e.target.value })}
+                        onChange={(e) => setEditFormData({ ...editFormData, cpf: e.target.value })}
                         className="w-full border border-gray-300 !bg-white !text-gray-900 p-2.5 rounded-lg outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-gray-100 disabled:text-gray-500"
                         placeholder="000.000.000-00"
                         style={{ backgroundColor: '#ffffff', color: '#111827' }}
                       />
                     </div>
-                    <button type="submit" disabled={isProcessing} className="w-full bg-primary-600 text-white py-3 rounded-lg font-bold hover:bg-primary-700 flex items-center justify-center gap-2 disabled:opacity-50"><Save size={18} /> Salvar Alterações</button>
+                    <button
+                      type="submit"
+                      disabled={isProcessing}
+                      className="w-full bg-primary-600 text-white py-3 rounded-lg font-bold hover:bg-primary-700 flex items-center justify-center gap-2 disabled:opacity-50"
+                    >
+                      <Save size={18} /> Salvar Alterações
+                    </button>
                   </form>
                 )}
                 {modalTab === 'SECURITY' && (
                   <div className="space-y-6">
                     <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 flex items-center justify-between">
                       <p className="text-sm text-gray-700 font-medium">Resetar Senha</p>
-                      <button onClick={() => sendPasswordReset(currentUser?.email || selectedItem?.email || '')} disabled={isProcessing} className="bg-amber-50 text-amber-700 px-3 py-1.5 rounded-lg text-sm font-bold hover:bg-amber-100 flex items-center gap-2 disabled:opacity-50">
+                      <button
+                        onClick={() =>
+                          sendPasswordReset(currentUser?.email || selectedItem?.email || '')
+                        }
+                        disabled={isProcessing}
+                        className="bg-amber-50 text-amber-700 px-3 py-1.5 rounded-lg text-sm font-bold hover:bg-amber-100 flex items-center gap-2 disabled:opacity-50"
+                      >
                         <Key size={16} /> Enviar Link
                       </button>
                     </div>
                     <div className="bg-red-50 p-4 rounded-xl border border-red-100 flex items-center justify-between">
                       <p className="text-sm text-red-700 font-medium">Excluir Conta</p>
-                      <button onClick={() => handlePermanentDelete(currentUser?.id || selectedItem?.id, currentUser?.role || selectedItem?.role)} disabled={isProcessing} className="bg-white text-red-600 px-3 py-1.5 rounded-lg text-sm font-bold hover:bg-red-100 flex items-center gap-2 disabled:opacity-50">
+                      <button
+                        onClick={() =>
+                          handlePermanentDelete(
+                            currentUser?.id || selectedItem?.id,
+                            currentUser?.role || selectedItem?.role
+                          )
+                        }
+                        disabled={isProcessing}
+                        className="bg-white text-red-600 px-3 py-1.5 rounded-lg text-sm font-bold hover:bg-red-100 flex items-center gap-2 disabled:opacity-50"
+                      >
                         <Trash2 size={16} /> Excluir
                       </button>
                     </div>
                   </div>
                 )}
-                {modalTab === 'HISTORY' && (() => {
-                  const userId = currentUser?.id || selectedItem?.id;
-                  // Get user activities
-                  const userBookings = bookings.filter(b => b.clientId === userId).slice(0, 10);
-                  const userReviews = reviews.filter(r => r.clientId === userId).slice(0, 10);
-                  const userAuditLogs = auditLogs.filter(log => {
-                    const userEmail = currentUser?.email || selectedItem?.email || '';
-                    const userName = currentUser?.name || selectedItem?.name || '';
-                    return log.details?.toLowerCase().includes(userEmail.toLowerCase()) ||
-                      log.details?.toLowerCase().includes(userName.toLowerCase());
-                  }).slice(0, 10);
+                {modalTab === 'HISTORY' &&
+                  (() => {
+                    const userId = currentUser?.id || selectedItem?.id;
+                    // Get user activities
+                    const userBookings = bookings.filter((b) => b.clientId === userId).slice(0, 10);
+                    const userReviews = reviews.filter((r) => r.clientId === userId).slice(0, 10);
+                    const userAuditLogs = auditLogs
+                      .filter((log) => {
+                        const userEmail = currentUser?.email || selectedItem?.email || '';
+                        const userName = currentUser?.name || selectedItem?.name || '';
+                        return (
+                          log.details?.toLowerCase().includes(userEmail.toLowerCase()) ||
+                          log.details?.toLowerCase().includes(userName.toLowerCase())
+                        );
+                      })
+                      .slice(0, 10);
 
-                  const allActivities: Array<{
-                    id: string;
-                    type: 'booking' | 'review' | 'activity';
-                    title: string;
-                    description: string;
-                    date: string;
-                    icon: any;
-                    color: string;
-                  }> = [];
+                    const allActivities: Array<{
+                      id: string;
+                      type: 'booking' | 'review' | 'activity';
+                      title: string;
+                      description: string;
+                      date: string;
+                      icon: any;
+                      color: string;
+                    }> = [];
 
-                  // Add bookings
-                  userBookings.forEach(booking => {
-                    const trip = trips.find(t => t.id === booking.tripId);
-                    allActivities.push({
-                      id: `booking-${booking.id}`,
-                      type: 'booking',
-                      title: 'Nova Reserva',
-                      description: `Reservou "${trip?.title || 'Viagem'}" - R$ ${booking.totalPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
-                      date: booking.date || booking.createdAt || new Date().toISOString(),
-                      icon: ShoppingBag,
-                      color: 'text-green-600 bg-green-50 border-green-200'
+                    // Add bookings
+                    userBookings.forEach((booking) => {
+                      const trip = trips.find((t) => t.id === booking.tripId);
+                      allActivities.push({
+                        id: `booking-${booking.id}`,
+                        type: 'booking',
+                        title: 'Nova Reserva',
+                        description: `Reservou "${trip?.title || 'Viagem'}" - R$ ${booking.totalPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+                        date: booking.date || booking.createdAt || new Date().toISOString(),
+                        icon: ShoppingBag,
+                        color: 'text-green-600 bg-green-50 border-green-200',
+                      });
                     });
-                  });
 
-                  // Add reviews
-                  userReviews.forEach(review => {
-                    const agency = agencies.find(a => a.agencyId === review.agencyId);
-                    allActivities.push({
-                      id: `review-${review.id}`,
-                      type: 'review',
-                      title: 'Nova Avaliação',
-                      description: `Avaliou ${agency?.name || 'Agência'} com ${review.rating} estrelas`,
-                      date: review.createdAt || new Date().toISOString(),
-                      icon: Star,
-                      color: 'text-amber-600 bg-amber-50 border-amber-200'
+                    // Add reviews
+                    userReviews.forEach((review) => {
+                      const agency = agencies.find((a) => a.agencyId === review.agencyId);
+                      allActivities.push({
+                        id: `review-${review.id}`,
+                        type: 'review',
+                        title: 'Nova Avaliação',
+                        description: `Avaliou ${agency?.name || 'Agência'} com ${review.rating} estrelas`,
+                        date: review.createdAt || new Date().toISOString(),
+                        icon: Star,
+                        color: 'text-amber-600 bg-amber-50 border-amber-200',
+                      });
                     });
-                  });
 
-                  // Add audit logs
-                  userAuditLogs.forEach(log => {
-                    allActivities.push({
-                      id: `log-${log.id}`,
-                      type: 'activity',
-                      title: log.action.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-                      description: log.details || '',
-                      date: log.createdAt,
-                      icon: Activity,
-                      color: 'text-blue-600 bg-blue-50 border-blue-200'
+                    // Add audit logs
+                    userAuditLogs.forEach((log) => {
+                      allActivities.push({
+                        id: `log-${log.id}`,
+                        type: 'activity',
+                        title: log.action
+                          .replace(/_/g, ' ')
+                          .replace(/\b\w/g, (l) => l.toUpperCase()),
+                        description: log.details || '',
+                        date: log.createdAt,
+                        icon: Activity,
+                        color: 'text-blue-600 bg-blue-50 border-blue-200',
+                      });
                     });
-                  });
 
-                  // Sort by date, newest first
-                  allActivities.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+                    // Sort by date, newest first
+                    allActivities.sort(
+                      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+                    );
 
-                  return (
-                    <div className="space-y-3 max-h-[400px] overflow-y-auto scrollbar-thin">
-                      {allActivities.length > 0 ? (
-                        allActivities.map(activity => {
-                          const Icon = activity.icon;
-                          const timeAgo = new Date(activity.date);
-                          const now = new Date();
-                          const diffMs = now.getTime() - timeAgo.getTime();
-                          const diffMins = Math.floor(diffMs / 60000);
-                          const diffHours = Math.floor(diffMs / 3600000);
-                          const diffDays = Math.floor(diffMs / 86400000);
+                    return (
+                      <div className="space-y-3 max-h-[400px] overflow-y-auto scrollbar-thin">
+                        {allActivities.length > 0 ? (
+                          allActivities.map((activity) => {
+                            const Icon = activity.icon;
+                            const timeAgo = new Date(activity.date);
+                            const now = new Date();
+                            const diffMs = now.getTime() - timeAgo.getTime();
+                            const diffMins = Math.floor(diffMs / 60000);
+                            const diffHours = Math.floor(diffMs / 3600000);
+                            const diffDays = Math.floor(diffMs / 86400000);
 
-                          let timeLabel = '';
-                          if (diffMins < 1) timeLabel = 'Agora';
-                          else if (diffMins < 60) timeLabel = `${diffMins}min atrás`;
-                          else if (diffHours < 24) timeLabel = `${diffHours}h atrás`;
-                          else if (diffDays < 7) timeLabel = `${diffDays}d atrás`;
-                          else timeLabel = timeAgo.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' });
+                            let timeLabel = '';
+                            if (diffMins < 1) timeLabel = 'Agora';
+                            else if (diffMins < 60) timeLabel = `${diffMins}min atrás`;
+                            else if (diffHours < 24) timeLabel = `${diffHours}h atrás`;
+                            else if (diffDays < 7) timeLabel = `${diffDays}d atrás`;
+                            else
+                              timeLabel = timeAgo.toLocaleDateString('pt-BR', {
+                                day: '2-digit',
+                                month: 'short',
+                                year: 'numeric',
+                              });
 
-                          return (
-                            <div key={activity.id} className={`p-4 rounded-xl border ${activity.color} hover:shadow-md transition-all`}>
-                              <div className="flex items-start gap-3">
-                                <div className={`p-2 rounded-lg bg-white border ${activity.color.split(' ')[2] || 'border-gray-200'} flex-shrink-0`}>
-                                  <Icon size={18} className={activity.color.split(' ')[0] || 'text-gray-600'} />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-bold text-gray-900 mb-1">{activity.title}</p>
-                                  <p className="text-xs text-gray-600 mb-2">{activity.description}</p>
-                                  <div className="flex items-center justify-between">
-                                    <p className="text-[10px] text-gray-400 font-medium">{timeLabel}</p>
-                                    <p className="text-[10px] text-gray-400">{timeAgo.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
+                            return (
+                              <div
+                                key={activity.id}
+                                className={`p-4 rounded-xl border ${activity.color} hover:shadow-md transition-all`}
+                              >
+                                <div className="flex items-start gap-3">
+                                  <div
+                                    className={`p-2 rounded-lg bg-white border ${activity.color.split(' ')[2] || 'border-gray-200'} flex-shrink-0`}
+                                  >
+                                    <Icon
+                                      size={18}
+                                      className={activity.color.split(' ')[0] || 'text-gray-600'}
+                                    />
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-bold text-gray-900 mb-1">
+                                      {activity.title}
+                                    </p>
+                                    <p className="text-xs text-gray-600 mb-2">
+                                      {activity.description}
+                                    </p>
+                                    <div className="flex items-center justify-between">
+                                      <p className="text-[10px] text-gray-400 font-medium">
+                                        {timeLabel}
+                                      </p>
+                                      <p className="text-[10px] text-gray-400">
+                                        {timeAgo.toLocaleTimeString('pt-BR', {
+                                          hour: '2-digit',
+                                          minute: '2-digit',
+                                        })}
+                                      </p>
+                                    </div>
                                   </div>
                                 </div>
                               </div>
-                            </div>
-                          );
-                        })
-                      ) : (
-                        <div className="text-center py-12 text-gray-400">
-                          <Activity size={48} className="mx-auto mb-3 opacity-50" />
-                          <p className="text-sm font-medium">Nenhuma atividade encontrada</p>
-                          <p className="text-xs mt-1">As atividades do usuário aparecerão aqui</p>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })()}
+                            );
+                          })
+                        ) : (
+                          <div className="text-center py-12 text-gray-400">
+                            <Activity size={48} className="mx-auto mb-3 opacity-50" />
+                            <p className="text-sm font-medium">Nenhuma atividade encontrada</p>
+                            <p className="text-xs mt-1">As atividades do usuário aparecerão aqui</p>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
               </div>
             </div>
           )}
 
           {modalType === 'MANAGE_SUB' && selectedItem && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-[fadeIn_0.2s]">
-              <div className="bg-white rounded-2xl max-w-lg w-full p-8 shadow-2xl relative" onClick={e => e.stopPropagation()}>
-                <button onClick={() => setModalType(null)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 bg-gray-100 p-2 rounded-full"><X size={20} /></button>
+              <div
+                className="bg-white rounded-2xl max-w-lg w-full p-8 shadow-2xl relative"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <button
+                  onClick={() => setModalType(null)}
+                  className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 bg-gray-100 p-2 rounded-full"
+                >
+                  <X size={20} />
+                </button>
                 <h2 className="text-2xl font-bold text-gray-900 mb-6">Gerenciar Assinatura</h2>
                 <div className="flex items-center gap-4 mb-6">
-                  <img src={selectedItem.logo || `https://ui-avatars.com/api/?name=${selectedItem.name}`} className="w-16 h-16 rounded-full object-cover border-2 border-gray-200" alt="" />
+                  <img
+                    src={
+                      selectedItem.logo || `https://ui-avatars.com/api/?name=${selectedItem.name}`
+                    }
+                    className="w-16 h-16 rounded-full object-cover border-2 border-gray-200"
+                    alt=""
+                  />
                   <div>
                     <h3 className="text-xl font-bold text-gray-900">{selectedItem.name}</h3>
                     <p className="text-sm text-gray-500">{selectedItem.email}</p>
@@ -6902,14 +8848,22 @@ export const AdminDashboard: React.FC = () => {
                 <form onSubmit={handleSubscriptionUpdate} className="space-y-6">
                   <div>
                     <label className="block text-sm font-bold text-gray-700 mb-1">Plano</label>
-                    <select value={editFormData.plan} onChange={e => setEditFormData({ ...editFormData, plan: e.target.value })} className="w-full border p-2.5 rounded-lg outline-none focus:ring-primary-500 focus:border-primary-500">
+                    <select
+                      value={editFormData.plan}
+                      onChange={(e) => setEditFormData({ ...editFormData, plan: e.target.value })}
+                      className="w-full border p-2.5 rounded-lg outline-none focus:ring-primary-500 focus:border-primary-500"
+                    >
                       <option value="BASIC">Básico</option>
                       <option value="PREMIUM">Premium</option>
                     </select>
                   </div>
                   <div>
                     <label className="block text-sm font-bold text-gray-700 mb-1">Status</label>
-                    <select value={editFormData.status} onChange={e => setEditFormData({ ...editFormData, status: e.target.value })} className="w-full border p-2.5 rounded-lg outline-none focus:ring-primary-500 focus:border-primary-500">
+                    <select
+                      value={editFormData.status}
+                      onChange={(e) => setEditFormData({ ...editFormData, status: e.target.value })}
+                      className="w-full border p-2.5 rounded-lg outline-none focus:ring-primary-500 focus:border-primary-500"
+                    >
                       <option value="ACTIVE">Ativo</option>
                       <option value="INACTIVE">Inativo</option>
                     </select>
@@ -6917,12 +8871,37 @@ export const AdminDashboard: React.FC = () => {
                   <div>
                     <label className="block text-sm font-bold text-gray-700 mb-1">Expira em</label>
                     <div className="flex gap-2 items-center">
-                      <input type="datetime-local" value={editFormData.expiresAt?.slice(0, 16)} onChange={e => setEditFormData({ ...editFormData, expiresAt: e.target.value })} className="w-full border p-2.5 rounded-lg outline-none focus:ring-primary-500 focus:border-primary-500" />
-                      <button type="button" onClick={() => addSubscriptionTime(30)} className="bg-gray-100 text-gray-700 px-3 py-2 rounded-lg text-xs font-bold hover:bg-gray-200">+30d</button>
-                      <button type="button" onClick={() => addSubscriptionTime(365)} className="bg-gray-100 text-gray-700 px-3 py-2 rounded-lg text-xs font-bold hover:bg-gray-200">+1a</button>
+                      <input
+                        type="datetime-local"
+                        value={editFormData.expiresAt?.slice(0, 16)}
+                        onChange={(e) =>
+                          setEditFormData({ ...editFormData, expiresAt: e.target.value })
+                        }
+                        className="w-full border p-2.5 rounded-lg outline-none focus:ring-primary-500 focus:border-primary-500"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => addSubscriptionTime(30)}
+                        className="bg-gray-100 text-gray-700 px-3 py-2 rounded-lg text-xs font-bold hover:bg-gray-200"
+                      >
+                        +30d
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => addSubscriptionTime(365)}
+                        className="bg-gray-100 text-gray-700 px-3 py-2 rounded-lg text-xs font-bold hover:bg-gray-200"
+                      >
+                        +1a
+                      </button>
                     </div>
                   </div>
-                  <button type="submit" disabled={isProcessing} className="w-full bg-primary-600 text-white py-3 rounded-lg font-bold hover:bg-primary-700 flex items-center justify-center gap-2 disabled:opacity-50"><Save size={18} /> Salvar Assinatura</button>
+                  <button
+                    type="submit"
+                    disabled={isProcessing}
+                    className="w-full bg-primary-600 text-white py-3 rounded-lg font-bold hover:bg-primary-700 flex items-center justify-center gap-2 disabled:opacity-50"
+                  >
+                    <Save size={18} /> Salvar Assinatura
+                  </button>
                 </form>
               </div>
             </div>
@@ -6930,49 +8909,168 @@ export const AdminDashboard: React.FC = () => {
 
           {modalType === 'EDIT_AGENCY' && selectedItem && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-[fadeIn_0.2s]">
-              <div className="bg-white rounded-2xl max-w-lg w-full p-8 shadow-2xl relative max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-                <button onClick={() => setModalType(null)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 bg-gray-100 p-2 rounded-full"><X size={20} /></button>
+              <div
+                className="bg-white rounded-2xl max-w-lg w-full p-8 shadow-2xl relative max-h-[90vh] overflow-y-auto"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <button
+                  onClick={() => setModalType(null)}
+                  className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 bg-gray-100 p-2 rounded-full"
+                >
+                  <X size={20} />
+                </button>
                 <h2 className="text-2xl font-bold text-gray-900 mb-6">Editar Agência</h2>
                 <form onSubmit={handleAgencyUpdate} className="space-y-6">
                   <div>
                     <label className="block text-sm font-bold text-gray-700 mb-1">Nome</label>
-                    <input value={editFormData.name || ''} onChange={e => setEditFormData({ ...editFormData, name: e.target.value })} className="w-full border p-2.5 rounded-lg outline-none focus:ring-primary-500 focus:border-primary-500" />
+                    <input
+                      value={editFormData.name || ''}
+                      onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+                      className="w-full border p-2.5 rounded-lg outline-none focus:ring-primary-500 focus:border-primary-500"
+                    />
                   </div>
                   <div>
                     <label className="block text-sm font-bold text-gray-700 mb-1">Slug (URL)</label>
-                    <input value={editFormData.slug || ''} onChange={e => setEditFormData({ ...editFormData, slug: e.target.value })} className="w-full border p-2.5 rounded-lg outline-none focus:ring-primary-500 focus:border-primary-500" />
+                    <input
+                      value={editFormData.slug || ''}
+                      onChange={(e) => setEditFormData({ ...editFormData, slug: e.target.value })}
+                      className="w-full border p-2.5 rounded-lg outline-none focus:ring-primary-500 focus:border-primary-500"
+                    />
                   </div>
                   <div>
                     <label className="block text-sm font-bold text-gray-700 mb-1">Descrição</label>
-                    <textarea value={editFormData.description || ''} onChange={e => setEditFormData({ ...editFormData, description: e.target.value })} rows={3} className="w-full border p-2.5 rounded-lg outline-none focus:ring-primary-500 focus:border-primary-500" />
+                    <textarea
+                      value={editFormData.description || ''}
+                      onChange={(e) =>
+                        setEditFormData({ ...editFormData, description: e.target.value })
+                      }
+                      rows={3}
+                      className="w-full border p-2.5 rounded-lg outline-none focus:ring-primary-500 focus:border-primary-500"
+                    />
                   </div>
                   <div>
                     <label className="block text-sm font-bold text-gray-700 mb-1">CNPJ</label>
-                    <input value={editFormData.cnpj || ''} onChange={e => setEditFormData({ ...editFormData, cnpj: e.target.value })} className="w-full border p-2.5 rounded-lg outline-none focus:ring-primary-500 focus:border-primary-500" />
+                    <input
+                      value={editFormData.cnpj || ''}
+                      onChange={(e) => setEditFormData({ ...editFormData, cnpj: e.target.value })}
+                      className="w-full border p-2.5 rounded-lg outline-none focus:ring-primary-500 focus:border-primary-500"
+                    />
                   </div>
                   <div>
                     <label className="block text-sm font-bold text-gray-700 mb-1">Telefone</label>
-                    <input value={editFormData.phone || ''} onChange={e => setEditFormData({ ...editFormData, phone: e.target.value })} className="w-full border p-2.5 rounded-lg outline-none focus:ring-primary-500 focus:border-primary-500" />
+                    <input
+                      value={editFormData.phone || ''}
+                      onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })}
+                      className="w-full border p-2.5 rounded-lg outline-none focus:ring-primary-500 focus:border-primary-500"
+                    />
                   </div>
                   <div>
                     <label className="block text-sm font-bold text-gray-700 mb-1">WhatsApp</label>
-                    <input value={editFormData.whatsapp || ''} onChange={e => setEditFormData({ ...editFormData, whatsapp: e.target.value })} className="w-full border p-2.5 rounded-lg outline-none focus:ring-primary-500 focus:border-primary-500" />
+                    <input
+                      value={editFormData.whatsapp || ''}
+                      onChange={(e) =>
+                        setEditFormData({ ...editFormData, whatsapp: e.target.value })
+                      }
+                      className="w-full border p-2.5 rounded-lg outline-none focus:ring-primary-500 focus:border-primary-500"
+                    />
                   </div>
                   <div>
                     <label className="block text-sm font-bold text-gray-700 mb-1">Website</label>
-                    <input value={editFormData.website || ''} onChange={e => setEditFormData({ ...editFormData, website: e.target.value })} className="w-full border p-2.5 rounded-lg outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500" />
+                    <input
+                      value={editFormData.website || ''}
+                      onChange={(e) =>
+                        setEditFormData({ ...editFormData, website: e.target.value })
+                      }
+                      className="w-full border p-2.5 rounded-lg outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    />
                   </div>
                   <div className="border-t pt-6">
                     <h3 className="text-lg font-bold text-gray-900 mb-4">Endereço</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div><label className="block text-xs font-bold text-gray-500 uppercase mb-1">CEP</label><input value={editFormData.address?.zipCode || ''} onChange={e => setEditFormData({ ...editFormData, address: { ...editFormData.address, zipCode: e.target.value } })} className="w-full border p-2 rounded-lg" /></div>
-                      <div><label className="block text-xs font-bold text-gray-500 uppercase mb-1">Rua</label><input value={editFormData.address?.street || ''} onChange={e => setEditFormData({ ...editFormData, address: { ...editFormData.address, street: e.target.value } })} className="w-full border p-2 rounded-lg" /></div>
-                      <div><label className="block text-xs font-bold text-gray-500 uppercase mb-1">Número</label><input value={editFormData.address?.number || ''} onChange={e => setEditFormData({ ...editFormData, address: { ...editFormData.address, number: e.target.value } })} className="w-full border p-2 rounded-lg" /></div>
-                      <div><label className="block text-xs font-bold text-gray-500 uppercase mb-1">Cidade</label><input value={editFormData.address?.city || ''} onChange={e => setEditFormData({ ...editFormData, address: { ...editFormData.address, city: e.target.value } })} className="w-full border p-2 rounded-lg" /></div>
-                      <div><label className="block text-xs font-bold text-gray-500 uppercase mb-1">Estado</label><input value={editFormData.address?.state || ''} onChange={e => setEditFormData({ ...editFormData, address: { ...editFormData.address, state: e.target.value } })} className="w-full border p-2 rounded-lg" /></div>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1">
+                          CEP
+                        </label>
+                        <input
+                          value={editFormData.address?.zipCode || ''}
+                          onChange={(e) =>
+                            setEditFormData({
+                              ...editFormData,
+                              address: { ...editFormData.address, zipCode: e.target.value },
+                            })
+                          }
+                          className="w-full border p-2 rounded-lg"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1">
+                          Rua
+                        </label>
+                        <input
+                          value={editFormData.address?.street || ''}
+                          onChange={(e) =>
+                            setEditFormData({
+                              ...editFormData,
+                              address: { ...editFormData.address, street: e.target.value },
+                            })
+                          }
+                          className="w-full border p-2 rounded-lg"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1">
+                          Número
+                        </label>
+                        <input
+                          value={editFormData.address?.number || ''}
+                          onChange={(e) =>
+                            setEditFormData({
+                              ...editFormData,
+                              address: { ...editFormData.address, number: e.target.value },
+                            })
+                          }
+                          className="w-full border p-2 rounded-lg"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1">
+                          Cidade
+                        </label>
+                        <input
+                          value={editFormData.address?.city || ''}
+                          onChange={(e) =>
+                            setEditFormData({
+                              ...editFormData,
+                              address: { ...editFormData.address, city: e.target.value },
+                            })
+                          }
+                          className="w-full border p-2 rounded-lg"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1">
+                          Estado
+                        </label>
+                        <input
+                          value={editFormData.address?.state || ''}
+                          onChange={(e) =>
+                            setEditFormData({
+                              ...editFormData,
+                              address: { ...editFormData.address, state: e.target.value },
+                            })
+                          }
+                          className="w-full border p-2 rounded-lg"
+                        />
+                      </div>
                     </div>
                   </div>
-                  <button type="submit" disabled={isProcessing} className="w-full bg-primary-600 text-white py-3 rounded-lg font-bold hover:bg-primary-700 flex items-center justify-center gap-2 disabled:opacity-50"><Save size={18} /> Salvar Alterações</button>
+                  <button
+                    type="submit"
+                    disabled={isProcessing}
+                    className="w-full bg-primary-600 text-white py-3 rounded-lg font-bold hover:bg-primary-700 flex items-center justify-center gap-2 disabled:opacity-50"
+                  >
+                    <Save size={18} /> Salvar Alterações
+                  </button>
                 </form>
               </div>
             </div>
@@ -6980,19 +9078,49 @@ export const AdminDashboard: React.FC = () => {
 
           {modalType === 'EDIT_REVIEW' && selectedItem && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-[fadeIn_0.2s]">
-              <div className="bg-white rounded-2xl max-w-md w-full p-8 shadow-2xl relative" onClick={e => e.stopPropagation()}>
-                <button onClick={() => setModalType(null)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 bg-gray-100 p-2 rounded-full"><X size={20} /></button>
+              <div
+                className="bg-white rounded-2xl max-w-md w-full p-8 shadow-2xl relative"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <button
+                  onClick={() => setModalType(null)}
+                  className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 bg-gray-100 p-2 rounded-full"
+                >
+                  <X size={20} />
+                </button>
                 <h2 className="text-2xl font-bold text-gray-900 mb-6">Editar Avaliação</h2>
                 <form onSubmit={handleReviewUpdate} className="space-y-6">
                   <div>
                     <label className="block text-sm font-bold text-gray-700 mb-1">Comentário</label>
-                    <textarea value={editFormData.comment || ''} onChange={e => setEditFormData({ ...editFormData, comment: e.target.value })} rows={4} className="w-full border p-2.5 rounded-lg outline-none focus:ring-primary-500 focus:border-primary-500" />
+                    <textarea
+                      value={editFormData.comment || ''}
+                      onChange={(e) =>
+                        setEditFormData({ ...editFormData, comment: e.target.value })
+                      }
+                      rows={4}
+                      className="w-full border p-2.5 rounded-lg outline-none focus:ring-primary-500 focus:border-primary-500"
+                    />
                   </div>
                   <div>
                     <label className="block text-sm font-bold text-gray-700 mb-1">Rating</label>
-                    <input type="number" min="1" max="5" value={editFormData.rating || 0} onChange={e => setEditFormData({ ...editFormData, rating: Number(e.target.value) })} className="w-full border p-2.5 rounded-lg outline-none focus:ring-primary-500 focus:border-primary-500" />
+                    <input
+                      type="number"
+                      min="1"
+                      max="5"
+                      value={editFormData.rating || 0}
+                      onChange={(e) =>
+                        setEditFormData({ ...editFormData, rating: Number(e.target.value) })
+                      }
+                      className="w-full border p-2.5 rounded-lg outline-none focus:ring-primary-500 focus:border-primary-500"
+                    />
                   </div>
-                  <button type="submit" disabled={isProcessing} className="w-full bg-primary-600 text-white py-3 rounded-lg font-bold hover:bg-primary-700 flex items-center justify-center gap-2 disabled:opacity-50"><Save size={18} /> Salvar Alterações</button>
+                  <button
+                    type="submit"
+                    disabled={isProcessing}
+                    className="w-full bg-primary-600 text-white py-3 rounded-lg font-bold hover:bg-primary-700 flex items-center justify-center gap-2 disabled:opacity-50"
+                  >
+                    <Save size={18} /> Salvar Alterações
+                  </button>
                 </form>
               </div>
             </div>
@@ -7000,27 +9128,45 @@ export const AdminDashboard: React.FC = () => {
 
           {modalType === 'EDIT_TRIP' && selectedItem && (
             <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-[fadeIn_0.2s]">
-              <div className="bg-white rounded-2xl max-w-3xl w-full p-8 shadow-2xl relative max-h-[95vh] overflow-y-auto custom-scrollbar" onClick={e => e.stopPropagation()}>
-                <button onClick={() => setModalType(null)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 bg-gray-100 p-2 rounded-full z-10"><X size={20} /></button>
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">Editar Viagem: {selectedItem.title}</h2>
+              <div
+                className="bg-white rounded-2xl max-w-3xl w-full p-8 shadow-2xl relative max-h-[95vh] overflow-y-auto custom-scrollbar"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <button
+                  onClick={() => setModalType(null)}
+                  className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 bg-gray-100 p-2 rounded-full z-10"
+                >
+                  <X size={20} />
+                </button>
+                <h2 className="text-2xl font-bold text-gray-900 mb-6">
+                  Editar Viagem: {selectedItem.title}
+                </h2>
                 <form onSubmit={handleTripUpdate} className="space-y-6 animate-[fadeIn_0.3s]">
                   {/* Título e Descrição */}
                   <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
                     <div className="space-y-4">
                       <div>
-                        <label className="block text-sm font-bold text-gray-700 mb-2">Título <span className="text-red-500">*</span></label>
+                        <label className="block text-sm font-bold text-gray-700 mb-2">
+                          Título <span className="text-red-500">*</span>
+                        </label>
                         <input
                           value={editFormData.title || ''}
-                          onChange={e => setEditFormData({ ...editFormData, title: e.target.value })}
+                          onChange={(e) =>
+                            setEditFormData({ ...editFormData, title: e.target.value })
+                          }
                           className="w-full border border-gray-300 p-3 rounded-lg outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                           required
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-bold text-gray-700 mb-2">Descrição</label>
+                        <label className="block text-sm font-bold text-gray-700 mb-2">
+                          Descrição
+                        </label>
                         <textarea
                           value={editFormData.description || ''}
-                          onChange={e => setEditFormData({ ...editFormData, description: e.target.value })}
+                          onChange={(e) =>
+                            setEditFormData({ ...editFormData, description: e.target.value })
+                          }
                           rows={5}
                           className="w-full border border-gray-300 p-3 rounded-lg outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                         />
@@ -7037,10 +9183,15 @@ export const AdminDashboard: React.FC = () => {
                     {/* Use SimpleLocationPicker - mais confiável e funciona com iframe */}
                     <SimpleLocationPicker
                       value={editFormData.destination || ''}
-                      coordinates={locationCoords || (editFormData.latitude && editFormData.longitude ? { lat: editFormData.latitude, lng: editFormData.longitude } : null)}
+                      coordinates={
+                        locationCoords ||
+                        (editFormData.latitude && editFormData.longitude
+                          ? { lat: editFormData.latitude, lng: editFormData.longitude }
+                          : null)
+                      }
                       onChange={handleLocationChange}
                       onCoordinatesChange={handleCoordinatesChange}
-                      placeholder={editFormData.destination || "Ex: Serrinha do Alambari, Resende"}
+                      placeholder={editFormData.destination || 'Ex: Serrinha do Alambari, Resende'}
                     />
                   </div>
 
@@ -7053,13 +9204,20 @@ export const AdminDashboard: React.FC = () => {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                       <div>
-                        <label className="block text-sm font-bold text-gray-700 mb-2">Preço por Pessoa <span className="text-red-500">*</span></label>
+                        <label className="block text-sm font-bold text-gray-700 mb-2">
+                          Preço por Pessoa <span className="text-red-500">*</span>
+                        </label>
                         <div className="relative">
-                          <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                          <DollarSign
+                            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                            size={18}
+                          />
                           <input
                             type="number"
                             value={editFormData.price || 0}
-                            onChange={e => setEditFormData({ ...editFormData, price: Number(e.target.value) })}
+                            onChange={(e) =>
+                              setEditFormData({ ...editFormData, price: Number(e.target.value) })
+                            }
                             className="w-full border border-gray-300 rounded-lg p-3 pl-10 bg-white text-gray-900 outline-none focus:ring-2 focus:ring-primary-500"
                             placeholder="0.00"
                             min="0"
@@ -7070,14 +9228,21 @@ export const AdminDashboard: React.FC = () => {
                       </div>
 
                       <div>
-                        <label className="block text-sm font-bold text-gray-700 mb-2">Data de Início <span className="text-red-500">*</span></label>
+                        <label className="block text-sm font-bold text-gray-700 mb-2">
+                          Data de Início <span className="text-red-500">*</span>
+                        </label>
                         <div className="relative">
-                          <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none z-10" size={18} />
+                          <Calendar
+                            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none z-10"
+                            size={18}
+                          />
                           <input
                             type="date"
                             lang="pt-BR"
                             value={editFormData.startDate || ''}
-                            onChange={e => setEditFormData({ ...editFormData, startDate: e.target.value })}
+                            onChange={(e) =>
+                              setEditFormData({ ...editFormData, startDate: e.target.value })
+                            }
                             min={normalizeDateToISO(new Date())}
                             className="w-full border border-gray-300 rounded-lg p-3 pl-10 pr-3 bg-white text-gray-900 outline-none focus:ring-2 focus:ring-primary-500 cursor-pointer"
                             required
@@ -7086,14 +9251,21 @@ export const AdminDashboard: React.FC = () => {
                       </div>
 
                       <div>
-                        <label className="block text-sm font-bold text-gray-700 mb-2">Data de Fim <span className="text-red-500">*</span></label>
+                        <label className="block text-sm font-bold text-gray-700 mb-2">
+                          Data de Fim <span className="text-red-500">*</span>
+                        </label>
                         <div className="relative">
-                          <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none z-10" size={18} />
+                          <Calendar
+                            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none z-10"
+                            size={18}
+                          />
                           <input
                             type="date"
                             lang="pt-BR"
                             value={editFormData.endDate || ''}
-                            onChange={e => setEditFormData({ ...editFormData, endDate: e.target.value })}
+                            onChange={(e) =>
+                              setEditFormData({ ...editFormData, endDate: e.target.value })
+                            }
                             min={editFormData.startDate || normalizeDateToISO(new Date())}
                             className="w-full border border-gray-300 rounded-lg p-3 pl-10 pr-3 bg-white text-gray-900 outline-none focus:ring-2 focus:ring-primary-500 cursor-pointer"
                             required
@@ -7102,13 +9274,18 @@ export const AdminDashboard: React.FC = () => {
                       </div>
 
                       <div>
-                        <label className="block text-sm font-bold text-gray-700 mb-2">Duração (Dias)</label>
+                        <label className="block text-sm font-bold text-gray-700 mb-2">
+                          Duração (Dias)
+                        </label>
                         <div className="relative">
-                          <Clock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                          <Clock
+                            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                            size={18}
+                          />
                           <input
                             type="number"
                             value={editFormData.durationDays || 1}
-                            onChange={e => {
+                            onChange={(e) => {
                               const value = parseInt(e.target.value) || 1;
                               setEditFormData({ ...editFormData, durationDays: value });
                             }}
@@ -7120,11 +9297,19 @@ export const AdminDashboard: React.FC = () => {
                           <Clock size={12} />
                           {editFormData.startDate && editFormData.endDate ? (
                             <span>
-                              Calculado automaticamente: <strong>{editFormData.durationDays || 1}</strong> {editFormData.durationDays === 1 ? 'dia' : 'dias'}
+                              Calculado automaticamente:{' '}
+                              <strong>{editFormData.durationDays || 1}</strong>{' '}
+                              {editFormData.durationDays === 1 ? 'dia' : 'dias'}
                               {(() => {
                                 try {
-                                  const [startYear, startMonth, startDay] = (editFormData.startDate || '').split('-').map(Number);
-                                  const [endYear, endMonth, endDay] = (editFormData.endDate || '').split('-').map(Number);
+                                  const [startYear, startMonth, startDay] = (
+                                    editFormData.startDate || ''
+                                  )
+                                    .split('-')
+                                    .map(Number);
+                                  const [endYear, endMonth, endDay] = (editFormData.endDate || '')
+                                    .split('-')
+                                    .map(Number);
                                   const start = new Date(startYear, startMonth - 1, startDay);
                                   const end = new Date(endYear, endMonth - 1, endDay);
                                   const diffTime = end.getTime() - start.getTime();
@@ -7136,19 +9321,22 @@ export const AdminDashboard: React.FC = () => {
                               })()}
                             </span>
                           ) : (
-                            <span className="text-amber-600">Preencha as datas para calcular automaticamente</span>
+                            <span className="text-amber-600">
+                              Preencha as datas para calcular automaticamente
+                            </span>
                           )}
                         </p>
                       </div>
                     </div>
 
                     {/* Validation message */}
-                    {editFormData.startDate && editFormData.endDate && new Date(editFormData.startDate) > new Date(editFormData.endDate) && (
-                      <p className="text-red-500 text-sm font-bold bg-red-50 p-3 rounded-lg mt-4 flex items-center gap-2">
-                        <AlertCircle size={16} />
-                        A data final deve ser depois da inicial.
-                      </p>
-                    )}
+                    {editFormData.startDate &&
+                      editFormData.endDate &&
+                      new Date(editFormData.startDate) > new Date(editFormData.endDate) && (
+                        <p className="text-red-500 text-sm font-bold bg-red-50 p-3 rounded-lg mt-4 flex items-center gap-2">
+                          <AlertCircle size={16} />A data final deve ser depois da inicial.
+                        </p>
+                      )}
                   </div>
 
                   {/* Categorias (Pills/Badges) */}
@@ -7156,14 +9344,17 @@ export const AdminDashboard: React.FC = () => {
                     <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
                       <Tag className="text-primary-600" size={20} />
                       Categorias <span className="text-red-500">*</span>
-                      <span className="text-xs font-normal text-gray-500">(Clique para selecionar)</span>
+                      <span className="text-xs font-normal text-gray-500">
+                        (Clique para selecionar)
+                      </span>
                     </h3>
 
                     <div className="flex flex-wrap gap-2.5">
-                      {ALL_TRIP_CATEGORIES.map(category => {
+                      {ALL_TRIP_CATEGORIES.map((category) => {
                         const categoryKey = category as string;
                         const categoryLabel = categoryKey.replace(/_/g, ' ');
-                        const isSelected = editFormData.categories?.includes(category as TripCategory) || false;
+                        const isSelected =
+                          editFormData.categories?.includes(category as TripCategory) || false;
 
                         return (
                           <button
@@ -7175,13 +9366,13 @@ export const AdminDashboard: React.FC = () => {
                                 // Remove category
                                 setEditFormData({
                                   ...editFormData,
-                                  categories: currentCategories.filter(cat => cat !== category)
+                                  categories: currentCategories.filter((cat) => cat !== category),
                                 });
                               } else {
                                 // Add category
                                 setEditFormData({
                                   ...editFormData,
-                                  categories: [...currentCategories, category as TripCategory]
+                                  categories: [...currentCategories, category as TripCategory],
                                 });
                               }
                             }}
@@ -7189,15 +9380,14 @@ export const AdminDashboard: React.FC = () => {
                           inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium
                           transition-all duration-200 ease-in-out
                           focus:outline-none focus:ring-2 focus:ring-offset-2
-                          ${isSelected
-                                ? 'bg-primary-600 text-white shadow-md hover:bg-primary-700 focus:ring-primary-500 transform scale-105'
-                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:text-gray-900 focus:ring-gray-400 border border-gray-200'
-                              }
+                          ${
+                            isSelected
+                              ? 'bg-primary-600 text-white shadow-md hover:bg-primary-700 focus:ring-primary-500 transform scale-105'
+                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:text-gray-900 focus:ring-gray-400 border border-gray-200'
+                          }
                         `}
                           >
-                            {isSelected && (
-                              <CheckCircle2Icon size={16} className="flex-shrink-0" />
-                            )}
+                            {isSelected && <CheckCircle2Icon size={16} className="flex-shrink-0" />}
                             <span>{categoryLabel}</span>
                           </button>
                         );
@@ -7213,7 +9403,10 @@ export const AdminDashboard: React.FC = () => {
 
                     {editFormData.categories && editFormData.categories.length > 0 && (
                       <p className="text-xs text-gray-500 mt-3">
-                        <strong>{editFormData.categories.length}</strong> {editFormData.categories.length === 1 ? 'categoria selecionada' : 'categorias selecionadas'}
+                        <strong>{editFormData.categories.length}</strong>{' '}
+                        {editFormData.categories.length === 1
+                          ? 'categoria selecionada'
+                          : 'categorias selecionadas'}
                       </p>
                     )}
                   </div>
@@ -7251,55 +9444,101 @@ export const AdminDashboard: React.FC = () => {
           )}
 
           {modalType === 'VIEW_STATS' && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-[fadeIn_0.2s]" onClick={() => setModalType(null)}>
-              <div className="bg-white rounded-3xl max-w-2xl w-full p-8 shadow-2xl relative max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-                <button onClick={() => setModalType(null)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 bg-gray-100 hover:bg-gray-200 p-2 rounded-full transition-colors z-10">
+            <div
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-[fadeIn_0.2s]"
+              onClick={() => setModalType(null)}
+            >
+              <div
+                className="bg-white rounded-3xl max-w-2xl w-full p-8 shadow-2xl relative max-h-[90vh] overflow-y-auto"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <button
+                  onClick={() => setModalType(null)}
+                  className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 bg-gray-100 hover:bg-gray-200 p-2 rounded-full transition-colors z-10"
+                >
                   <X size={20} />
                 </button>
                 <div className="mb-6">
-                  <h2 className="text-3xl font-extrabold text-gray-900 mb-2">Estatísticas dos Usuários</h2>
-                  <p className="text-sm text-gray-500">Análise detalhada de {selectedUsers.length} usuário(s) selecionado(s)</p>
+                  <h2 className="text-3xl font-extrabold text-gray-900 mb-2">
+                    Estatísticas dos Usuários
+                  </h2>
+                  <p className="text-sm text-gray-500">
+                    Análise detalhada de {selectedUsers.length} usuário(s) selecionado(s)
+                  </p>
                 </div>
                 <div className="space-y-4">
                   {userStats.length > 0 ? (
                     <>
-                      {userStats.map(stat => (
-                        <div key={stat.userId} className="bg-gradient-to-br from-gray-50 to-white p-6 rounded-2xl border-2 border-gray-200 shadow-lg hover:shadow-xl transition-all">
+                      {userStats.map((stat) => (
+                        <div
+                          key={stat.userId}
+                          className="bg-gradient-to-br from-gray-50 to-white p-6 rounded-2xl border-2 border-gray-200 shadow-lg hover:shadow-xl transition-all"
+                        >
                           <div className="flex items-center justify-between mb-4">
                             <p className="font-extrabold text-gray-900 text-xl">{stat.userName}</p>
                             <Badge color="blue">ID: {stat.userId.slice(0, 8)}...</Badge>
                           </div>
                           <div className="grid grid-cols-3 gap-4">
                             <div className="bg-white p-4 rounded-xl border border-gray-200">
-                              <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Total Gasto</p>
-                              <p className="text-2xl font-extrabold text-primary-600">R$ {stat.totalSpent.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                              <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
+                                Total Gasto
+                              </p>
+                              <p className="text-2xl font-extrabold text-primary-600">
+                                R${' '}
+                                {stat.totalSpent.toLocaleString('pt-BR', {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                })}
+                              </p>
                             </div>
                             <div className="bg-white p-4 rounded-xl border border-gray-200">
-                              <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Reservas</p>
-                              <p className="text-2xl font-extrabold text-green-600">{stat.totalBookings}</p>
+                              <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
+                                Reservas
+                              </p>
+                              <p className="text-2xl font-extrabold text-green-600">
+                                {stat.totalBookings}
+                              </p>
                             </div>
                             <div className="bg-white p-4 rounded-xl border border-gray-200">
-                              <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Avaliações</p>
-                              <p className="text-2xl font-extrabold text-amber-600">{stat.totalReviews}</p>
+                              <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
+                                Avaliações
+                              </p>
+                              <p className="text-2xl font-extrabold text-amber-600">
+                                {stat.totalReviews}
+                              </p>
                             </div>
                           </div>
                         </div>
                       ))}
                       {/* Summary */}
                       <div className="bg-gradient-to-r from-primary-500 to-secondary-500 p-6 rounded-2xl text-white shadow-xl">
-                        <p className="text-sm font-bold uppercase tracking-wider mb-3 opacity-90">Resumo Total</p>
+                        <p className="text-sm font-bold uppercase tracking-wider mb-3 opacity-90">
+                          Resumo Total
+                        </p>
                         <div className="grid grid-cols-3 gap-4">
                           <div>
                             <p className="text-xs opacity-80 mb-1">Total Gasto</p>
-                            <p className="text-2xl font-extrabold">R$ {userStats.reduce((sum, s) => sum + s.totalSpent, 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                            <p className="text-2xl font-extrabold">
+                              R${' '}
+                              {userStats
+                                .reduce((sum, s) => sum + s.totalSpent, 0)
+                                .toLocaleString('pt-BR', {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                })}
+                            </p>
                           </div>
                           <div>
                             <p className="text-xs opacity-80 mb-1">Total Reservas</p>
-                            <p className="text-2xl font-extrabold">{userStats.reduce((sum, s) => sum + s.totalBookings, 0)}</p>
+                            <p className="text-2xl font-extrabold">
+                              {userStats.reduce((sum, s) => sum + s.totalBookings, 0)}
+                            </p>
                           </div>
                           <div>
                             <p className="text-xs opacity-80 mb-1">Total Avaliações</p>
-                            <p className="text-2xl font-extrabold">{userStats.reduce((sum, s) => sum + s.totalReviews, 0)}</p>
+                            <p className="text-2xl font-extrabold">
+                              {userStats.reduce((sum, s) => sum + s.totalReviews, 0)}
+                            </p>
                           </div>
                         </div>
                       </div>
@@ -7307,7 +9546,9 @@ export const AdminDashboard: React.FC = () => {
                   ) : (
                     <div className="text-center py-12">
                       <StatsIcon size={48} className="mx-auto text-gray-300 mb-4" />
-                      <p className="text-sm text-gray-500 font-medium">Nenhum dado disponível para os usuários selecionados.</p>
+                      <p className="text-sm text-gray-500 font-medium">
+                        Nenhum dado disponível para os usuários selecionados.
+                      </p>
                     </div>
                   )}
                 </div>
@@ -7318,7 +9559,10 @@ export const AdminDashboard: React.FC = () => {
           {/* Modal: Change Plan */}
           {modalType === 'CHANGE_PLAN' && selectedItem && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-[fadeIn_0.2s]">
-              <div className="bg-white rounded-2xl max-w-lg w-full shadow-2xl relative overflow-hidden" onClick={e => e.stopPropagation()}>
+              <div
+                className="bg-white rounded-2xl max-w-lg w-full shadow-2xl relative overflow-hidden"
+                onClick={(e) => e.stopPropagation()}
+              >
                 {/* Header */}
                 <div className="bg-white border-b border-slate-200 p-6 relative">
                   <button
@@ -7344,15 +9588,44 @@ export const AdminDashboard: React.FC = () => {
                   <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-5 rounded-xl border-2 border-gray-200">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Plano Atual</p>
-                        <Badge color={selectedItem.subscriptionPlan === 'PREMIUM' ? 'purple' : selectedItem.subscriptionPlan === 'BASIC' ? 'blue' : 'gray'} className="text-sm py-1.5 px-3">
-                          {selectedItem.subscriptionPlan === 'PREMIUM' ? '⭐ Premium' : selectedItem.subscriptionPlan === 'BASIC' ? '📦 Básico' : selectedItem.subscriptionPlan || 'Starter'}
+                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                          Plano Atual
+                        </p>
+                        <Badge
+                          color={
+                            selectedItem.subscriptionPlan === 'PREMIUM'
+                              ? 'purple'
+                              : selectedItem.subscriptionPlan === 'BASIC'
+                                ? 'blue'
+                                : 'gray'
+                          }
+                          className="text-sm py-1.5 px-3"
+                        >
+                          {selectedItem.subscriptionPlan === 'PREMIUM'
+                            ? '⭐ Premium'
+                            : selectedItem.subscriptionPlan === 'BASIC'
+                              ? '📦 Básico'
+                              : selectedItem.subscriptionPlan || 'Starter'}
                         </Badge>
                       </div>
                       <div className="text-right">
-                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Status</p>
-                        <Badge color={selectedItem.subscriptionStatus === 'ACTIVE' ? 'green' : selectedItem.subscriptionStatus === 'PENDING' ? 'amber' : 'amber'}>
-                          {selectedItem.subscriptionStatus === 'ACTIVE' ? '✓ Ativo' : selectedItem.subscriptionStatus === 'PENDING' ? '⏳ Pendente' : '✗ Inativo'}
+                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                          Status
+                        </p>
+                        <Badge
+                          color={
+                            selectedItem.subscriptionStatus === 'ACTIVE'
+                              ? 'green'
+                              : selectedItem.subscriptionStatus === 'PENDING'
+                                ? 'amber'
+                                : 'amber'
+                          }
+                        >
+                          {selectedItem.subscriptionStatus === 'ACTIVE'
+                            ? '✓ Ativo'
+                            : selectedItem.subscriptionStatus === 'PENDING'
+                              ? '⏳ Pendente'
+                              : '✗ Inativo'}
                         </Badge>
                       </div>
                     </div>
@@ -7360,17 +9633,20 @@ export const AdminDashboard: React.FC = () => {
 
                   {/* Plan Options */}
                   <div className="space-y-3">
-                    <p className="text-sm font-bold text-gray-700 uppercase tracking-wide">Selecione um Plano</p>
+                    <p className="text-sm font-bold text-gray-700 uppercase tracking-wide">
+                      Selecione um Plano
+                    </p>
                     <div className="grid grid-cols-2 gap-4">
                       <button
                         onClick={() => handleChangePlan(selectedItem.agencyId, 'BASIC')}
                         disabled={isProcessing || selectedItem.subscriptionPlan === 'BASIC'}
                         className={`
                       relative p-5 rounded-xl border-2 transition-all duration-200
-                      ${selectedItem.subscriptionPlan === 'BASIC'
-                            ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200'
-                            : 'border-gray-200 bg-white hover:border-blue-400 hover:bg-blue-50 hover:shadow-lg'
-                          }
+                      ${
+                        selectedItem.subscriptionPlan === 'BASIC'
+                          ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200'
+                          : 'border-gray-200 bg-white hover:border-blue-400 hover:bg-blue-50 hover:shadow-lg'
+                      }
                       disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-gray-200 disabled:hover:bg-white disabled:hover:shadow-none
                     `}
                       >
@@ -7410,10 +9686,11 @@ export const AdminDashboard: React.FC = () => {
                         disabled={isProcessing || selectedItem.subscriptionPlan === 'PREMIUM'}
                         className={`
                       relative p-5 rounded-xl border-2 transition-all duration-200
-                      ${selectedItem.subscriptionPlan === 'PREMIUM'
-                            ? 'border-purple-500 bg-purple-50 ring-2 ring-purple-200'
-                            : 'border-gray-200 bg-white hover:border-purple-400 hover:bg-purple-50 hover:shadow-lg'
-                          }
+                      ${
+                        selectedItem.subscriptionPlan === 'PREMIUM'
+                          ? 'border-purple-500 bg-purple-50 ring-2 ring-purple-200'
+                          : 'border-gray-200 bg-white hover:border-purple-400 hover:bg-purple-50 hover:shadow-lg'
+                      }
                       disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-gray-200 disabled:hover:bg-white disabled:hover:shadow-none
                     `}
                       >
@@ -7464,10 +9741,11 @@ export const AdminDashboard: React.FC = () => {
                       disabled={isProcessing}
                       className={`
                     flex-1 px-4 py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2
-                    ${selectedItem.subscriptionStatus === 'ACTIVE'
-                          ? 'bg-amber-50 text-amber-700 hover:bg-amber-100 border-2 border-amber-200'
-                          : 'bg-green-50 text-green-700 hover:bg-green-100 border-2 border-green-200'
-                        }
+                    ${
+                      selectedItem.subscriptionStatus === 'ACTIVE'
+                        ? 'bg-amber-50 text-amber-700 hover:bg-amber-100 border-2 border-amber-200'
+                        : 'bg-green-50 text-green-700 hover:bg-green-100 border-2 border-green-200'
+                    }
                     disabled:opacity-50 disabled:cursor-not-allowed
                   `}
                     >
@@ -7515,13 +9793,29 @@ export const AdminDashboard: React.FC = () => {
                 {/* Header */}
                 <div className="flex items-center justify-between mb-8 pb-6 border-b border-gray-200">
                   <div className="flex items-center gap-4">
-                    <img src={agencyDetails.agency.logo || `https://ui-avatars.com/api/?name=${agencyDetails.agency.name}`} className="w-16 h-16 rounded-full object-cover border-2 border-gray-200" alt="" />
+                    <img
+                      src={
+                        agencyDetails.agency.logo ||
+                        `https://ui-avatars.com/api/?name=${agencyDetails.agency.name}`
+                      }
+                      className="w-16 h-16 rounded-full object-cover border-2 border-gray-200"
+                      alt=""
+                    />
                     <div>
-                      <h1 className="text-3xl font-bold text-gray-900">{agencyDetails.agency.name}</h1>
-                      <p className="text-sm text-gray-500 font-mono">/{agencyDetails.agency.slug}</p>
+                      <h1 className="text-3xl font-bold text-gray-900">
+                        {agencyDetails.agency.name}
+                      </h1>
+                      <p className="text-sm text-gray-500 font-mono">
+                        /{agencyDetails.agency.slug}
+                      </p>
                     </div>
                   </div>
-                  <button onClick={() => setModalType(null)} className="p-2 text-gray-400 hover:text-gray-600 bg-gray-100 rounded-full"><X size={24} /></button>
+                  <button
+                    onClick={() => setModalType(null)}
+                    className="p-2 text-gray-400 hover:text-gray-600 bg-gray-100 rounded-full"
+                  >
+                    <X size={24} />
+                  </button>
                 </div>
 
                 {/* Stats Grid */}
@@ -7529,45 +9823,71 @@ export const AdminDashboard: React.FC = () => {
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
                     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                       <p className="text-sm text-gray-500 mb-1">Receita Total</p>
-                      <p className="text-2xl font-bold text-gray-900">R$ {agencyDetails.stats.totalRevenue?.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) || '0,00'}</p>
+                      <p className="text-2xl font-bold text-gray-900">
+                        R${' '}
+                        {agencyDetails.stats.totalRevenue?.toLocaleString('pt-BR', {
+                          minimumFractionDigits: 2,
+                        }) || '0,00'}
+                      </p>
                     </div>
                     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                       <p className="text-sm text-gray-500 mb-1">Vendas</p>
-                      <p className="text-2xl font-bold text-gray-900">{agencyDetails.stats.totalSales || 0}</p>
+                      <p className="text-2xl font-bold text-gray-900">
+                        {agencyDetails.stats.totalSales || 0}
+                      </p>
                     </div>
                     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                       <p className="text-sm text-gray-500 mb-1">Visualizações</p>
-                      <p className="text-2xl font-bold text-gray-900">{agencyDetails.stats.totalViews || 0}</p>
+                      <p className="text-2xl font-bold text-gray-900">
+                        {agencyDetails.stats.totalViews || 0}
+                      </p>
                     </div>
                     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                       <p className="text-sm text-gray-500 mb-1">Avaliação Média</p>
-                      <p className="text-2xl font-bold text-gray-900">{agencyDetails.stats.averageRating?.toFixed(1) || '-'}</p>
+                      <p className="text-2xl font-bold text-gray-900">
+                        {agencyDetails.stats.averageRating?.toFixed(1) || '-'}
+                      </p>
                     </div>
                   </div>
                 )}
 
                 {/* Trips List */}
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-8">
-                  <h2 className="text-xl font-bold text-gray-900 mb-4">Pacotes Ativos ({agencyDetails.trips.length})</h2>
+                  <h2 className="text-xl font-bold text-gray-900 mb-4">
+                    Pacotes Ativos ({agencyDetails.trips.length})
+                  </h2>
                   <div className="space-y-3">
                     {agencyDetails.trips.length > 0 ? (
-                      agencyDetails.trips.map(trip => (
-                        <div key={trip.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-100">
+                      agencyDetails.trips.map((trip) => (
+                        <div
+                          key={trip.id}
+                          className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-100"
+                        >
                           <div className="flex items-center gap-4">
-                            <img src={trip.images?.[0] || 'https://placehold.co/80x60'} className="w-20 h-15 rounded-lg object-cover" alt="" />
+                            <img
+                              src={trip.images?.[0] || 'https://placehold.co/80x60'}
+                              className="w-20 h-15 rounded-lg object-cover"
+                              alt=""
+                            />
                             <div>
                               <p className="font-bold text-gray-900">{trip.title}</p>
                               <p className="text-sm text-gray-500">{trip.destination}</p>
                             </div>
                           </div>
                           <div className="text-right">
-                            <p className="font-bold text-gray-900">R$ {trip.price.toLocaleString('pt-BR')}</p>
-                            <Badge color={trip.is_active ? 'green' : 'gray'}>{trip.is_active ? 'Ativo' : 'Inativo'}</Badge>
+                            <p className="font-bold text-gray-900">
+                              R$ {trip.price.toLocaleString('pt-BR')}
+                            </p>
+                            <Badge color={trip.is_active ? 'green' : 'gray'}>
+                              {trip.is_active ? 'Ativo' : 'Inativo'}
+                            </Badge>
                           </div>
                         </div>
                       ))
                     ) : (
-                      <p className="text-sm text-gray-500 text-center py-8">Nenhum pacote cadastrado.</p>
+                      <p className="text-sm text-gray-500 text-center py-8">
+                        Nenhum pacote cadastrado.
+                      </p>
                     )}
                   </div>
                 </div>
@@ -7576,16 +9896,27 @@ export const AdminDashboard: React.FC = () => {
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                   <h2 className="text-xl font-bold text-gray-900 mb-4">Histórico de Atividades</h2>
                   <div className="space-y-3 max-h-[400px] overflow-y-auto">
-                    {auditLogs.filter(log => log.details?.includes(agencyDetails.agency!.agencyId)).length > 0 ? (
-                      auditLogs.filter(log => log.details?.includes(agencyDetails.agency!.agencyId)).map(log => (
-                        <div key={log.id} className="bg-gray-50 p-3 rounded-lg border border-gray-100">
-                          <p className="text-sm font-bold text-gray-900">{log.action}</p>
-                          <p className="text-xs text-gray-600 mt-1">{log.details}</p>
-                          <p className="text-[10px] text-gray-400 mt-1">{new Date(log.createdAt).toLocaleString()}</p>
-                        </div>
-                      ))
+                    {auditLogs.filter((log) =>
+                      log.details?.includes(agencyDetails.agency!.agencyId)
+                    ).length > 0 ? (
+                      auditLogs
+                        .filter((log) => log.details?.includes(agencyDetails.agency!.agencyId))
+                        .map((log) => (
+                          <div
+                            key={log.id}
+                            className="bg-gray-50 p-3 rounded-lg border border-gray-100"
+                          >
+                            <p className="text-sm font-bold text-gray-900">{log.action}</p>
+                            <p className="text-xs text-gray-600 mt-1">{log.details}</p>
+                            <p className="text-[10px] text-gray-400 mt-1">
+                              {new Date(log.createdAt).toLocaleString()}
+                            </p>
+                          </div>
+                        ))
                     ) : (
-                      <p className="text-sm text-gray-500 text-center py-8">Nenhuma atividade registrada.</p>
+                      <p className="text-sm text-gray-500 text-center py-8">
+                        Nenhuma atividade registrada.
+                      </p>
                     )}
                   </div>
                 </div>
@@ -7601,13 +9932,46 @@ export const AdminDashboard: React.FC = () => {
                   {selectedAgencies.length} Agência(s) selecionada(s)
                 </span>
                 <div className="flex gap-2">
-                  <button onClick={() => handleMassUpdateAgencyStatus('ACTIVE')} className="bg-green-50 text-green-700 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-green-100 transition-colors">Ativar</button>
-                  <button onClick={() => handleMassUpdateAgencyStatus('INACTIVE')} className="bg-amber-50 text-amber-700 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-amber-100 transition-colors">Inativar</button>
-                  <button onClick={() => handleMassChangePlan('BASIC')} className="bg-gray-50 text-gray-700 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-gray-100 transition-colors">Plano Básico</button>
-                  <button onClick={() => handleMassChangePlan('PREMIUM')} className="bg-purple-50 text-purple-700 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-purple-100 transition-colors">Plano Premium</button>
-                  <button onClick={() => handleMassArchiveAgencies()} className="bg-orange-50 text-orange-700 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-orange-100 transition-colors">Arquivar</button>
-                  <button onClick={() => handleMassDeleteAgencies()} className="bg-red-50 text-red-700 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-red-100 transition-colors">Excluir</button>
-                  <button onClick={() => setSelectedAgencies([])} className="bg-gray-100 text-gray-700 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-gray-200 transition-colors">
+                  <button
+                    onClick={() => handleMassUpdateAgencyStatus('ACTIVE')}
+                    className="bg-green-50 text-green-700 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-green-100 transition-colors"
+                  >
+                    Ativar
+                  </button>
+                  <button
+                    onClick={() => handleMassUpdateAgencyStatus('INACTIVE')}
+                    className="bg-amber-50 text-amber-700 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-amber-100 transition-colors"
+                  >
+                    Inativar
+                  </button>
+                  <button
+                    onClick={() => handleMassChangePlan('BASIC')}
+                    className="bg-gray-50 text-gray-700 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-gray-100 transition-colors"
+                  >
+                    Plano Básico
+                  </button>
+                  <button
+                    onClick={() => handleMassChangePlan('PREMIUM')}
+                    className="bg-purple-50 text-purple-700 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-purple-100 transition-colors"
+                  >
+                    Plano Premium
+                  </button>
+                  <button
+                    onClick={() => handleMassArchiveAgencies()}
+                    className="bg-orange-50 text-orange-700 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-orange-100 transition-colors"
+                  >
+                    Arquivar
+                  </button>
+                  <button
+                    onClick={() => handleMassDeleteAgencies()}
+                    className="bg-red-50 text-red-700 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-red-100 transition-colors"
+                  >
+                    Excluir
+                  </button>
+                  <button
+                    onClick={() => setSelectedAgencies([])}
+                    className="bg-gray-100 text-gray-700 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-gray-200 transition-colors"
+                  >
                     <X size={14} />
                   </button>
                 </div>
@@ -7621,10 +9985,13 @@ export const AdminDashboard: React.FC = () => {
               isOpen={usersFilterModal.isOpen}
               onClose={() => setUsersFilterModal({ isOpen: false, filterType: null })}
               title={
-                usersFilterModal.filterType === 'all' ? 'Total de Usuários' :
-                  usersFilterModal.filterType === 'new' ? 'Novos este Mês' :
-                    usersFilterModal.filterType === 'active' ? 'Ativos Agora' :
-                      'Bloqueados'
+                usersFilterModal.filterType === 'all'
+                  ? 'Total de Usuários'
+                  : usersFilterModal.filterType === 'new'
+                    ? 'Novos este Mês'
+                    : usersFilterModal.filterType === 'active'
+                      ? 'Ativos Agora'
+                      : 'Bloqueados'
               }
               users={getFilteredUsers(usersFilterModal.filterType)}
               onUserClick={(client) => {
@@ -7642,12 +10009,17 @@ export const AdminDashboard: React.FC = () => {
               isOpen={agenciesFilterModal.isOpen}
               onClose={() => setAgenciesFilterModal({ isOpen: false, filterType: null })}
               title={
-                agenciesFilterModal.filterType === 'all' ? 'Total de Agências' :
-                  agenciesFilterModal.filterType === 'premium' ? 'Planos Premium (PM)' :
-                    agenciesFilterModal.filterType === 'basic' ? 'Planos Básicos (PB)' :
-                      agenciesFilterModal.filterType === 'free' ? 'Planos Gratuitos (FREE)' :
-                        agenciesFilterModal.filterType === 'pending' ? 'Agências Pendentes' :
-                          'Agências Ativas'
+                agenciesFilterModal.filterType === 'all'
+                  ? 'Total de Agências'
+                  : agenciesFilterModal.filterType === 'premium'
+                    ? 'Planos Premium (PM)'
+                    : agenciesFilterModal.filterType === 'basic'
+                      ? 'Planos Básicos (PB)'
+                      : agenciesFilterModal.filterType === 'free'
+                        ? 'Planos Gratuitos (FREE)'
+                        : agenciesFilterModal.filterType === 'pending'
+                          ? 'Agências Pendentes'
+                          : 'Agências Ativas'
               }
               agencies={getFilteredAgencies(agenciesFilterModal.filterType)}
               onAgencyClick={(agency) => {
@@ -7667,7 +10039,17 @@ export const AdminDashboard: React.FC = () => {
             onEdit={() => {
               if (agencyDetailModal.agency) {
                 setSelectedItem(agencyDetailModal.agency);
-                setEditFormData({ name: agencyDetailModal.agency.name, description: agencyDetailModal.agency.description, cnpj: agencyDetailModal.agency.cnpj, slug: agencyDetailModal.agency.slug, phone: agencyDetailModal.agency.phone, whatsapp: agencyDetailModal.agency.whatsapp, website: agencyDetailModal.agency.website, address: agencyDetailModal.agency.address, bankInfo: agencyDetailModal.agency.bankInfo });
+                setEditFormData({
+                  name: agencyDetailModal.agency.name,
+                  description: agencyDetailModal.agency.description,
+                  cnpj: agencyDetailModal.agency.cnpj,
+                  slug: agencyDetailModal.agency.slug,
+                  phone: agencyDetailModal.agency.phone,
+                  whatsapp: agencyDetailModal.agency.whatsapp,
+                  website: agencyDetailModal.agency.website,
+                  address: agencyDetailModal.agency.address,
+                  bankInfo: agencyDetailModal.agency.bankInfo,
+                });
                 setModalType('EDIT_AGENCY');
                 setAgencyDetailModal({ isOpen: false, agency: null });
               }

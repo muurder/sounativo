@@ -3,7 +3,7 @@ import { useLoadScript, GoogleMap, Marker, Autocomplete } from '@react-google-ma
 import { MapPin, Loader, AlertCircle, Navigation, Search } from 'lucide-react';
 import { logger } from '../../utils/logger';
 
-const libraries: ("places" | "drawing" | "geometry" | "visualization")[] = ['places'];
+const libraries: ('places' | 'drawing' | 'geometry' | 'visualization')[] = ['places'];
 
 interface GoogleLocationPickerProps {
   value: string;
@@ -19,14 +19,15 @@ const GoogleLocationPicker: React.FC<GoogleLocationPickerProps> = ({
   coordinates,
   onChange,
   onCoordinatesChange,
-  placeholder = "Digite o nome do local...",
-  error
+  placeholder = 'Digite o nome do local...',
+  error,
 }) => {
   // Use coordinates or default to São Paulo
-  const initialCenter = useMemo(() => 
-    coordinates && coordinates.lat !== 0 && coordinates.lng !== 0 
-      ? coordinates 
-      : { lat: -23.5505, lng: -46.6333 },
+  const initialCenter = useMemo(
+    () =>
+      coordinates && coordinates.lat !== 0 && coordinates.lng !== 0
+        ? coordinates
+        : { lat: -23.5505, lng: -46.6333 },
     [coordinates]
   );
 
@@ -58,8 +59,8 @@ const GoogleLocationPicker: React.FC<GoogleLocationPickerProps> = ({
     if (value !== inputValue && !isUpdatingRef.current) {
       setInputValue(value);
       if (inputRef.current) {
-      inputRef.current.value = value;
-    }
+        inputRef.current.value = value;
+      }
     }
   }, [value, inputValue]);
 
@@ -72,12 +73,12 @@ const GoogleLocationPicker: React.FC<GoogleLocationPickerProps> = ({
         setMapCenter(newCoords);
         setMarkerPosition(newCoords);
         setMapZoom(16);
-        
-      if (mapRef.current) {
+
+        if (mapRef.current) {
           mapRef.current.setCenter(newCoords);
-        mapRef.current.setZoom(16);
-      }
-        
+          mapRef.current.setZoom(16);
+        }
+
         setTimeout(() => {
           isUpdatingRef.current = false;
         }, 300);
@@ -88,96 +89,105 @@ const GoogleLocationPicker: React.FC<GoogleLocationPickerProps> = ({
   // Handle autocomplete selection
   const onPlaceChanged = useCallback(() => {
     if (!autocompleteRef.current) return;
-    
-      const place = autocompleteRef.current.getPlace();
-      setIsSearching(false);
-      
-      if (place.geometry?.location) {
+
+    const place = autocompleteRef.current.getPlace();
+    setIsSearching(false);
+
+    if (place.geometry?.location) {
       isUpdatingRef.current = true;
-      
-        const lat = place.geometry.location.lat();
-        const lng = place.geometry.location.lng();
+
+      const lat = place.geometry.location.lat();
+      const lng = place.geometry.location.lng();
       const formattedAddress = place.formatted_address || place.name || inputValue || '';
-        const newCoords = { lat, lng };
-        
-        // Determine zoom level based on place type
+      const newCoords = { lat, lng };
+
+      // Determine zoom level based on place type
       let zoomLevel = 16;
-        if (place.types) {
-          if (place.types.includes('locality') || place.types.includes('administrative_area_level_1')) {
+      if (place.types) {
+        if (
+          place.types.includes('locality') ||
+          place.types.includes('administrative_area_level_1')
+        ) {
           zoomLevel = 12;
-          } else if (place.types.includes('country')) {
+        } else if (place.types.includes('country')) {
           zoomLevel = 6;
-          } else if (place.types.includes('establishment') || place.types.includes('point_of_interest')) {
+        } else if (
+          place.types.includes('establishment') ||
+          place.types.includes('point_of_interest')
+        ) {
           zoomLevel = 17;
-          }
         }
-        
+      }
+
       // Update input value
       setInputValue(formattedAddress);
       if (inputRef.current) {
         inputRef.current.value = formattedAddress;
       }
-      
+
       // Update map state
-        setMapCenter(newCoords);
-        setMarkerPosition(newCoords);
-        setMapZoom(zoomLevel);
-        
+      setMapCenter(newCoords);
+      setMarkerPosition(newCoords);
+      setMapZoom(zoomLevel);
+
       // Update map view
-        if (mapRef.current) {
-          mapRef.current.setCenter(newCoords);
-          mapRef.current.setZoom(zoomLevel);
-        }
-      
+      if (mapRef.current) {
+        mapRef.current.setCenter(newCoords);
+        mapRef.current.setZoom(zoomLevel);
+      }
+
       // Update parent
       onChange(formattedAddress, newCoords);
       onCoordinatesChange(newCoords);
-      
+
       setTimeout(() => {
         isUpdatingRef.current = false;
       }, 200);
-      } else {
-        logger.warn('Place selected but no geometry available:', place);
-        setMapError('Localização não encontrada. Tente ser mais específico.');
-      }
+    } else {
+      logger.warn('Place selected but no geometry available:', place);
+      setMapError('Localização não encontrada. Tente ser mais específico.');
+    }
   }, [onChange, onCoordinatesChange, inputValue]);
 
   // Handle marker drag end
-  const onMarkerDragEnd = useCallback((e: google.maps.MapMouseEvent) => {
-    if (!e.latLng) return;
-    
-    isUpdatingRef.current = true;
+  const onMarkerDragEnd = useCallback(
+    (e: google.maps.MapMouseEvent) => {
+      if (!e.latLng) return;
+
+      isUpdatingRef.current = true;
       const lat = e.latLng.lat();
       const lng = e.latLng.lng();
       const newCoords = { lat, lng };
-      
+
       setMarkerPosition(newCoords);
       setMapCenter(newCoords);
       onCoordinatesChange(newCoords);
-      
-    // Reverse geocode
-    if (typeof window !== 'undefined' && (window as any).google?.maps) {
+
+      // Reverse geocode
+      if (typeof window !== 'undefined' && (window as any).google?.maps) {
         const geocoder = new (window as any).google.maps.Geocoder();
         geocoder.geocode({ location: newCoords }, (results: any, status: string) => {
           if (status === 'OK' && results && results[0]) {
-          const address = results[0].formatted_address;
-          setInputValue(address);
-          onChange(address, newCoords);
+            const address = results[0].formatted_address;
+            setInputValue(address);
+            onChange(address, newCoords);
           } else {
-          const coordString = `Lat: ${newCoords.lat.toFixed(6)}, Lng: ${newCoords.lng.toFixed(6)}`;
-          setInputValue(coordString);
-          onChange(coordString, newCoords);
-        }
+            const coordString = `Lat: ${newCoords.lat.toFixed(6)}, Lng: ${newCoords.lng.toFixed(6)}`;
+            setInputValue(coordString);
+            onChange(coordString, newCoords);
+          }
+          setTimeout(() => {
+            isUpdatingRef.current = false;
+          }, 200);
+        });
+      } else {
         setTimeout(() => {
           isUpdatingRef.current = false;
         }, 200);
-      });
-    } else {
-      setTimeout(() => {
-        isUpdatingRef.current = false;
-      }, 200);
-    }
-  }, [onChange, onCoordinatesChange]);
+      }
+    },
+    [onChange, onCoordinatesChange]
+  );
 
   // Handle use current location
   const handleUseCurrentLocation = useCallback(() => {
@@ -194,17 +204,17 @@ const GoogleLocationPicker: React.FC<GoogleLocationPickerProps> = ({
           lat: position.coords.latitude,
           lng: position.coords.longitude,
         };
-        
+
         setMapCenter(userLocation);
         setMarkerPosition(userLocation);
         setMapZoom(16);
         setIsSearching(false);
-        
+
         if (mapRef.current) {
           mapRef.current.setCenter(userLocation);
           mapRef.current.setZoom(16);
         }
-        
+
         // Reverse geocode
         if (typeof window !== 'undefined' && (window as any).google?.maps) {
           const geocoder = new (window as any).google.maps.Geocoder();
@@ -232,66 +242,76 @@ const GoogleLocationPicker: React.FC<GoogleLocationPickerProps> = ({
       },
       (err) => {
         logger.warn('Geolocation failed:', err);
-        setMapError('Não foi possível obter sua localização. Verifique as permissões do navegador.');
+        setMapError(
+          'Não foi possível obter sua localização. Verifique as permissões do navegador.'
+        );
         setIsSearching(false);
       },
       {
         enableHighAccuracy: true,
         timeout: 10000,
-        maximumAge: 0
+        maximumAge: 0,
       }
     );
   }, [onChange, onCoordinatesChange]);
 
   // Handle map load
-  const onMapLoad = useCallback((map: google.maps.Map) => {
-    mapRef.current = map;
-    setIsMapLoaded(true);
-    
-    isUpdatingRef.current = true;
-    
-    if (markerPosition) {
-      map.setCenter(markerPosition);
-      map.setZoom(mapZoom);
-    } else if (coordinates && coordinates.lat !== 0 && coordinates.lng !== 0) {
-      map.setCenter(coordinates);
-      map.setZoom(16);
-    }
-    
-    setTimeout(() => {
-      isUpdatingRef.current = false;
-    }, 300);
-  }, [markerPosition, coordinates, mapZoom]);
+  const onMapLoad = useCallback(
+    (map: google.maps.Map) => {
+      mapRef.current = map;
+      setIsMapLoaded(true);
+
+      isUpdatingRef.current = true;
+
+      if (markerPosition) {
+        map.setCenter(markerPosition);
+        map.setZoom(mapZoom);
+      } else if (coordinates && coordinates.lat !== 0 && coordinates.lng !== 0) {
+        map.setCenter(coordinates);
+        map.setZoom(16);
+      }
+
+      setTimeout(() => {
+        isUpdatingRef.current = false;
+      }, 300);
+    },
+    [markerPosition, coordinates, mapZoom]
+  );
 
   // Handle input change with debounce
-  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = e.target.value;
-    setInputValue(newValue);
-    
-    // Clear previous timeout
-    if (debounceTimeoutRef.current) {
-      clearTimeout(debounceTimeoutRef.current);
-    }
-    
-    // Update parent after debounce (only if not selecting from autocomplete)
-    debounceTimeoutRef.current = setTimeout(() => {
-      if (!isUpdatingRef.current) {
-        onChange(newValue, coordinates || { lat: 0, lng: 0 });
-        if (newValue.trim() === '') {
-          setMarkerPosition(null);
-        }
+  const handleInputChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const newValue = e.target.value;
+      setInputValue(newValue);
+
+      // Clear previous timeout
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
       }
-    }, 300);
-  }, [onChange, coordinates]);
+
+      // Update parent after debounce (only if not selecting from autocomplete)
+      debounceTimeoutRef.current = setTimeout(() => {
+        if (!isUpdatingRef.current) {
+          onChange(newValue, coordinates || { lat: 0, lng: 0 });
+          if (newValue.trim() === '') {
+            setMarkerPosition(null);
+          }
+        }
+      }, 300);
+    },
+    [onChange, coordinates]
+  );
 
   // Error handling
   useEffect(() => {
     if (loadError) {
       logger.error('Google Maps load error:', loadError);
       const errorMessage = loadError.message || String(loadError);
-      
+
       if (errorMessage.includes('CORS') || errorMessage.includes('cross-origin')) {
-        setMapError('Erro de CORS ao carregar Google Maps. Verifique as configurações da API e domínios permitidos.');
+        setMapError(
+          'Erro de CORS ao carregar Google Maps. Verifique as configurações da API e domínios permitidos.'
+        );
       } else if (errorMessage.includes('API key')) {
         setMapError('Chave da API do Google Maps inválida ou não configurada.');
       } else {
@@ -356,23 +376,21 @@ const GoogleLocationPicker: React.FC<GoogleLocationPickerProps> = ({
 
   return (
     <div>
-      <label className="block text-sm font-bold text-gray-700 mb-2">
-        Localização no Mapa
-      </label>
-      
+      <label className="block text-sm font-bold text-gray-700 mb-2">Localização no Mapa</label>
+
       {/* Autocomplete Input */}
       <div className="relative mb-3">
         <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10" size={18} />
         <Autocomplete
           onLoad={(autocomplete) => {
             try {
-            autocompleteRef.current = autocomplete;
+              autocompleteRef.current = autocomplete;
               if (typeof window !== 'undefined' && (window as any).google?.maps) {
-            const brazilBounds = new (window as any).google.maps.LatLngBounds(
+                const brazilBounds = new (window as any).google.maps.LatLngBounds(
                   new (window as any).google.maps.LatLng(-35.0, -74.0),
                   new (window as any).google.maps.LatLng(5.0, -32.0)
-            );
-            autocomplete.setBounds(brazilBounds);
+                );
+                autocomplete.setBounds(brazilBounds);
               }
             } catch (error) {
               logger.error('Error setting autocomplete bounds:', error);
@@ -405,11 +423,7 @@ const GoogleLocationPicker: React.FC<GoogleLocationPickerProps> = ({
           className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           title="Usar minha localização atual"
         >
-          {isSearching ? (
-            <Loader className="animate-spin" size={16} />
-          ) : (
-            <Navigation size={16} />
-          )}
+          {isSearching ? <Loader className="animate-spin" size={16} /> : <Navigation size={16} />}
         </button>
       </div>
 
@@ -434,8 +448,8 @@ const GoogleLocationPicker: React.FC<GoogleLocationPickerProps> = ({
               {
                 featureType: 'poi',
                 elementType: 'labels',
-                stylers: [{ visibility: 'on' }]
-              }
+                stylers: [{ visibility: 'on' }],
+              },
             ],
             gestureHandling: 'greedy',
           }}

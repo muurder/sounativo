@@ -4,12 +4,29 @@ import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { usePlanPermissions } from '../../hooks/usePlanPermissions';
-import { extractColorsFromImage, extractColorsFromUrl, generateColorPalettes, ColorPalette } from '../../utils/colorExtractor';
+import {
+  extractColorsFromImage,
+  extractColorsFromUrl,
+  generateColorPalettes,
+  ColorPalette,
+} from '../../utils/colorExtractor';
 import { logger } from '../../utils/logger';
-import { 
-  Palette, Sparkles, Type, Square, Circle, Lock, 
-  Image as ImageIcon, Upload, Save, Loader, 
-  ChevronDown, ChevronUp, Wand2, Eye, X
+import {
+  Palette,
+  Sparkles,
+  Type,
+  Square,
+  Circle,
+  Lock,
+  Image as ImageIcon,
+  Upload,
+  Save,
+  Loader,
+  ChevronDown,
+  ChevronUp,
+  Wand2,
+  Eye,
+  X,
 } from 'lucide-react';
 
 interface AgencyThemeManagerProps {
@@ -26,20 +43,20 @@ const FONT_PAIRS = {
     name: 'Moderno',
     primary: 'Inter, system-ui, sans-serif',
     secondary: 'Inter, system-ui, sans-serif',
-    description: 'Limpo e profissional'
+    description: 'Limpo e profissional',
   },
   classic: {
     name: 'Clássico',
     primary: '"Playfair Display", serif',
     secondary: '"Lora", serif',
-    description: 'Elegante e sofisticado'
+    description: 'Elegante e sofisticado',
   },
   playful: {
     name: 'Descontraído',
     primary: '"Comfortaa", cursive',
     secondary: '"Nunito", sans-serif',
-    description: 'Alegre e amigável'
-  }
+    description: 'Alegre e amigável',
+  },
 };
 
 export const AgencyThemeManager: React.FC<AgencyThemeManagerProps> = ({
@@ -47,7 +64,7 @@ export const AgencyThemeManager: React.FC<AgencyThemeManagerProps> = ({
   currentTheme,
   onSave,
   onLogoUpload,
-  currentLogoUrl
+  currentLogoUrl,
 }) => {
   const { user } = useAuth();
   const { showToast } = useToast();
@@ -60,7 +77,12 @@ export const AgencyThemeManager: React.FC<AgencyThemeManagerProps> = ({
 
   // Form state
   const [themeForm, setThemeForm] = useState<Partial<AgencyTheme>>(() => ({
-    colors: currentTheme?.colors || { primary: '#3b82f6', secondary: '#f97316', background: '#f9fafb', text: '#111827' },
+    colors: currentTheme?.colors || {
+      primary: '#3b82f6',
+      secondary: '#f97316',
+      background: '#f9fafb',
+      text: '#111827',
+    },
     fontPair: currentTheme?.fontPair || 'modern',
     borderRadius: currentTheme?.borderRadius || 'soft',
     buttonStyle: currentTheme?.buttonStyle || 'solid',
@@ -77,7 +99,7 @@ export const AgencyThemeManager: React.FC<AgencyThemeManagerProps> = ({
   const [selectedPaletteIndex, setSelectedPaletteIndex] = useState<number>(0);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['identity']));
   const [previewLogo, setPreviewLogo] = useState<string | null>(currentLogoUrl || null);
-  
+
   // Update preview when currentLogoUrl changes (e.g., after instant upload)
   useEffect(() => {
     if (currentLogoUrl) {
@@ -89,7 +111,12 @@ export const AgencyThemeManager: React.FC<AgencyThemeManagerProps> = ({
   useEffect(() => {
     if (currentTheme) {
       setThemeForm({
-        colors: currentTheme.colors || { primary: '#3b82f6', secondary: '#f97316', background: '#f9fafb', text: '#111827' },
+        colors: currentTheme.colors || {
+          primary: '#3b82f6',
+          secondary: '#f97316',
+          background: '#f9fafb',
+          text: '#111827',
+        },
         fontPair: currentTheme.fontPair || 'modern',
         borderRadius: currentTheme.borderRadius || 'soft',
         buttonStyle: currentTheme.buttonStyle || 'solid',
@@ -107,14 +134,14 @@ export const AgencyThemeManager: React.FC<AgencyThemeManagerProps> = ({
       showToast('Upload de logo não configurado', 'error');
       return;
     }
-    
+
     setLoading(true);
     setExtractingColors(true);
-    
+
     try {
       // Upload logo (this now updates immediately via updateUser in AgencyDashboard)
       const logoUrl = await onLogoUpload(file);
-      
+
       // Update preview immediately
       setPreviewLogo(logoUrl);
 
@@ -141,35 +168,35 @@ export const AgencyThemeManager: React.FC<AgencyThemeManagerProps> = ({
   // Apply suggested colors
   const applySuggestedColors = () => {
     logger.debug('applySuggestedColors called', { suggestedPalettes, selectedPaletteIndex });
-    
+
     if (suggestedPalettes.length === 0) {
       logger.warn('No suggested palettes available');
       showToast('Nenhuma paleta disponível', 'error');
       return;
     }
-    
+
     if (selectedPaletteIndex < 0 || selectedPaletteIndex >= suggestedPalettes.length) {
       logger.warn('Invalid palette index', selectedPaletteIndex);
       showToast('Paleta selecionada inválida', 'error');
       return;
     }
-    
+
     const selectedPalette = suggestedPalettes[selectedPaletteIndex];
     logger.debug('Applying palette:', selectedPalette);
-    
-    setThemeForm(prev => {
+
+    setThemeForm((prev) => {
       const updated = {
         ...prev,
         colors: {
           ...prev.colors!,
           primary: selectedPalette.primary,
           secondary: selectedPalette.secondary,
-        }
+        },
       };
       logger.debug('Updated themeForm:', updated);
       return updated;
     });
-    
+
     setShowColorSuggestion(false);
     showToast('Cores aplicadas! Ajuste se necessário e clique em Salvar.', 'success');
   };
@@ -200,7 +227,7 @@ export const AgencyThemeManager: React.FC<AgencyThemeManagerProps> = ({
 
   // Toggle section
   const toggleSection = (section: string) => {
-    setExpandedSections(prev => {
+    setExpandedSections((prev) => {
       const next = new Set(prev);
       if (next.has(section)) {
         next.delete(section);
@@ -227,12 +254,12 @@ export const AgencyThemeManager: React.FC<AgencyThemeManagerProps> = ({
 
   // Update color
   const updateColor = (key: keyof ThemeColors, value: string) => {
-    setThemeForm(prev => ({
+    setThemeForm((prev) => ({
       ...prev,
       colors: {
         ...prev.colors!,
-        [key]: value
-      }
+        [key]: value,
+      },
     }));
   };
 
@@ -242,65 +269,65 @@ export const AgencyThemeManager: React.FC<AgencyThemeManagerProps> = ({
     const borderRadiusMap = {
       none: '0px',
       soft: '8px',
-      full: '24px'
+      full: '24px',
     };
     const borderRadius = borderRadiusMap[themeForm.borderRadius || 'soft'];
     const buttonStyle = themeForm.buttonStyle || 'solid';
 
     return (
-      <div 
+      <div
         className="bg-white rounded-3xl border-2 border-gray-200 overflow-hidden shadow-2xl"
         style={{
           fontFamily: fontConfig.primary,
         }}
       >
         {/* Premium Header Preview */}
-        <div 
+        <div
           className={`p-6 ${themeForm.headerStyle === 'transparent' ? 'bg-gradient-to-r from-gray-50 to-gray-100' : 'bg-white'}`}
-          style={{ 
+          style={{
             borderBottom: `2px solid ${themeForm.colors?.primary}20`,
           }}
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               {previewLogo && (
-                <div 
+                <div
                   className="rounded-xl overflow-hidden shadow-lg border-2"
-                  style={{ 
+                  style={{
                     borderColor: themeForm.colors?.primary + '40',
-                    borderRadius 
+                    borderRadius,
                   }}
                 >
                   <img src={previewLogo} alt="Logo" className="w-14 h-14 object-cover" />
                 </div>
               )}
               <div>
-                <div 
+                <div
                   className="h-5 mb-2 rounded font-bold text-white flex items-center px-3"
-                  style={{ 
+                  style={{
                     backgroundColor: themeForm.colors?.primary,
                     borderRadius,
-                    width: '140px'
+                    width: '140px',
                   }}
                 >
                   Nome da Agência
                 </div>
-                <div 
+                <div
                   className="h-3 rounded"
-                  style={{ 
+                  style={{
                     backgroundColor: themeForm.colors?.secondary + '40',
                     width: '100px',
-                    borderRadius
+                    borderRadius,
                   }}
                 />
               </div>
             </div>
             <div className="flex gap-2">
-              <div 
+              <div
                 className="w-10 h-10 rounded-full"
                 style={{ backgroundColor: themeForm.colors?.primary + '20', borderRadius }}
               />
-              <div 
+              <div
                 className="w-10 h-10 rounded-full"
                 style={{ backgroundColor: themeForm.colors?.secondary + '20', borderRadius }}
               />
@@ -311,11 +338,11 @@ export const AgencyThemeManager: React.FC<AgencyThemeManagerProps> = ({
         {/* Content Preview */}
         <div className="p-6 space-y-6">
           {/* Hero Section Preview */}
-          <div 
+          <div
             className="rounded-2xl p-8 relative overflow-hidden"
-            style={{ 
+            style={{
               background: `linear-gradient(135deg, ${themeForm.colors?.primary}15 0%, ${themeForm.colors?.secondary}15 100%)`,
-              borderRadius 
+              borderRadius,
             }}
           >
             {isPremium && themeForm.backgroundImage && (
@@ -328,22 +355,22 @@ export const AgencyThemeManager: React.FC<AgencyThemeManagerProps> = ({
               />
             )}
             <div className="relative z-10">
-              <div 
+              <div
                 className="h-6 mb-3 rounded font-bold"
-                style={{ 
+                style={{
                   backgroundColor: themeForm.colors?.primary,
                   width: '200px',
                   borderRadius,
-                  opacity: 0.9
+                  opacity: 0.9,
                 }}
               />
-              <div 
+              <div
                 className="h-4 rounded"
-                style={{ 
+                style={{
                   backgroundColor: themeForm.colors?.secondary,
                   width: '150px',
                   borderRadius,
-                  opacity: 0.7
+                  opacity: 0.7,
                 }}
               />
             </div>
@@ -356,19 +383,23 @@ export const AgencyThemeManager: React.FC<AgencyThemeManagerProps> = ({
                 className={`px-6 py-3 font-bold transition-all shadow-lg hover:scale-105`}
                 style={{
                   borderRadius,
-                  ...(buttonStyle === 'solid' ? {
-                    backgroundColor: themeForm.colors?.primary,
-                    color: 'white',
-                    border: 'none'
-                  } : buttonStyle === 'outline' ? {
-                    backgroundColor: 'transparent',
-                    color: themeForm.colors?.primary,
-                    border: `2px solid ${themeForm.colors?.primary}`
-                  } : {
-                    backgroundColor: 'transparent',
-                    color: themeForm.colors?.primary,
-                    border: 'none'
-                  })
+                  ...(buttonStyle === 'solid'
+                    ? {
+                        backgroundColor: themeForm.colors?.primary,
+                        color: 'white',
+                        border: 'none',
+                      }
+                    : buttonStyle === 'outline'
+                      ? {
+                          backgroundColor: 'transparent',
+                          color: themeForm.colors?.primary,
+                          border: `2px solid ${themeForm.colors?.primary}`,
+                        }
+                      : {
+                          backgroundColor: 'transparent',
+                          color: themeForm.colors?.primary,
+                          border: 'none',
+                        }),
                 }}
               >
                 Botão Principal
@@ -379,44 +410,47 @@ export const AgencyThemeManager: React.FC<AgencyThemeManagerProps> = ({
                   borderRadius,
                   borderColor: themeForm.colors?.secondary,
                   color: themeForm.colors?.secondary,
-                  backgroundColor: 'transparent'
+                  backgroundColor: 'transparent',
                 }}
               >
                 Botão Secundário
               </button>
             </div>
-            
-            <div 
+
+            <div
               className="text-sm p-4 rounded-xl"
-              style={{ 
+              style={{
                 fontFamily: fontConfig.secondary,
                 backgroundColor: themeForm.colors?.primary + '08',
                 color: themeForm.colors?.text || '#374151',
-                borderRadius
+                borderRadius,
               }}
             >
               <p className="font-bold mb-1">Texto de exemplo</p>
               <p className="text-xs opacity-75">
-                Esta é uma prévia de como o tema {fontConfig.name.toLowerCase()} aparecerá no seu site.
+                Esta é uma prévia de como o tema {fontConfig.name.toLowerCase()} aparecerá no seu
+                site.
               </p>
             </div>
           </div>
 
           {/* Color Swatches */}
           <div className="flex items-center gap-4 pt-4 border-t border-gray-200">
-            <div className="text-xs font-bold text-gray-500 uppercase tracking-wider">Cores do Tema</div>
+            <div className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+              Cores do Tema
+            </div>
             <div className="flex gap-2">
-              <div 
+              <div
                 className="w-8 h-8 rounded-lg shadow-md border-2 border-white"
                 style={{ backgroundColor: themeForm.colors?.primary }}
                 title={themeForm.colors?.primary}
               />
-              <div 
+              <div
                 className="w-8 h-8 rounded-lg shadow-md border-2 border-white"
                 style={{ backgroundColor: themeForm.colors?.secondary }}
                 title={themeForm.colors?.secondary}
               />
-              <div 
+              <div
                 className="w-8 h-8 rounded-lg shadow-md border-2 border-white"
                 style={{ backgroundColor: themeForm.colors?.background || '#f9fafb' }}
                 title={themeForm.colors?.background}
@@ -444,7 +478,9 @@ export const AgencyThemeManager: React.FC<AgencyThemeManagerProps> = ({
                   Premium
                 </span>
               </h2>
-              <p className="text-gray-600 text-lg">Personalize a identidade visual da sua agência com ferramentas profissionais</p>
+              <p className="text-gray-600 text-lg">
+                Personalize a identidade visual da sua agência com ferramentas profissionais
+              </p>
             </div>
           </div>
         </div>
@@ -458,7 +494,9 @@ export const AgencyThemeManager: React.FC<AgencyThemeManagerProps> = ({
               <Wand2 className="text-primary-600" size={24} />
               <div>
                 <h3 className="font-bold text-gray-900 mb-1">Cores extraídas do seu logo!</h3>
-                <p className="text-sm text-gray-600">Escolha uma das paletas abaixo para aplicar:</p>
+                <p className="text-sm text-gray-600">
+                  Escolha uma das paletas abaixo para aplicar:
+                </p>
               </div>
             </div>
             <button
@@ -468,7 +506,7 @@ export const AgencyThemeManager: React.FC<AgencyThemeManagerProps> = ({
               <X size={20} />
             </button>
           </div>
-          
+
           {/* Palette Selection Grid - Now with 6 palettes */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
             {suggestedPalettes.map((palette, index) => (
@@ -501,7 +539,7 @@ export const AgencyThemeManager: React.FC<AgencyThemeManagerProps> = ({
               </button>
             ))}
           </div>
-          
+
           <div className="flex gap-3">
             <button
               type="button"
@@ -569,9 +607,9 @@ export const AgencyThemeManager: React.FC<AgencyThemeManagerProps> = ({
                 <div className="flex items-center gap-4">
                   {previewLogo && (
                     <div className="relative">
-                      <img 
-                        src={previewLogo} 
-                        alt="Logo preview" 
+                      <img
+                        src={previewLogo}
+                        alt="Logo preview"
                         className="w-20 h-20 rounded-lg object-cover border-2 border-gray-200"
                       />
                       {currentLogoUrl && (
@@ -653,7 +691,9 @@ export const AgencyThemeManager: React.FC<AgencyThemeManagerProps> = ({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-3">Cor Secundária</label>
+                  <label className="block text-sm font-bold text-gray-700 mb-3">
+                    Cor Secundária
+                  </label>
                   <div className="flex items-center gap-3">
                     <input
                       type="color"
@@ -703,22 +743,28 @@ export const AgencyThemeManager: React.FC<AgencyThemeManagerProps> = ({
           {expandedSections.has('typography') && (
             <div className="px-6 pb-6 space-y-6 border-t border-gray-100">
               {/* Font Pair */}
-              <div className={!isBasic && !isPremium ? 'opacity-50 pointer-events-none relative' : ''}>
-                {(!isBasic && !isPremium) && (
+              <div
+                className={!isBasic && !isPremium ? 'opacity-50 pointer-events-none relative' : ''}
+              >
+                {!isBasic && !isPremium && (
                   <div className="absolute inset-0 flex items-center justify-center z-10">
                     <div className="bg-white/90 backdrop-blur-sm rounded-lg p-3 border-2 border-gray-200 shadow-lg flex items-center gap-2">
                       <Lock size={18} className="text-gray-400" />
-                      <span className="text-sm font-bold text-gray-600">Upgrade para desbloquear</span>
+                      <span className="text-sm font-bold text-gray-600">
+                        Upgrade para desbloquear
+                      </span>
                     </div>
                   </div>
                 )}
-                <label className="block text-sm font-bold text-gray-700 mb-3">Família de Fontes</label>
+                <label className="block text-sm font-bold text-gray-700 mb-3">
+                  Família de Fontes
+                </label>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {Object.entries(FONT_PAIRS).map(([key, config]) => (
                     <button
                       key={key}
                       type="button"
-                      onClick={() => setThemeForm(prev => ({ ...prev, fontPair: key as any }))}
+                      onClick={() => setThemeForm((prev) => ({ ...prev, fontPair: key as any }))}
                       className={`p-4 rounded-xl border-2 transition-all text-left ${
                         themeForm.fontPair === key
                           ? 'border-primary-600 bg-primary-50'
@@ -728,7 +774,10 @@ export const AgencyThemeManager: React.FC<AgencyThemeManagerProps> = ({
                       <div className="font-bold mb-1" style={{ fontFamily: config.primary }}>
                         {config.name}
                       </div>
-                      <div className="text-xs text-gray-500" style={{ fontFamily: config.secondary }}>
+                      <div
+                        className="text-xs text-gray-500"
+                        style={{ fontFamily: config.secondary }}
+                      >
                         {config.description}
                       </div>
                     </button>
@@ -737,22 +786,28 @@ export const AgencyThemeManager: React.FC<AgencyThemeManagerProps> = ({
               </div>
 
               {/* Border Radius */}
-              <div className={!isBasic && !isPremium ? 'opacity-50 pointer-events-none relative' : ''}>
-                {(!isBasic && !isPremium) && (
+              <div
+                className={!isBasic && !isPremium ? 'opacity-50 pointer-events-none relative' : ''}
+              >
+                {!isBasic && !isPremium && (
                   <div className="absolute inset-0 flex items-center justify-center z-10">
                     <div className="bg-white/90 backdrop-blur-sm rounded-lg p-3 border-2 border-gray-200 shadow-lg flex items-center gap-2">
                       <Lock size={18} className="text-gray-400" />
-                      <span className="text-sm font-bold text-gray-600">Upgrade para desbloquear</span>
+                      <span className="text-sm font-bold text-gray-600">
+                        Upgrade para desbloquear
+                      </span>
                     </div>
                   </div>
                 )}
-                <label className="block text-sm font-bold text-gray-700 mb-3">Cantos (Border Radius)</label>
+                <label className="block text-sm font-bold text-gray-700 mb-3">
+                  Cantos (Border Radius)
+                </label>
                 <div className="flex gap-4">
                   {(['none', 'soft', 'full'] as const).map((radius) => (
                     <button
                       key={radius}
                       type="button"
-                      onClick={() => setThemeForm(prev => ({ ...prev, borderRadius: radius }))}
+                      onClick={() => setThemeForm((prev) => ({ ...prev, borderRadius: radius }))}
                       className={`flex-1 p-4 rounded-xl border-2 transition-all ${
                         themeForm.borderRadius === radius
                           ? 'border-primary-600 bg-primary-50'
@@ -777,22 +832,28 @@ export const AgencyThemeManager: React.FC<AgencyThemeManagerProps> = ({
               </div>
 
               {/* Button Style */}
-              <div className={!isBasic && !isPremium ? 'opacity-50 pointer-events-none relative' : ''}>
-                {(!isBasic && !isPremium) && (
+              <div
+                className={!isBasic && !isPremium ? 'opacity-50 pointer-events-none relative' : ''}
+              >
+                {!isBasic && !isPremium && (
                   <div className="absolute inset-0 flex items-center justify-center z-10">
                     <div className="bg-white/90 backdrop-blur-sm rounded-lg p-3 border-2 border-gray-200 shadow-lg flex items-center gap-2">
                       <Lock size={18} className="text-gray-400" />
-                      <span className="text-sm font-bold text-gray-600">Upgrade para desbloquear</span>
+                      <span className="text-sm font-bold text-gray-600">
+                        Upgrade para desbloquear
+                      </span>
                     </div>
                   </div>
                 )}
-                <label className="block text-sm font-bold text-gray-700 mb-3">Estilo de Botões</label>
+                <label className="block text-sm font-bold text-gray-700 mb-3">
+                  Estilo de Botões
+                </label>
                 <div className="flex gap-4">
                   {(['solid', 'outline', 'ghost'] as const).map((style) => (
                     <button
                       key={style}
                       type="button"
-                      onClick={() => setThemeForm(prev => ({ ...prev, buttonStyle: style }))}
+                      onClick={() => setThemeForm((prev) => ({ ...prev, buttonStyle: style }))}
                       className={`flex-1 p-4 rounded-xl border-2 transition-all ${
                         themeForm.buttonStyle === style
                           ? 'border-primary-600 bg-primary-50'
@@ -806,10 +867,13 @@ export const AgencyThemeManager: React.FC<AgencyThemeManagerProps> = ({
                             style === 'solid'
                               ? 'bg-primary-600 text-white'
                               : style === 'outline'
-                              ? 'border-2 border-primary-600 text-primary-600 bg-transparent'
-                              : 'text-primary-600 bg-transparent'
+                                ? 'border-2 border-primary-600 text-primary-600 bg-transparent'
+                                : 'text-primary-600 bg-transparent'
                           }`}
-                          style={{ backgroundColor: style === 'solid' ? themeForm.colors?.primary : undefined }}
+                          style={{
+                            backgroundColor:
+                              style === 'solid' ? themeForm.colors?.primary : undefined,
+                          }}
                         >
                           Exemplo
                         </button>
@@ -837,7 +901,9 @@ export const AgencyThemeManager: React.FC<AgencyThemeManagerProps> = ({
               <div className="text-left">
                 <h3 className="text-lg font-bold text-gray-900">Plano de Fundo</h3>
                 <p className="text-sm text-gray-500">
-                  {isPremium ? 'Imagem de fundo personalizada' : '🔒 Premium - Upgrade para desbloquear'}
+                  {isPremium
+                    ? 'Imagem de fundo personalizada'
+                    : '🔒 Premium - Upgrade para desbloquear'}
                 </p>
               </div>
             </div>
@@ -859,7 +925,9 @@ export const AgencyThemeManager: React.FC<AgencyThemeManagerProps> = ({
                   </p>
                   <button
                     type="button"
-                    onClick={() => showToast('Funcionalidade de upgrade em desenvolvimento', 'info')}
+                    onClick={() =>
+                      showToast('Funcionalidade de upgrade em desenvolvimento', 'info')
+                    }
                     className="bg-purple-600 text-white px-6 py-2.5 rounded-lg font-bold hover:bg-purple-700 transition-colors"
                   >
                     Fazer Upgrade
@@ -868,7 +936,9 @@ export const AgencyThemeManager: React.FC<AgencyThemeManagerProps> = ({
               ) : (
                 <>
                   <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-3">Imagem de Fundo</label>
+                    <label className="block text-sm font-bold text-gray-700 mb-3">
+                      Imagem de Fundo
+                    </label>
                     <input
                       ref={fileInputRef}
                       type="file"
@@ -879,7 +949,7 @@ export const AgencyThemeManager: React.FC<AgencyThemeManagerProps> = ({
                           const reader = new FileReader();
                           reader.onload = (event) => {
                             const url = event.target?.result as string;
-                            setThemeForm(prev => ({ ...prev, backgroundImage: url }));
+                            setThemeForm((prev) => ({ ...prev, backgroundImage: url }));
                           };
                           reader.readAsDataURL(file);
                         }
@@ -897,7 +967,7 @@ export const AgencyThemeManager: React.FC<AgencyThemeManagerProps> = ({
                           <button
                             type="button"
                             onClick={() => {
-                              setThemeForm(prev => ({ ...prev, backgroundImage: undefined }));
+                              setThemeForm((prev) => ({ ...prev, backgroundImage: undefined }));
                               if (fileInputRef.current) fileInputRef.current.value = '';
                             }}
                             className="absolute -top-2 -right-2 bg-red-500 text-white p-1 rounded-full hover:bg-red-600"
@@ -928,7 +998,12 @@ export const AgencyThemeManager: React.FC<AgencyThemeManagerProps> = ({
                           min="0"
                           max="20"
                           value={themeForm.backgroundBlur || 0}
-                          onChange={(e) => setThemeForm(prev => ({ ...prev, backgroundBlur: Number(e.target.value) }))}
+                          onChange={(e) =>
+                            setThemeForm((prev) => ({
+                              ...prev,
+                              backgroundBlur: Number(e.target.value),
+                            }))
+                          }
                           className="w-full"
                         />
                       </div>
@@ -942,7 +1017,12 @@ export const AgencyThemeManager: React.FC<AgencyThemeManagerProps> = ({
                           min="0"
                           max="100"
                           value={(themeForm.backgroundOpacity || 1) * 100}
-                          onChange={(e) => setThemeForm(prev => ({ ...prev, backgroundOpacity: Number(e.target.value) / 100 }))}
+                          onChange={(e) =>
+                            setThemeForm((prev) => ({
+                              ...prev,
+                              backgroundOpacity: Number(e.target.value) / 100,
+                            }))
+                          }
                           className="w-full"
                         />
                       </div>
@@ -978,10 +1058,10 @@ export const AgencyThemeManager: React.FC<AgencyThemeManagerProps> = ({
             type="submit"
             disabled={loading}
             className="w-full bg-gradient-to-r from-primary-600 to-primary-700 text-white py-5 rounded-2xl font-extrabold text-xl hover:from-primary-700 hover:to-primary-800 flex items-center justify-center gap-3 disabled:opacity-50 shadow-2xl transition-all hover:scale-[1.02] hover:shadow-primary-500/50"
-            style={{ 
-              background: loading 
-                ? undefined 
-                : `linear-gradient(135deg, ${themeForm.colors?.primary} 0%, ${themeForm.colors?.secondary} 100%)`
+            style={{
+              background: loading
+                ? undefined
+                : `linear-gradient(135deg, ${themeForm.colors?.primary} 0%, ${themeForm.colors?.secondary} 100%)`,
             }}
           >
             {loading ? (
@@ -1004,4 +1084,3 @@ export const AgencyThemeManager: React.FC<AgencyThemeManagerProps> = ({
     </div>
   );
 };
-

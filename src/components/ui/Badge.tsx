@@ -15,7 +15,9 @@ export const Badge: React.FC<BadgeProps> = ({ children, color }) => {
     amber: 'bg-amber-100 text-amber-700 border-amber-200',
   };
   return (
-    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider border ${colors[color]} inline-flex items-center gap-1.5 w-fit`}>
+    <span
+      className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider border ${colors[color]} inline-flex items-center gap-1.5 w-fit`}
+    >
       {children}
     </span>
   );

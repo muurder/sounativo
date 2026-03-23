@@ -1,5 +1,5 @@
-import React from 'react';
-import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import React, { Suspense, lazy } from 'react';
+import { HashRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { DataProvider } from './context/DataContext';
 import { ThemeProvider } from './context/ThemeContext';
@@ -8,90 +8,84 @@ import Layout from './components/Layout';
 import Home from './pages/Home';
 import { TripList } from './pages/TripList';
 import TripDetails from './pages/TripDetails';
-import AgencyList from './pages/AgencyList';
-import GuideList from './pages/GuideList';
-import AgencyProfile from './pages/AgencyProfile';
-import TestAccounts from './pages/TestAccounts';
-// Corrected import path for AdminDashboard component
-import { AdminDashboard } from './pages/AdminDashboard';
-import { AgencyDashboard } from './pages/AgencyDashboard';
-import AgencyLandingPage from './pages/AgencyLandingPage';
-import ClientDashboard from './pages/ClientDashboard'; // Fix: Import ClientDashboard as default export
-import ClientFeed from './pages/ClientFeed'; // Travel Feed experience
-import GuideDashboard from './pages/guide/GuideDashboard';
+import { AgencyLayout } from './pages/agency/AgencyLayout';
+import Settings from './pages/Settings';
 import { About, Contact, Terms, Help, Privacy, Blog, Careers, Press } from './pages/StaticPages';
 import { NotFound, Unauthorized, CheckoutSuccess, ForgotPassword } from './pages/UtilityPages';
-import ErrorBoundary from './components/ErrorBoundary';
-import { AgencyLayout } from './pages/agency/AgencyLayout';
-import { HireGuides } from './pages/agency/HireGuides';
+import { AdminDashboard } from './pages/AdminDashboard';
+
+const LoadingSpinner = () => (
+  <div className="flex items-center justify-center min-h-[50vh]">
+    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+  </div>
+);
+
+const AgencyList = lazy(() => import('./pages/AgencyList'));
+const GuideList = lazy(() => import('./pages/GuideList'));
+const AgencyProfile = lazy(() => import('./pages/AgencyProfile'));
+const AgencyDashboard = lazy(() => import('./pages/AgencyDashboard'));
+const AgencyLandingPage = lazy(() => import('./pages/AgencyLandingPage'));
+const ClientDashboard = lazy(() => import('./pages/ClientDashboard'));
+const ClientFeed = lazy(() => import('./pages/ClientFeed'));
+const GuideDashboard = lazy(() => import('./pages/guide/GuideDashboard'));
+const TestAccounts = lazy(() => import('./pages/TestAccounts'));
+const HireGuides = lazy(() => import('./pages/agency/HireGuides'));
 
 const App: React.FC = () => {
   return (
-    <ToastProvider> {/* Moved ToastProvider to the outermost layer */}
+    <ToastProvider>
       <AuthProvider>
         <ThemeProvider>
           <DataProvider>
             <Router>
-              <Routes>
-                <Route path="/" element={<Layout />}>
-                  <Route index element={<Home />} />
+              <Suspense fallback={<LoadingSpinner />}>
+                <Routes>
+                  <Route path="/" element={<Layout />}>
+                    <Route index element={<Home />} />
 
-                  {/* Global Routes (SouNativo Context) */}
-                  <Route path="trips" element={<TripList />} />
-                  <Route path="viagem/:slug" element={<TripDetails />} />
-                  <Route path="agencies" element={<AgencyList />} />
-                  <Route path="guides" element={<GuideList />} />
-                  <Route path="agency/:id" element={<AgencyProfile />} /> {/* Perfil público legado/visualização rápida */}
+                    <Route path="trips" element={<TripList />} />
+                    <Route path="viagem/:slug" element={<TripDetails />} />
+                    <Route path="agencies" element={<AgencyList />} />
+                    <Route path="guides" element={<GuideList />} />
+                    <Route path="agency/:id" element={<AgencyProfile />} />
+                    <Route path="settings" element={<Settings />} />
 
-                  {/* Static Pages */}
-                  <Route path="about" element={<About />} />
-                  <Route path="contact" element={<Contact />} />
-                  <Route path="terms" element={<Terms />} />
-                  <Route path="privacy" element={<Privacy />} />
-                  <Route path="help" element={<Help />} />
-                  <Route path="blog" element={<Blog />} />
-                  <Route path="careers" element={<Careers />} />
-                  <Route path="press" element={<Press />} />
+                    <Route path="about" element={<About />} />
+                    <Route path="contact" element={<Contact />} />
+                    <Route path="terms" element={<Terms />} />
+                    <Route path="privacy" element={<Privacy />} />
+                    <Route path="help" element={<Help />} />
+                    <Route path="blog" element={<Blog />} />
+                    <Route path="careers" element={<Careers />} />
+                    <Route path="press" element={<Press />} />
 
-                  {/* Utility Routes */}
-                  <Route path="checkout/success" element={<CheckoutSuccess />} />
-                  <Route path="unauthorized" element={<Unauthorized />} />
-                  <Route path="forgot-password" element={<ForgotPassword />} />
-                  {/* DEV ONLY: Test accounts page - Protected by component-level checks */}
-                  {import.meta.env.DEV && (
-                    <Route path="test-accounts" element={<TestAccounts />} />
-                  )}
+                    <Route path="checkout/success" element={<CheckoutSuccess />} />
+                    <Route path="unauthorized" element={<Unauthorized />} />
+                    <Route path="forgot-password" element={<ForgotPassword />} />
+                    {import.meta.env.DEV && (
+                      <Route path="test-accounts" element={<TestAccounts />} />
+                    )}
 
-                  {/* Agency Protected Routes */}
-                  <Route path="agency" element={
-                    <ErrorBoundary>
-                      <AgencyLayout />
-                    </ErrorBoundary>
-                  }>
-                    <Route path="dashboard" element={<AgencyDashboard />} />
-                    <Route path="guides" element={<HireGuides />} />
+                    <Route path="agency" element={<AgencyLayout />}>
+                      <Route path="dashboard" element={<AgencyDashboard />} />
+                      <Route path="guides" element={<HireGuides />} />
+                    </Route>
+                    <Route path="admin/dashboard" element={<AdminDashboard />} />
+                    <Route path="client/feed" element={<ClientFeed />} />
+                    <Route path="client/dashboard/:tab?" element={<ClientDashboard />} />
+                    <Route path="guide/dashboard" element={<GuideDashboard />} />
+
+                    <Route path=":agencySlug" element={<AgencyLandingPage />} />
+                    <Route path=":agencySlug/trips" element={<TripList />} />
+                    <Route path=":agencySlug/guides" element={<GuideList />} />
+                    <Route path=":agencySlug/viagem/:tripSlug" element={<TripDetails />} />
+                    <Route path=":agencySlug/checkout/success" element={<CheckoutSuccess />} />
+                    <Route path=":agencySlug/client/:tab?" element={<ClientDashboard />} />
+
+                    <Route path="*" element={<NotFound />} />
                   </Route>
-                  <Route path="admin/dashboard" element={<AdminDashboard />} />
-                  <Route path="client/feed" element={<ClientFeed />} />
-                  <Route path="client/dashboard/:tab?" element={<ClientDashboard />} />
-                  <Route path="guide/dashboard" element={<GuideDashboard />} />
-
-                  {/* --- AGENCY MODE ROUTES --- */}
-                  {/* Captura /:agencySlug e suas sub-rotas */}
-                  <Route path=":agencySlug" element={<AgencyLandingPage />} />
-                  <Route path=":agencySlug/trips" element={<TripList />} />
-                  <Route path=":agencySlug/guides" element={<GuideList />} />
-                  <Route path=":agencySlug/viagem/:tripSlug" element={<TripDetails />} />
-                  <Route path=":agencySlug/checkout/success" element={<CheckoutSuccess />} />
-
-                  {/* Microsite Client Dashboard */}
-                  <Route path=":agencySlug/client/:tab?" element={<ClientDashboard />} />
-
-
-                  {/* Catch all */}
-                  <Route path="*" element={<NotFound />} />
-                </Route>
-              </Routes>
+                </Routes>
+              </Suspense>
             </Router>
           </DataProvider>
         </ThemeProvider>

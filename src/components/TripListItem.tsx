@@ -19,14 +19,16 @@ const TripListItem: React.FC<TripListItemProps> = ({ trip, onHover, highlighted,
 
   // Get included items for badges
   const includedItems = trip.included || [];
-  const hasBreakfast = includedItems.some(item => 
-    item.toLowerCase().includes('café') || 
-    item.toLowerCase().includes('cafe') || 
-    item.toLowerCase().includes('café da manhã')
+  const hasBreakfast = includedItems.some(
+    (item) =>
+      item.toLowerCase().includes('café') ||
+      item.toLowerCase().includes('cafe') ||
+      item.toLowerCase().includes('café da manhã')
   );
-  const hasFreeCancellation = includedItems.some(item => 
-    item.toLowerCase().includes('cancelamento') || 
-    item.toLowerCase().includes('cancelamento grátis')
+  const hasFreeCancellation = includedItems.some(
+    (item) =>
+      item.toLowerCase().includes('cancelamento') ||
+      item.toLowerCase().includes('cancelamento grátis')
   );
 
   const handleImageClick = (e: React.MouseEvent) => {
@@ -74,7 +76,7 @@ const TripListItem: React.FC<TripListItemProps> = ({ trip, onHover, highlighted,
               />
             </>
           ) : (
-            <NoImagePlaceholder 
+            <NoImagePlaceholder
               title={trip.title}
               category={trip.category}
               size="medium"
@@ -90,7 +92,7 @@ const TripListItem: React.FC<TripListItemProps> = ({ trip, onHover, highlighted,
             <h3 className="text-xl font-bold text-gray-900 mb-2 line-clamp-2 group-hover:text-primary-600 transition-colors">
               {trip.title}
             </h3>
-            
+
             <div className="flex items-center gap-2 text-sm text-gray-600 mb-3">
               <MapPin size={14} className="text-gray-400" />
               <span className="truncate">{trip.destination}</span>
@@ -127,9 +129,7 @@ const TripListItem: React.FC<TripListItemProps> = ({ trip, onHover, highlighted,
             </div>
 
             {/* Description */}
-            <p className="text-sm text-gray-600 line-clamp-2 mb-3">
-              {trip.description}
-            </p>
+            <p className="text-sm text-gray-600 line-clamp-2 mb-3">{trip.description}</p>
           </div>
         </div>
 
@@ -157,11 +157,16 @@ const TripListItem: React.FC<TripListItemProps> = ({ trip, onHover, highlighted,
 
           {/* Price */}
           <div className="text-right">
-            <div className="text-xs text-gray-500 mb-1">Total para {adults} {adults === 1 ? 'pessoa' : 'pessoas'}</div>
+            <div className="text-xs text-gray-500 mb-1">
+              Total para {adults} {adults === 1 ? 'pessoa' : 'pessoas'}
+            </div>
             <div className="flex items-baseline gap-1">
               <span className="text-sm font-semibold text-gray-600">R$</span>
               <span className="text-2xl font-extrabold text-gray-900">
-                {totalPrice.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                {totalPrice.toLocaleString('pt-BR', {
+                  minimumFractionDigits: 0,
+                  maximumFractionDigits: 0,
+                })}
               </span>
             </div>
             <div className="text-xs text-gray-500 mt-1">Impostos e taxas incluídos</div>
@@ -181,4 +186,3 @@ const TripListItem: React.FC<TripListItemProps> = ({ trip, onHover, highlighted,
 };
 
 export default TripListItem;
-

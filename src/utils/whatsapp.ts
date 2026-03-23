@@ -2,7 +2,7 @@ import { Trip } from '../types';
 
 export const buildWhatsAppLink = (whatsapp: string | undefined, trip: Trip): string | null => {
   if (!whatsapp) return null;
-  
+
   const cleanNumber = whatsapp.replace(/\D/g, '');
   if (!cleanNumber) return null;
 
