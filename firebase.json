@@ -1,0 +1,35 @@
+{
+  "auth": {
+    "providers": {
+      "emailPassword": true,
+      "googleSignIn": {
+        "oAuthBrandDisplayName": "SouNativo",
+        "supportEmail": "juannicolas1@gmail.com",
+        "authorizedRedirectUris": [
+          "https://sounativo-app-br.firebaseapp.com/__/auth/handler",
+          "https://sounativo.vercel.app/__/auth/handler",
+          "https://viajastore.vercel.app/__/auth/handler",
+          "http://localhost:3000/__/auth/handler"
+        ]
+      }
+    }
+  },
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "hosting": {
+    "public": "dist",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  }
+}

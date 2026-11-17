@@ -1,25 +1,19 @@
-import { Trip } from '../types';
+import { Trip } from '@/types';
+import { formatCurrencyBRL } from './formatters';
 
-export const buildWhatsAppLink = (whatsapp: string | undefined, trip: Trip): string | null => {
+export function buildWhatsAppLink(whatsapp: string | undefined, trip: Trip): string | null {
   if (!whatsapp) return null;
+  const digits = whatsapp.replace(/\D/g, '');
+  if (!digits) return null;
 
-  const cleanNumber = whatsapp.replace(/\D/g, '');
-  if (!cleanNumber) return null;
+  const tripUrl = `${window.location.origin}/viagem/${trip.slug || trip.id}`;
+  const message = [
+    `Olá! Vi o pacote *${trip.title}* no SouNativo.`,
+    `Destino: ${trip.destination}`,
+    `Duração: ${trip.durationDays} dias`,
+    `Valor: ${formatCurrencyBRL(trip.price)} por pessoa`,
+    `Link: ${tripUrl}`,
+  ].join('\n');
 
-  // Detect if using HashRouter or BrowserRouter based on current location
-  const isHashRouter = window.location.hash.length > 0;
-  const baseUrl = window.location.origin;
-  const path = `/viagem/${trip.slug || trip.id}`;
-  const tripUrl = isHashRouter ? `${baseUrl}/#${path}` : `${baseUrl}${path}`;
-
-  const message = `Olá! Vi o pacote *${trip.title}* no SouNativo.
-Destino: ${trip.destination}
-Duração: ${trip.durationDays} dias
-Preço: A partir de R$ ${trip.price.toLocaleString('pt-BR')}
-Link: ${tripUrl}
-Ref: VS-${trip.id}
-
-Gostaria de mais informações.`;
-
-  return `https://wa.me/${cleanNumber}?text=${encodeURIComponent(message)}`;
-};
+  return `https://wa.me/${digits}?text=${encodeURIComponent(message)}`;
+}

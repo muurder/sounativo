@@ -1,104 +1,54 @@
-import { useCallback } from 'react';
-import { Booking } from '../types';
-import { useAuth } from '../context/AuthContext';
-import { useToast } from '../context/ToastContext';
-import { supabase } from '../services/supabase';
-import { logger } from '../utils/logger';
+import { useCallback, useEffect, useState } from 'react';
+import {
+  createBookingInFirestore,
+  fetchUserBookings,
+  updateBookingStatusInFirestore,
+} from '@/services/bookingService';
+import { Booking, BookingStatus } from '@/types';
+import { useAuth } from './useAuth';
 
-/**
- * Custom hook for Booking operations
- * Extracted from DataContext to reduce complexity
- */
-export const useBookings = () => {
+export function useBookings() {
   const { user } = useAuth();
-  const { showToast } = useToast();
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const addBooking = useCallback(
-    async (booking: Booking): Promise<Booking | undefined> => {
-      if (!user) {
-        showToast('Usuário não autenticado', 'error');
-        return;
-      }
+  const loadBookings = useCallback(async () => {
+    if (!user?.uid) {
+      setBookings([]);
+      return;
+    }
+    setLoading(true);
+    try {
+      const items = await fetchUserBookings(user.uid);
+      setBookings(items);
+    } finally {
+      setLoading(false);
+    }
+  }, [user?.uid]);
 
-      const sb = supabase;
-      if (!sb) {
-        showToast('Erro de configuração do banco de dados', 'error');
-        return;
-      }
+  useEffect(() => {
+    void loadBookings();
+  }, [loadBookings]);
 
-      try {
-        const bookingData: any = {
-          trip_id: booking.tripId,
-          client_id: booking.clientId,
-          agency_id: booking.agencyId,
-          passengers: booking.passengers,
-          total_price: booking.totalPrice,
-          status: booking.status || 'PENDING',
-          date: booking.date,
-          payment_method: booking.paymentMethod,
-          voucher_code: booking.voucherCode,
-        };
-
-        const { data, error } = await sb.from('bookings').insert(bookingData).select().single();
-
-        if (error) throw error;
-
-        showToast('Reserva criada com sucesso!', 'success');
-        logger.log('[useBookings] Booking created:', data.id);
-
-        return {
-          id: data.id,
-          tripId: data.trip_id,
-          clientId: data.client_id,
-          agencyId: data.agency_id,
-          passengers: data.passengers,
-          totalPrice: data.total_price,
-          status: data.status,
-          date: data.date,
-          paymentMethod: data.payment_method,
-          voucherCode: data.voucher_code,
-          createdAt: data.created_at,
-        } as Booking;
-      } catch (error: any) {
-        logger.error('[useBookings] Error creating booking:', error);
-        showToast(`Erro ao criar reserva: ${error.message}`, 'error');
-        throw error;
-      }
+  const createBooking = useCallback(
+    async (payload: Omit<Booking, 'id' | 'createdAt' | 'updatedAt'>) => {
+      const created = await createBookingInFirestore(payload);
+      setBookings((prev) => [created, ...prev]);
+      return created;
     },
-    [user, showToast]
+    []
   );
 
-  const updateBookingStatus = useCallback(
-    async (bookingId: string, status: string) => {
-      if (!user) {
-        showToast('Usuário não autenticado', 'error');
-        return;
-      }
-
-      const sb = supabase;
-      if (!sb) {
-        showToast('Erro de configuração do banco de dados', 'error');
-        return;
-      }
-
-      try {
-        const { error } = await sb.from('bookings').update({ status }).eq('id', bookingId);
-
-        if (error) throw error;
-
-        showToast('Status da reserva atualizado!', 'success');
-        logger.log('[useBookings] Booking status updated:', bookingId, status);
-      } catch (error: any) {
-        logger.error('[useBookings] Error updating booking status:', error);
-        showToast(`Erro ao atualizar status: ${error.message}`, 'error');
-        throw error;
-      }
-    },
-    [user, showToast]
-  );
+  const updateStatus = useCallback(async (bookingId: string, status: BookingStatus) => {
+    await updateBookingStatusInFirestore(bookingId, status);
+    setBookings((prev) => prev.map((b) => (b.id === bookingId ? { ...b, status } : b)));
+  }, []);
 
   return {
-    addBooking,
-    updateBookingStatus,
+    bookings,
+    loading,
+    reload: loadBookings,
+    createBooking,
+    updateStatus,
   };
-};
+}

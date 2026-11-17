@@ -1,24 +1,30 @@
 import React from 'react';
+import { cn } from '@/utils/cn';
+
+type BadgeTone = 'primary' | 'secondary' | 'neutral' | 'success' | 'warning';
 
 interface BadgeProps {
+  tone?: BadgeTone;
   children: React.ReactNode;
-  color: 'green' | 'red' | 'blue' | 'purple' | 'gray' | 'amber';
+  className?: string;
 }
 
-export const Badge: React.FC<BadgeProps> = ({ children, color }) => {
-  const colors = {
-    green: 'bg-green-100 text-green-700 border-green-200',
-    red: 'bg-red-100 text-red-700 border-red-200',
-    blue: 'bg-blue-100 text-blue-700 border-blue-200',
-    purple: 'bg-purple-100 text-purple-700 border-purple-200',
-    gray: 'bg-gray-100 text-gray-600 border-gray-200',
-    amber: 'bg-amber-100 text-amber-700 border-amber-200',
-  };
-  return (
-    <span
-      className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider border ${colors[color]} inline-flex items-center gap-1.5 w-fit`}
-    >
-      {children}
-    </span>
-  );
+const TONE_CLASSES: Record<BadgeTone, string> = {
+  primary: 'bg-primary-50 text-primary-700 border-primary-200',
+  secondary: 'bg-secondary-50 text-secondary-800 border-secondary-200',
+  neutral: 'bg-stone-100 text-stone-700 border-stone-200',
+  success: 'bg-emerald-50 text-emerald-800 border-emerald-200',
+  warning: 'bg-amber-50 text-amber-900 border-amber-200',
 };
+
+export const Badge: React.FC<BadgeProps> = ({ tone = 'neutral', children, className }) => (
+  <span
+    className={cn(
+      'inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-semibold tracking-wide',
+      TONE_CLASSES[tone],
+      className
+    )}
+  >
+    {children}
+  </span>
+);

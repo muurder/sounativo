@@ -1,256 +1,89 @@
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  ReactNode,
-  useCallback,
-} from 'react';
-import { ThemePalette, ThemeColors } from '../types';
-import { supabase } from '../services/supabase';
-import { logger } from '../utils/logger';
+import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { ThemeColors } from '@/types';
 
-// Helper to convert Hex to RGB Array [r, g, b]
-const hexToRgbArray = (hex: string): [number, number, number] => {
-  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-  return result
-    ? [parseInt(result[1], 16), parseInt(result[2], 16), parseInt(result[3], 16)]
-    : [59, 130, 246]; // fallback blue
+const DEFAULT_SOUNATIVO_COLORS: ThemeColors = {
+  primary: '#0F4C3A',
+  secondary: '#C66B3D',
+  background: '#FAFAF9',
+  text: '#1C1917',
 };
 
-// Mix color with white (tint) or black (shade)
-const mix = (color: number, mixColor: number, weight: number) => {
-  return Math.round(color + (mixColor - color) * weight);
-};
-
-// Generate lighter shade (mix with white)
-const tint = (rgb: [number, number, number], weight: number) => {
-  return `${mix(rgb[0], 255, weight)} ${mix(rgb[1], 255, weight)} ${mix(rgb[2], 255, weight)}`;
-};
-
-// Generate darker shade (mix with black)
-const shade = (rgb: [number, number, number], weight: number) => {
-  return `${mix(rgb[0], 0, weight)} ${mix(rgb[1], 0, weight)} ${mix(rgb[2], 0, weight)}`;
-};
-
-const rgbString = (rgb: [number, number, number]) => `${rgb[0]} ${rgb[1]} ${rgb[2]}`;
-
-// Fallback Themes in case DB is empty or loading
-const FALLBACK_THEME: ThemePalette = {
-  id: 'default',
-  name: 'Azul Oceano (Padrão)',
-  colors: { primary: '#3b82f6', secondary: '#f97316', background: '#f9fafb', text: '#111827' },
-  isActive: true,
-  isDefault: true,
-};
-
-interface ThemeContextType {
-  themes: ThemePalette[];
-  activeTheme: ThemePalette;
-  loading: boolean;
-  setTheme: (themeId: string) => Promise<void>;
-  addTheme: (theme: Partial<ThemePalette>) => Promise<string | null>; // Returns ID
-  deleteTheme: (themeId: string) => Promise<void>;
-  previewTheme: (theme: ThemePalette) => void; // Temporarily apply without saving (admin preview)
-  resetPreview: () => void;
-  previewMode: ThemePalette | null; // Added to ThemeContextType
-
-  // Agency Theme Logic
-  setAgencyTheme: (colors: ThemeColors) => void;
-  resetAgencyTheme: () => void;
+function hexToRgb(hex: string): [number, number, number] {
+  const match = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  if (!match) return [15, 76, 58];
+  return [parseInt(match[1], 16), parseInt(match[2], 16), parseInt(match[3], 16)];
 }
 
-const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
+const mixChannel = (base: number, target: number, weight: number): number =>
+  Math.round(base + (target - base) * weight);
 
-export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [themes, setThemes] = useState<ThemePalette[]>([FALLBACK_THEME]);
-  const [activeTheme, setActiveTheme] = useState<ThemePalette>(FALLBACK_THEME);
-  const [previewMode, setPreviewMode] = useState<ThemePalette | null>(null);
-  const [overrideTheme, setOverrideTheme] = useState<ThemePalette | null>(null); // Used for Agency microsites
-  const [loading, setLoading] = useState(true);
+function tint(rgb: [number, number, number], weight: number): string {
+  return `${mixChannel(rgb[0], 255, weight)} ${mixChannel(rgb[1], 255, weight)} ${mixChannel(rgb[2], 255, weight)}`;
+}
 
-  // Fetch Themes from Supabase
-  const fetchThemes = async () => {
-    if (!supabase) {
-      setLoading(false);
-      return;
-    }
-    try {
-      const { data, error } = await supabase
-        .from('themes')
-        .select('*')
-        .order('created_at', { ascending: true });
+function shade(rgb: [number, number, number], weight: number): string {
+  return `${mixChannel(rgb[0], 0, weight)} ${mixChannel(rgb[1], 0, weight)} ${mixChannel(rgb[2], 0, weight)}`;
+}
 
-      if (error) throw error;
+interface ThemeContextValue {
+  colors: ThemeColors;
+  isCustomAgencyTheme: boolean;
+  setAgencyTheme: (colors: ThemeColors) => void;
+  resetTheme: () => void;
+}
 
-      if (data && data.length > 0) {
-        const formattedThemes: ThemePalette[] = data.map((t: any) => ({
-          id: t.id,
-          name: t.name,
-          colors: t.colors,
-          isActive: t.is_active,
-          isDefault: t.is_default,
-        }));
-        setThemes(formattedThemes);
+const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 
-        const currentActive = formattedThemes.find((t) => t.isActive);
-        if (currentActive) setActiveTheme(currentActive);
-      }
-    } catch (error: any) {
-      logger.error('Error fetching themes:', error.message || error);
-      // Keep fallback
-    } finally {
-      setLoading(false);
-    }
-  };
+export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [colors, setColors] = useState<ThemeColors>(DEFAULT_SOUNATIVO_COLORS);
+  const [isCustomAgencyTheme, setIsCustomAgencyTheme] = useState(false);
 
   useEffect(() => {
-    fetchThemes();
-
-    if (supabase) {
-      const channel = supabase
-        .channel('public:themes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'themes' }, (payload) => {
-          logger.info('Theme change detected!', payload);
-          fetchThemes();
-        })
-        .subscribe();
-
-      return () => {
-        supabase.removeChannel(channel);
-      };
-    }
-  }, []);
-
-  // Apply CSS Variables to :root
-  useEffect(() => {
-    // Hierarchy: Preview Mode (Admin) > Override (Agency) > Active (Global)
-    const theme = previewMode || overrideTheme || activeTheme;
     const root = document.documentElement;
+    const primary = hexToRgb(colors.primary);
+    const secondary = hexToRgb(colors.secondary);
 
-    if (!theme?.colors?.primary) return; // Safety check
-
-    const primary = hexToRgbArray(theme.colors.primary);
-    const secondary = hexToRgbArray(theme.colors.secondary);
-
-    // Primary Palette Generation
-    root.style.setProperty('--color-primary-50', tint(primary, 0.95));
+    root.style.setProperty('--color-primary-50', tint(primary, 0.9));
     root.style.setProperty('--color-primary-100', tint(primary, 0.8));
-    root.style.setProperty('--color-primary-500', rgbString(primary));
-    root.style.setProperty('--color-primary-600', shade(primary, 0.1));
-    root.style.setProperty('--color-primary-700', shade(primary, 0.2));
-    root.style.setProperty('--color-primary-900', shade(primary, 0.4));
+    root.style.setProperty('--color-primary-200', tint(primary, 0.6));
+    root.style.setProperty('--color-primary-300', tint(primary, 0.4));
+    root.style.setProperty('--color-primary-400', tint(primary, 0.2));
+    root.style.setProperty('--color-primary-500', `${primary[0]} ${primary[1]} ${primary[2]}`);
+    root.style.setProperty('--color-primary-600', shade(primary, 0.2));
+    root.style.setProperty('--color-primary-700', shade(primary, 0.4));
+    root.style.setProperty('--color-primary-800', shade(primary, 0.6));
+    root.style.setProperty('--color-primary-900', shade(primary, 0.8));
 
-    // Secondary Palette Generation
-    root.style.setProperty('--color-secondary-500', rgbString(secondary));
-    root.style.setProperty('--color-secondary-600', shade(secondary, 0.1));
-  }, [activeTheme, previewMode, overrideTheme]);
+    root.style.setProperty('--color-secondary-50', tint(secondary, 0.9));
+    root.style.setProperty('--color-secondary-100', tint(secondary, 0.8));
+    root.style.setProperty(
+      '--color-secondary-500',
+      `${secondary[0]} ${secondary[1]} ${secondary[2]}`
+    );
+    root.style.setProperty('--color-secondary-600', shade(secondary, 0.2));
+    root.style.setProperty('--color-secondary-700', shade(secondary, 0.4));
+    root.style.setProperty('--color-secondary-800', shade(secondary, 0.6));
+  }, [colors]);
 
-  const setTheme = async (themeId: string) => {
-    setLoading(true);
-    const targetTheme = themes.find((t) => t.id === themeId);
-    if (targetTheme) setActiveTheme(targetTheme);
-
-    if (!supabase) {
-      setLoading(false);
-      return;
-    }
-
-    try {
-      // FIX: Deactivate all other themes by matching against the ID that is *not* the current one.
-      await supabase.from('themes').update({ is_active: false }).neq('id', themeId);
-      const { error } = await supabase.from('themes').update({ is_active: true }).eq('id', themeId);
-      if (error) throw error;
-    } catch (error) {
-      logger.error('Error setting theme:', error);
-      alert('Erro ao aplicar tema globalmente.');
-    } finally {
-      await fetchThemes(); // fetchThemes will set loading to false
-    }
-  };
-
-  const addTheme = async (theme: Partial<ThemePalette>): Promise<string | null> => {
-    if (!supabase) return null;
-    setLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('themes')
-        .insert({
-          name: theme.name,
-          colors: theme.colors,
-          is_active: false,
-          is_default: false,
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data ? data.id : null;
-    } catch (error) {
-      logger.error('Error adding theme:', error);
-      return null;
-    } finally {
-      await fetchThemes(); // fetchThemes will set loading to false
-    }
-  };
-
-  const deleteTheme = async (themeId: string) => {
-    if (!supabase) return;
-    try {
-      const { error } = await supabase.from('themes').delete().eq('id', themeId);
-      if (error) throw error;
-      await fetchThemes();
-    } catch (error) {
-      logger.error('Error deleting theme:', error);
-    }
-  };
-
-  const previewTheme = (theme: ThemePalette) => {
-    setPreviewMode(theme);
-  };
-
-  const resetPreview = () => {
-    setPreviewMode(null);
-  };
-
-  // Agency Theme Functions - FIXED WITH USECALLBACK
-  const setAgencyTheme = useCallback((colors: ThemeColors) => {
-    setOverrideTheme({
-      id: 'agency-override',
-      name: 'Agency Theme',
-      colors: colors,
-      isActive: true,
-      isDefault: false,
-    });
+  const setAgencyTheme = useCallback((customColors: ThemeColors) => {
+    setColors(customColors);
+    setIsCustomAgencyTheme(true);
   }, []);
 
-  const resetAgencyTheme = useCallback(() => {
-    setOverrideTheme(null);
+  const resetTheme = useCallback(() => {
+    setColors(DEFAULT_SOUNATIVO_COLORS);
+    setIsCustomAgencyTheme(false);
   }, []);
 
   return (
-    <ThemeContext.Provider
-      value={{
-        themes,
-        activeTheme,
-        loading,
-        setTheme,
-        addTheme,
-        deleteTheme,
-        previewTheme,
-        resetPreview,
-        previewMode, // Added to the provider value
-        setAgencyTheme,
-        resetAgencyTheme,
-      }}
-    >
+    <ThemeContext.Provider value={{ colors, isCustomAgencyTheme, setAgencyTheme, resetTheme }}>
       {children}
     </ThemeContext.Provider>
   );
 };
 
-export const useTheme = () => {
-  const context = useContext(ThemeContext);
-  if (!context) throw new Error('useTheme must be used within a ThemeProvider');
-  return context;
-};
+export function useTheme(): ThemeContextValue {
+  const ctx = useContext(ThemeContext);
+  if (!ctx) throw new Error('useTheme deve ser usado dentro de ThemeProvider');
+  return ctx;
+}

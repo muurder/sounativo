@@ -1,0 +1,59 @@
+export type PlanTier = 'STARTER' | 'BASIC' | 'PREMIUM';
+export type SubscriptionStatus = 'ACTIVE' | 'INACTIVE' | 'PENDING';
+
+export interface SubscriptionPlan {
+  id: PlanTier;
+  name: string;
+  priceMonthly: number;
+  maxActiveTrips: number;
+  description: string;
+  features: string[];
+  highlighted?: boolean;
+}
+
+export interface ThemeColors {
+  primary: string;
+  secondary: string;
+  background: string;
+  text: string;
+}
+
+export interface AgencyTheme {
+  colors: ThemeColors;
+  fontPair: 'modern' | 'classic' | 'playful';
+  borderRadius: 'none' | 'soft' | 'full';
+  buttonStyle: 'solid' | 'outline' | 'ghost';
+  headerStyle: 'solid' | 'transparent';
+}
+
+export interface Agency {
+  id: string;
+  ownerUid: string;
+  name: string;
+  slug: string;
+  description: string;
+  logo: string;
+  email?: string;
+  phone?: string;
+  whatsapp?: string;
+  website?: string;
+  city?: string;
+  state?: string;
+  isGuide: boolean;
+  cadastur?: string;
+  languages?: string[];
+  specialties?: string[];
+  experienceYears?: number;
+  heroMode: 'TRIPS' | 'STATIC';
+  heroBannerUrl?: string;
+  heroTitle?: string;
+  heroSubtitle?: string;
+  subscriptionPlan: PlanTier;
+  subscriptionStatus: SubscriptionStatus;
+  theme?: AgencyTheme;
+  isActive: boolean;
+  rating?: number;
+  totalReviews?: number;
+  createdAt?: string;
+  updatedAt?: string;
+}

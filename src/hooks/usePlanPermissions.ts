@@ -1,53 +1,18 @@
 import { useMemo } from 'react';
-import { useAuth } from '../context/AuthContext';
-import { useData } from '../context/DataContext';
+import { SUBSCRIPTION_PLANS } from '@/utils/constants';
+import { PlanTier } from '@/types';
 
-export type PlanType = 'STARTER' | 'BASIC' | 'PREMIUM';
-
-export interface PlanPermissions {
-  plan: PlanType;
-  canAccessOperational: boolean;
-  maxTrips: number;
-  canPostTrip: boolean;
-  currentActiveTrips: number;
-}
-
-/**
- * Hook to get plan-based permissions for the current agency
- */
-export const usePlanPermissions = (): PlanPermissions => {
-  const { user } = useAuth();
-  const { agencies, trips } = useData();
-
+export function usePlanPermissions(plan: PlanTier = 'STARTER', activeTripsCount = 0) {
   return useMemo(() => {
-    const currentAgency = agencies.find((a) => a.id === user?.id);
-
-    // Default to STARTER if no plan is set
-    const subscriptionPlan = (currentAgency?.subscriptionPlan as PlanType) || 'STARTER';
-
-    // Count active trips for this agency
-    const agencyTrips = trips.filter(
-      (t) => t.agencyId === currentAgency?.agencyId && t.is_active === true
-    );
-    const currentActiveTrips = agencyTrips.length;
-
-    // Define plan limits
-    const maxTripsMap: Record<PlanType, number> = {
-      STARTER: 2,
-      BASIC: 5,
-      PREMIUM: Infinity,
-    };
-
-    const maxTrips = maxTripsMap[subscriptionPlan] || 1;
-    const canPostTrip = currentActiveTrips < maxTrips;
-    const canAccessOperational = subscriptionPlan === 'PREMIUM';
-
+    const planConfig = SUBSCRIPTION_PLANS.find((p) => p.id === plan) ?? SUBSCRIPTION_PLANS[0];
+    const maxTrips = planConfig.maxActiveTrips;
     return {
-      plan: subscriptionPlan,
-      canAccessOperational,
+      plan,
+      planName: planConfig.name,
       maxTrips,
-      canPostTrip,
-      currentActiveTrips,
+      canPublishMoreTrips: activeTripsCount < maxTrips,
+      canCustomizeTheme: plan === 'BASIC' || plan === 'PREMIUM',
+      canAccessOperationalTools: plan === 'PREMIUM',
     };
-  }, [agencies, trips, user?.id]);
-};
+  }, [activeTripsCount, plan]);
+}

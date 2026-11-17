@@ -2,17 +2,48 @@
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SouNativo | O maior marketplace de viagens</title>
-    <meta name="description" content="Descubra as melhores experiências de viagem do Brasil. Agências verificadas, guias especializados e roteiros únicos." />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>SouNativo | Experiências Autênticas de Viagem pelo Brasil</title>
+    <meta
+      name="description"
+      content="Marketplace brasileiro de viagens autorais. Conectamos viajantes a agências verificadas e guias credenciados Cadastur em todo o Brasil."
+    />
     <meta name="theme-color" content="#0F4C3A" />
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230F4C3A' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cline x1='22' y1='2' x2='11' y2='13'/%3E%3Cpolygon points='22 2 15 22 11 13 2 9 22 2'/%3E%3C/svg%3E" />
-    <link rel="apple-touch-icon" href="/pwa-192x192.svg" />
-    <link rel="manifest" href="/manifest.webmanifest" />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="pt_BR" />
+    <meta property="og:title" content="SouNativo — Viagens Autênticas pelo Brasil" />
+    <meta
+      property="og:description"
+      content="Explore roteiros de natureza, cultura e aventura operados por agências verificadas e guias locais."
+    />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="SouNativo" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,900;1,600&display=swap"
+      rel="stylesheet"
+    />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "SouNativo",
+        "url": "https://sounativo.vercel.app",
+        "description": "Marketplace de experiências autênticas de viagem pelo Brasil com agências verificadas e guias Cadastur.",
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": "https://sounativo.vercel.app/trips?q={search_term_string}",
+          "query-input": "required name=search_term_string"
+        }
+      }
+    </script>
   </head>
-  <body class="font-sans antialiased">
+  <body class="bg-accent-50 text-stone-900 antialiased selection:bg-primary-500 selection:text-white">
     <div id="root"></div>
-    <script type="module" src="/src/index.tsx"></script>
+    <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

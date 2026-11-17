@@ -1,108 +1,81 @@
 import React, { Suspense, lazy } from 'react';
-import { HashRouter as Router, Routes, Route } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
-import { DataProvider } from './context/DataContext';
-import { ThemeProvider } from './context/ThemeContext';
-import { ToastProvider } from './context/ToastContext';
-import Layout from './components/Layout';
-const Home = lazy(() => import('./pages/Home'));
-const TripList = lazy(() => import('./pages/TripList').then(m => ({ default: m.TripList })));
-const TripDetails = lazy(() => import('./pages/TripDetails'));
-const Settings = lazy(() => import('./pages/Settings'));
-const AdminDashboard = lazy(() => import('./pages/AdminDashboard').then(m => ({ default: m.AdminDashboard })));
-const AgencyLayout = lazy(() => import('./pages/agency/AgencyLayout').then(m => ({ default: m.AgencyLayout })));
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { ToastProvider } from '@/context/ToastContext';
+import { ThemeProvider } from '@/context/ThemeContext';
+import { AuthProvider } from '@/context/AuthContext';
+import { AppLayout } from '@/components/layout/AppLayout';
 
-// Static & Utility Pages
-const About = lazy(() => import('./pages/StaticPages').then(m => ({ default: m.About })));
-const Contact = lazy(() => import('./pages/StaticPages').then(m => ({ default: m.Contact })));
-const Terms = lazy(() => import('./pages/StaticPages').then(m => ({ default: m.Terms })));
-const Help = lazy(() => import('./pages/StaticPages').then(m => ({ default: m.Help })));
-const Privacy = lazy(() => import('./pages/StaticPages').then(m => ({ default: m.Privacy })));
-const Blog = lazy(() => import('./pages/StaticPages').then(m => ({ default: m.Blog })));
-const Careers = lazy(() => import('./pages/StaticPages').then(m => ({ default: m.Careers })));
-const Press = lazy(() => import('./pages/StaticPages').then(m => ({ default: m.Press })));
+const HomePage = lazy(() => import('@/pages/HomePage'));
+const TripsPage = lazy(() => import('@/pages/TripsPage'));
+const TripDetailsPage = lazy(() => import('@/pages/TripDetailsPage'));
+const AgenciesPage = lazy(() => import('@/pages/AgenciesPage'));
+const GuidesPage = lazy(() => import('@/pages/GuidesPage'));
+const AgencyMicrositePage = lazy(() => import('@/pages/AgencyMicrositePage'));
+const DashboardPage = lazy(() => import('@/pages/dashboard/DashboardPage'));
+const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'));
 
-const NotFound = lazy(() => import('./pages/UtilityPages').then(m => ({ default: m.NotFound })));
-const Unauthorized = lazy(() => import('./pages/UtilityPages').then(m => ({ default: m.Unauthorized })));
-const CheckoutSuccess = lazy(() => import('./pages/UtilityPages').then(m => ({ default: m.CheckoutSuccess })));
-const ForgotPassword = lazy(() => import('./pages/UtilityPages').then(m => ({ default: m.ForgotPassword })));
+const AboutPage = lazy(() =>
+  import('@/pages/InstitutionalPage').then((m) => ({ default: m.AboutPage }))
+);
+const ContactPage = lazy(() =>
+  import('@/pages/InstitutionalPage').then((m) => ({ default: m.ContactPage }))
+);
+const TermsPage = lazy(() =>
+  import('@/pages/InstitutionalPage').then((m) => ({ default: m.TermsPage }))
+);
+const PrivacyPage = lazy(() =>
+  import('@/pages/InstitutionalPage').then((m) => ({ default: m.PrivacyPage }))
+);
 
-const LoadingSpinner = () => (
-  <div className="flex items-center justify-center min-h-[50vh]">
-    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+const PageLoader: React.FC = () => (
+  <div className="flex min-h-[55vh] items-center justify-center">
+    <div
+      className="h-10 w-10 animate-spin rounded-full border-4 border-primary-100 border-t-primary-500"
+      role="status"
+      aria-label="Carregando página"
+    />
   </div>
 );
 
-const AgencyList = lazy(() => import('./pages/AgencyList'));
-const GuideList = lazy(() => import('./pages/GuideList'));
-const AgencyProfile = lazy(() => import('./pages/AgencyProfile'));
-const AgencyDashboard = lazy(() => import('./pages/AgencyDashboard'));
-const AgencyLandingPage = lazy(() => import('./pages/AgencyLandingPage'));
-const ClientDashboard = lazy(() => import('./pages/ClientDashboard'));
-const ClientFeed = lazy(() => import('./pages/ClientFeed'));
-const GuideDashboard = lazy(() => import('./pages/guide/GuideDashboard'));
-const TestAccounts = lazy(() => import('./pages/TestAccounts'));
-const HireGuides = lazy(() => import('./pages/agency/HireGuides'));
-
-const App: React.FC = () => {
+export const App: React.FC = () => {
   return (
     <ToastProvider>
-      <AuthProvider>
-        <ThemeProvider>
-          <DataProvider>
-            <Router>
-              <Suspense fallback={<LoadingSpinner />}>
-                <Routes>
-                  <Route path="/" element={<Layout />}>
-                    <Route index element={<Home />} />
+      <ThemeProvider>
+        <AuthProvider>
+          <BrowserRouter>
+            <Suspense fallback={<PageLoader />}>
+              <Routes>
+                <Route path="/" element={<AppLayout />}>
+                  <Route index element={<HomePage />} />
+                  <Route path="trips" element={<TripsPage />} />
+                  <Route path="viagem/:slug" element={<TripDetailsPage />} />
+                  <Route path="agencies" element={<AgenciesPage />} />
+                  <Route path="guides" element={<GuidesPage />} />
+                  <Route path="dashboard" element={<DashboardPage />} />
 
-                    <Route path="trips" element={<TripList />} />
-                    <Route path="viagem/:slug" element={<TripDetails />} />
-                    <Route path="agencies" element={<AgencyList />} />
-                    <Route path="guides" element={<GuideList />} />
-                    <Route path="agency/:id" element={<AgencyProfile />} />
-                    <Route path="settings" element={<Settings />} />
+                  <Route path="about" element={<AboutPage />} />
+                  <Route path="contact" element={<ContactPage />} />
+                  <Route path="terms" element={<TermsPage />} />
+                  <Route path="privacy" element={<PrivacyPage />} />
 
-                    <Route path="about" element={<About />} />
-                    <Route path="contact" element={<Contact />} />
-                    <Route path="terms" element={<Terms />} />
-                    <Route path="privacy" element={<Privacy />} />
-                    <Route path="help" element={<Help />} />
-                    <Route path="blog" element={<Blog />} />
-                    <Route path="careers" element={<Careers />} />
-                    <Route path="press" element={<Press />} />
+                  {/* Legacy route redirects */}
+                  <Route path="client/*" element={<Navigate to="/dashboard" replace />} />
+                  <Route path="agency/*" element={<Navigate to="/dashboard" replace />} />
+                  <Route path="guide/*" element={<Navigate to="/dashboard" replace />} />
+                  <Route path="admin/*" element={<Navigate to="/dashboard" replace />} />
+                  <Route path="settings" element={<Navigate to="/dashboard" replace />} />
 
-                    <Route path="checkout/success" element={<CheckoutSuccess />} />
-                    <Route path="unauthorized" element={<Unauthorized />} />
-                    <Route path="forgot-password" element={<ForgotPassword />} />
-                    {import.meta.env.DEV && (
-                      <Route path="test-accounts" element={<TestAccounts />} />
-                    )}
+                  {/* Whitelabel agency microsite */}
+                  <Route path=":agencySlug" element={<AgencyMicrositePage />} />
+                  <Route path=":agencySlug/viagem/:tripSlug" element={<TripDetailsPage />} />
 
-                    <Route path="agency" element={<AgencyLayout />}>
-                      <Route path="dashboard" element={<AgencyDashboard />} />
-                      <Route path="guides" element={<HireGuides />} />
-                    </Route>
-                    <Route path="admin/dashboard" element={<AdminDashboard />} />
-                    <Route path="client/feed" element={<ClientFeed />} />
-                    <Route path="client/dashboard/:tab?" element={<ClientDashboard />} />
-                    <Route path="guide/dashboard" element={<GuideDashboard />} />
-
-                    <Route path=":agencySlug" element={<AgencyLandingPage />} />
-                    <Route path=":agencySlug/trips" element={<TripList />} />
-                    <Route path=":agencySlug/guides" element={<GuideList />} />
-                    <Route path=":agencySlug/viagem/:tripSlug" element={<TripDetails />} />
-                    <Route path=":agencySlug/checkout/success" element={<CheckoutSuccess />} />
-                    <Route path=":agencySlug/client/:tab?" element={<ClientDashboard />} />
-
-                    <Route path="*" element={<NotFound />} />
-                  </Route>
-                </Routes>
-              </Suspense>
-            </Router>
-          </DataProvider>
-        </ThemeProvider>
-      </AuthProvider>
+                  <Route path="*" element={<NotFoundPage />} />
+                </Route>
+              </Routes>
+            </Suspense>
+          </BrowserRouter>
+        </AuthProvider>
+      </ThemeProvider>
     </ToastProvider>
   );
 };

@@ -1,44 +1,48 @@
 /** @type {import('tailwindcss').Config} */
+const withOpacity = (variableName) => {
+  return ({ opacityValue }) => {
+    if (opacityValue !== undefined) {
+      return `rgb(var(${variableName}) / ${opacityValue})`;
+    }
+    return `rgb(var(${variableName}))`;
+  };
+};
+
 export default {
-  content: [
-    "./index.html",
-    "./src/components/**/*.{js,ts,jsx,tsx}",
-    "./src/pages/**/*.{js,ts,jsx,tsx}",
-    "./src/context/**/*.{js,ts,jsx,tsx}",
-    "./src/App.tsx",
-    "./src/index.tsx"
-  ],
+  content: ['./index.html', './src/**/*.{ts,tsx}'],
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Inter', 'sans-serif'],
-        serif: ['"Playfair Display"', '"Georgia"', 'serif'],
+        sans: ['Inter', 'system-ui', 'sans-serif'],
+        serif: ['"Playfair Display"', 'Georgia', 'serif'],
       },
       colors: {
         primary: {
-          50: '#E6F2EF',
-          100: '#CCE5DF',
-          200: '#99CBBF',
-          300: '#66B19F',
-          400: '#33977F',
-          500: '#0F4C3A',
-          600: '#0C3D2E',
-          700: '#092E23',
-          800: '#061F17',
-          900: '#030F0C',
+          50: withOpacity('--color-primary-50'),
+          100: withOpacity('--color-primary-100'),
+          200: withOpacity('--color-primary-200'),
+          300: withOpacity('--color-primary-300'),
+          400: withOpacity('--color-primary-400'),
+          500: withOpacity('--color-primary-500'),
+          600: withOpacity('--color-primary-600'),
+          700: withOpacity('--color-primary-700'),
+          800: withOpacity('--color-primary-800'),
+          900: withOpacity('--color-primary-900'),
+          DEFAULT: withOpacity('--color-primary-500'),
           foreground: '#ffffff',
         },
         secondary: {
-          50: '#F9EDE8',
-          100: '#F3DBD1',
-          200: '#E7B7A3',
-          300: '#DB9375',
-          400: '#CF6F47',
-          500: '#C66B3D',
-          600: '#9E5631',
-          700: '#774025',
-          800: '#4F2B19',
-          900: '#28150C',
+          50: withOpacity('--color-secondary-50'),
+          100: withOpacity('--color-secondary-100'),
+          200: withOpacity('--color-secondary-200'),
+          300: withOpacity('--color-secondary-300'),
+          400: withOpacity('--color-secondary-400'),
+          500: withOpacity('--color-secondary-500'),
+          600: withOpacity('--color-secondary-600'),
+          700: withOpacity('--color-secondary-700'),
+          800: withOpacity('--color-secondary-800'),
+          900: withOpacity('--color-secondary-900'),
+          DEFAULT: withOpacity('--color-secondary-500'),
           foreground: '#ffffff',
         },
         accent: {
@@ -47,9 +51,13 @@ export default {
           100: '#F5F5F4',
           200: '#E7E5E4',
           300: '#D6D3D1',
-        }
-      }
+        },
+      },
+      boxShadow: {
+        editorial: '0 20px 50px -15px rgba(15, 76, 58, 0.14)',
+        card: '0 8px 30px -10px rgba(28, 25, 23, 0.08)',
+      },
     },
   },
   plugins: [],
-}
+};

@@ -1,0 +1,94 @@
+import React, { useEffect, useState } from 'react';
+import { useOutletContext } from 'react-router-dom';
+import { Briefcase, Compass, User } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { GoogleSignInButton } from '@/components/ui/GoogleSignInButton';
+import { Button } from '@/components/ui/Button';
+import { Badge } from '@/components/ui/Badge';
+import { ClientDashboardView } from './ClientDashboardView';
+import { PartnerDashboardView } from './PartnerDashboardView';
+
+interface OutletContextValue {
+  openAuth: (mode: 'login' | 'signup') => void;
+}
+
+export const DashboardPage: React.FC = () => {
+  const { openAuth } = useOutletContext<OutletContextValue>();
+  const { user, loading, signInWithGoogle } = useAuth();
+  const [viewMode, setViewMode] = useState<'traveler' | 'partner'>('traveler');
+
+  useEffect(() => {
+    if (user?.role === 'AGENCY' || user?.role === 'GUIDE') {
+      setViewMode('partner');
+    }
+  }, [user?.role]);
+
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-4xl px-4 py-16 text-center text-sm text-stone-500">
+        Verificando sessão Firebase...
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="mx-auto max-w-md px-4 py-16">
+        <div className="rounded-3xl border border-stone-200 bg-white p-8 shadow-editorial text-center space-y-5">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-50 text-primary-600">
+            <Compass size={28} />
+          </div>
+          <h1 className="font-serif text-2xl font-bold text-stone-900">
+            Acesse seu Painel SouNativo
+          </h1>
+          <p className="text-sm text-stone-600">
+            Entre com sua conta Google para gerenciar reservas, favoritos ou operar sua agência.
+          </p>
+          <GoogleSignInButton onClick={() => void signInWithGoogle()} />
+          <Button variant="ghost" fullWidth onClick={() => openAuth('login')}>
+            Entrar com e-mail e senha
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10 space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <Badge tone="primary">{user.role}</Badge>
+            <span className="text-xs text-stone-500">{user.email}</span>
+          </div>
+          <h1 className="font-serif text-3xl font-bold text-stone-900">Olá, {user.name}</h1>
+        </div>
+
+        <div className="inline-flex rounded-xl border border-stone-200 bg-white p-1">
+          <button
+            type="button"
+            onClick={() => setViewMode('traveler')}
+            className={`inline-flex items-center gap-2 min-h-[38px] px-4 rounded-lg text-xs font-semibold transition-colors ${
+              viewMode === 'traveler' ? 'bg-primary-500 text-white' : 'text-stone-600'
+            }`}
+          >
+            <User size={15} /> Modo Viajante
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewMode('partner')}
+            className={`inline-flex items-center gap-2 min-h-[38px] px-4 rounded-lg text-xs font-semibold transition-colors ${
+              viewMode === 'partner' ? 'bg-primary-500 text-white' : 'text-stone-600'
+            }`}
+          >
+            <Briefcase size={15} /> Modo Agência / Guia
+          </button>
+        </div>
+      </div>
+
+      {viewMode === 'traveler' ? <ClientDashboardView /> : <PartnerDashboardView />}
+    </div>
+  );
+};
+
+export default DashboardPage;
