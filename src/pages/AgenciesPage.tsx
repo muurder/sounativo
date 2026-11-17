@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, MapPin, ShieldCheck, Star } from 'lucide-react';
 import { useAgencies } from '@/hooks/useAgencies';
 import { Badge } from '@/components/ui/Badge';
+import { SafeImage } from '@/components/ui/SafeImage';
 import { Skeleton } from '@/components/ui/Skeleton';
 
 export const AgenciesPage: React.FC = () => {
@@ -34,7 +35,7 @@ export const AgenciesPage: React.FC = () => {
               className="group flex flex-col rounded-2xl border border-stone-200 bg-white p-6 shadow-card hover:border-primary-300 hover:shadow-editorial transition-all"
             >
               <div className="flex items-center gap-4">
-                <img
+                <SafeImage
                   src={agency.logo}
                   alt={agency.name}
                   loading="lazy"

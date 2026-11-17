@@ -5,12 +5,14 @@ import { MobileDrawer } from './MobileDrawer';
 import { BottomNav } from './BottomNav';
 import { Footer } from './Footer';
 import { AuthModal } from '@/components/auth/AuthModal';
+import { useTheme } from '@/context/ThemeContext';
 
 export const AppLayout: React.FC = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [authModalMode, setAuthModalMode] = useState<'login' | 'signup' | null>(null);
   const { pathname } = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { agencyBrand } = useTheme();
 
   useEffect(() => {
     setDrawerOpen(false);
@@ -38,6 +40,7 @@ export const AppLayout: React.FC = () => {
       <Navbar
         onOpenMenu={() => setDrawerOpen(true)}
         onOpenAuth={(mode) => setAuthModalMode(mode)}
+        agencyBrand={agencyBrand}
       />
 
       <MobileDrawer

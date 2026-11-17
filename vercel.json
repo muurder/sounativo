@@ -5,6 +5,10 @@
   "outputDirectory": "dist",
   "rewrites": [
     {
+      "source": "/__/auth/(.*)",
+      "destination": "https://sounativo-app-br.firebaseapp.com/__/auth/$1"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
@@ -15,13 +19,14 @@
       "headers": [
         { "key": "X-Content-Type-Options", "value": "nosniff" },
         { "key": "X-Frame-Options", "value": "SAMEORIGIN" },
-        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+        { "key": "Cross-Origin-Opener-Policy", "value": "same-origin-allow-popups" }
       ]
     },
     {
-      "source": "/sw.js",
+      "source": "/(index\\.html|sw\\.js|registerSW\\.js)",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }
+        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
       ]
     }
   ]

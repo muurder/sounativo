@@ -17,20 +17,23 @@
 
 ```plaintext
 src/
+├── __tests__/           # Suíte unitária Vitest (filtros, slugs, formatação, permissões, Auth/WhatsApp)
 ├── components/
-│   ├── auth/            # AuthModal (Google Auth + Email/Senha + seleção de papel)
+│   ├── auth/            # AuthModal, AuthRoleSelector, AuthEmailForm, PasswordResetForm
 │   ├── feedback/        # ErrorBoundary
-│   ├── landing/         # HeroSection, HeroSearchBar, InterestFilterBar, FeaturedTripsSection, ValuePillarsSection, GuidesHighlightSection, CtaBannerSection
+│   ├── institutional/   # ContactForm
+│   ├── landing/         # HeroSection, HeroSearchBar, BiomesDiscoverySection, UpcomingTripsSection, InterestFilterBar, HowItWorksSection, WhySouNativoSection, ReviewsShowcaseSection, GroupQuoteSection, GuidesHighlightSection, FaqSection, CtaBannerSection
 │   ├── layout/          # AppLayout, Navbar, MobileDrawer, BottomNav, Footer
-│   ├── trips/           # TripCard, TripGrid, BookingCard
-│   └── ui/              # Logo, Button, Badge, Tooltip, Modal, Skeleton, EmptyState, GoogleSignInButton
+│   ├── trips/           # TripCard, TripGrid, TripGallery, TripHeader, TripItinerarySection, TripReviewsSection, BookingCard, StickyTripBar, GuestCounterRow, CompanionFields
+│   └── ui/              # Logo, Button, Badge, Tooltip, Modal, Skeleton, EmptyState, GoogleSignInButton, SafeImage
 ├── context/             # AuthContext, ThemeContext, ToastContext
-├── hooks/               # useAuth, useUserProfile, useTrips, useBookings, useAgencies, useAgencyMicrosite, usePlanPermissions, useDebounce
+├── data/                # Catálogo curado modular (seedAgencies, seedTripsNorthEast, seedTripsSouthCenter, seedReviews)
+├── hooks/               # useAuth, useUserProfile, useTrips, useTripDetails, useBookings, useAgencies, useAgencyMicrosite, usePlanPermissions, useDebounce
 ├── pages/               # HomePage, TripsPage, TripDetailsPage, AgenciesPage, GuidesPage, AgencyMicrositePage, InstitutionalPage, NotFoundPage
-│   └── dashboard/       # DashboardPage, ClientDashboardView, PartnerDashboardView, TripCreateModal
-├── services/            # firebase.config.ts, firebase.ts, authService.ts, userService.ts, tripService.ts, agencyService.ts, bookingService.ts, seedCatalog.ts
+│   └── dashboard/       # DashboardPage, ClientDashboardView, ClientBookingsTab, BookingVoucherModal, ClientProfileForm, PartnerDashboardView, PartnerOnboardingForm, PartnerTripsSection, PartnerBookingsSection, PartnerThemeBuilder, PartnerProfileForm, PartnerGuideFields, PartnerPlansSection, TripCreateModal, TripFormFields, AdminDashboardView, AdminCatalogSection
+├── services/            # firebase.config.ts, firebase.ts, authService.ts, userService.ts, tripService.ts, agencyService.ts, bookingService.ts, reviewService.ts, adminService.ts, seedCatalog.ts
 ├── types/               # Modelos TypeScript estritos (user, agency, trip, booking)
-└── utils/               # constants, formatters, slugUtils, dailyHeroImage, whatsapp, colorExtractor, cn
+└── utils/               # constants, formatters, slugUtils, dailyHeroImage, whatsapp, colorExtractor, tripFilters, planPermissions, cn
 ```
 
 ---
@@ -83,6 +86,7 @@ Regras configuradas em [`firestore.rules`](./firestore.rules) e índices em [`fi
 | `npm run dev` | Servidor local Vite com HMR (porta `3000`) |
 | `npm run typecheck` | Verificação estrita TypeScript (`tsc --noEmit`) |
 | `npm run lint` | Análise ESLint + Regras React Hooks + Acessibilidade `jsx-a11y` |
+| `npm test` | Execução dos testes unitários com Vitest |
 | `npm run format` | Formatação Prettier em `src/` |
 | `npm run build` | Typecheck + Build de produção + geração do Service Worker PWA em `dist/` |
 | `npm run preview` | Preview local do build final |

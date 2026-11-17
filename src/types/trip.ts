@@ -68,5 +68,6 @@ export interface TripSearchFilters {
   category?: TripCategory | 'ALL';
   maxPrice?: number;
   travelers?: number;
+  month?: string;
   sortBy?: 'featured' | 'price_asc' | 'price_desc' | 'rating';
 }

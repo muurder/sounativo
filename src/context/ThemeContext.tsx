@@ -1,11 +1,23 @@
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
-import { ThemeColors } from '@/types';
+import { AgencyTheme, ThemeColors } from '@/types';
 
-const DEFAULT_SOUNATIVO_COLORS: ThemeColors = {
-  primary: '#0F4C3A',
-  secondary: '#C66B3D',
-  background: '#FAFAF9',
-  text: '#1C1917',
+export interface AgencyBrandHeader {
+  name: string;
+  slug: string;
+  logo: string;
+}
+
+const DEFAULT_AGENCY_THEME: AgencyTheme = {
+  colors: {
+    primary: '#0F4C3A',
+    secondary: '#C66B3D',
+    background: '#FAFAF9',
+    text: '#1C1917',
+  },
+  fontPair: 'classic',
+  borderRadius: 'soft',
+  buttonStyle: 'solid',
+  headerStyle: 'solid',
 };
 
 function hexToRgb(hex: string): [number, number, number] {
@@ -17,31 +29,33 @@ function hexToRgb(hex: string): [number, number, number] {
 const mixChannel = (base: number, target: number, weight: number): number =>
   Math.round(base + (target - base) * weight);
 
-function tint(rgb: [number, number, number], weight: number): string {
-  return `${mixChannel(rgb[0], 255, weight)} ${mixChannel(rgb[1], 255, weight)} ${mixChannel(rgb[2], 255, weight)}`;
-}
+const tint = (rgb: [number, number, number], weight: number): string =>
+  `${mixChannel(rgb[0], 255, weight)} ${mixChannel(rgb[1], 255, weight)} ${mixChannel(rgb[2], 255, weight)}`;
 
-function shade(rgb: [number, number, number], weight: number): string {
-  return `${mixChannel(rgb[0], 0, weight)} ${mixChannel(rgb[1], 0, weight)} ${mixChannel(rgb[2], 0, weight)}`;
-}
+const shade = (rgb: [number, number, number], weight: number): string =>
+  `${mixChannel(rgb[0], 0, weight)} ${mixChannel(rgb[1], 0, weight)} ${mixChannel(rgb[2], 0, weight)}`;
 
 interface ThemeContextValue {
   colors: ThemeColors;
+  agencyTheme: AgencyTheme;
+  agencyBrand: AgencyBrandHeader | null;
   isCustomAgencyTheme: boolean;
-  setAgencyTheme: (colors: ThemeColors) => void;
+  setAgencyTheme: (themeOrColors: AgencyTheme | ThemeColors) => void;
+  setAgencyBrand: (brand: AgencyBrandHeader | null) => void;
   resetTheme: () => void;
 }
 
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [colors, setColors] = useState<ThemeColors>(DEFAULT_SOUNATIVO_COLORS);
+  const [agencyTheme, setAgencyThemeState] = useState<AgencyTheme>(DEFAULT_AGENCY_THEME);
+  const [agencyBrand, setAgencyBrand] = useState<AgencyBrandHeader | null>(null);
   const [isCustomAgencyTheme, setIsCustomAgencyTheme] = useState(false);
 
   useEffect(() => {
     const root = document.documentElement;
-    const primary = hexToRgb(colors.primary);
-    const secondary = hexToRgb(colors.secondary);
+    const primary = hexToRgb(agencyTheme.colors.primary);
+    const secondary = hexToRgb(agencyTheme.colors.secondary);
 
     root.style.setProperty('--color-primary-50', tint(primary, 0.9));
     root.style.setProperty('--color-primary-100', tint(primary, 0.8));
@@ -63,20 +77,35 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     root.style.setProperty('--color-secondary-600', shade(secondary, 0.2));
     root.style.setProperty('--color-secondary-700', shade(secondary, 0.4));
     root.style.setProperty('--color-secondary-800', shade(secondary, 0.6));
-  }, [colors]);
+  }, [agencyTheme]);
 
-  const setAgencyTheme = useCallback((customColors: ThemeColors) => {
-    setColors(customColors);
+  const setAgencyTheme = useCallback((themeOrColors: AgencyTheme | ThemeColors) => {
+    if ('colors' in themeOrColors) {
+      setAgencyThemeState(themeOrColors);
+    } else {
+      setAgencyThemeState({ ...DEFAULT_AGENCY_THEME, colors: themeOrColors });
+    }
     setIsCustomAgencyTheme(true);
   }, []);
 
   const resetTheme = useCallback(() => {
-    setColors(DEFAULT_SOUNATIVO_COLORS);
+    setAgencyThemeState(DEFAULT_AGENCY_THEME);
+    setAgencyBrand(null);
     setIsCustomAgencyTheme(false);
   }, []);
 
   return (
-    <ThemeContext.Provider value={{ colors, isCustomAgencyTheme, setAgencyTheme, resetTheme }}>
+    <ThemeContext.Provider
+      value={{
+        colors: agencyTheme.colors,
+        agencyTheme,
+        agencyBrand,
+        isCustomAgencyTheme,
+        setAgencyTheme,
+        setAgencyBrand,
+        resetTheme,
+      }}
+    >
       {children}
     </ThemeContext.Provider>
   );

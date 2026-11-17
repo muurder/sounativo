@@ -2,10 +2,12 @@ import React, { createContext, useCallback, useEffect, useState } from 'react';
 import { User as FirebaseUser, onAuthStateChanged } from 'firebase/auth';
 import { auth, isFirebaseConfigured } from '@/services/firebase';
 import {
+  consumeGoogleRedirectResult,
   loginWithEmail,
   loginWithGoogle,
   logoutFirebase,
   registerWithEmail,
+  requestPasswordReset,
 } from '@/services/authService';
 import { ensureUserProfile, getUserProfile } from '@/services/userService';
 import { UserProfile, UserRole } from '@/types';
@@ -23,6 +25,7 @@ export interface AuthContextValue {
     password: string,
     role?: Exclude<UserRole, 'ADMIN'>
   ) => Promise<UserProfile>;
+  sendPasswordReset: (email: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
@@ -35,38 +38,62 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState<boolean>(isFirebaseConfigured);
 
   useEffect(() => {
-    if (!auth) {
+    const firebaseAuth = auth;
+    if (!firebaseAuth) {
       setLoading(false);
       return;
     }
 
-    const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
-      setFirebaseUser(fbUser);
-      if (!fbUser) {
-        setUser(null);
-        setLoading(false);
-        return;
-      }
+    let cancelled = false;
+    let unsubscribe = () => {};
 
+    const bootstrapAuth = async () => {
       try {
-        const profile = await ensureUserProfile(fbUser);
-        setUser(profile);
+        const redirectProfile = await consumeGoogleRedirectResult();
+        if (!cancelled && redirectProfile) {
+          setUser(redirectProfile);
+        }
       } catch {
-        setUser({
-          uid: fbUser.uid,
-          name: fbUser.displayName || 'Viajante',
-          email: fbUser.email || '',
-          photoURL: fbUser.photoURL || undefined,
-          role: 'CLIENT',
-          favorites: [],
-          notificationsEnabled: true,
-        });
-      } finally {
-        setLoading(false);
+        // Redirect errors clear sessionStorage inside consumeGoogleRedirectResult
       }
-    });
 
-    return () => unsubscribe();
+      if (cancelled) return;
+
+      unsubscribe = onAuthStateChanged(firebaseAuth, async (fbUser) => {
+        setFirebaseUser(fbUser);
+        if (!fbUser) {
+          setUser(null);
+          setLoading(false);
+          return;
+        }
+
+        try {
+          const profile = await ensureUserProfile(fbUser);
+          if (!cancelled) setUser(profile);
+        } catch {
+          if (!cancelled) {
+            setUser({
+              uid: fbUser.uid,
+              name: fbUser.displayName || 'Viajante',
+              email: fbUser.email || '',
+              photoURL: fbUser.photoURL || undefined,
+              role: 'CLIENT',
+              favorites: [],
+              notificationsEnabled: true,
+            });
+          }
+        } finally {
+          if (!cancelled) setLoading(false);
+        }
+      });
+    };
+
+    void bootstrapAuth();
+
+    return () => {
+      cancelled = true;
+      unsubscribe();
+    };
   }, []);
 
   const refreshProfile = useCallback(async () => {
@@ -104,6 +131,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     []
   );
 
+  const handlePasswordReset = useCallback(async (email: string) => {
+    await requestPasswordReset(email);
+  }, []);
+
   const handleLogout = useCallback(async () => {
     await logoutFirebase();
     setUser(null);
@@ -120,6 +151,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         signInWithGoogle: handleGoogleSignIn,
         signInWithEmail: handleEmailSignIn,
         signUpWithEmail: handleEmailSignUp,
+        sendPasswordReset: handlePasswordReset,
         logout: handleLogout,
         refreshProfile,
       }}

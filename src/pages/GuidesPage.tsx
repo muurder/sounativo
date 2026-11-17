@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Award, Globe, MapPin } from 'lucide-react';
 import { useAgencies } from '@/hooks/useAgencies';
 import { Badge } from '@/components/ui/Badge';
+import { SafeImage } from '@/components/ui/SafeImage';
 import { Skeleton } from '@/components/ui/Skeleton';
 
 export const GuidesPage: React.FC = () => {
@@ -33,7 +34,7 @@ export const GuidesPage: React.FC = () => {
               to={`/${guide.slug}`}
               className="group flex flex-col sm:flex-row gap-5 rounded-2xl border border-stone-200 bg-white p-6 shadow-card hover:border-primary-300 transition-all"
             >
-              <img
+              <SafeImage
                 src={guide.logo}
                 alt={guide.name}
                 loading="lazy"

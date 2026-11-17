@@ -1,7 +1,19 @@
-import { addDoc, collection, getDocs, limit, orderBy, query, where } from 'firebase/firestore';
+import {
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  getDoc,
+  getDocs,
+  limit,
+  orderBy,
+  query,
+  updateDoc,
+  where,
+} from 'firebase/firestore';
 import { COLLECTIONS, db, serverTimestamp } from './firebase';
-import { SEED_REVIEWS, SEED_TRIPS } from './seedCatalog';
-import { Trip, TripReview } from '@/types';
+import { SEED_TRIPS } from './seedCatalog';
+import { Trip } from '@/types';
 
 export async function fetchActiveTrips(): Promise<Trip[]> {
   if (!db) return SEED_TRIPS;
@@ -42,6 +54,11 @@ export async function fetchTripBySlugOrId(slugOrId: string): Promise<Trip | null
         const docSnap = snap.docs[0];
         return { id: docSnap.id, ...(docSnap.data() as Omit<Trip, 'id'>) };
       }
+
+      const byId = await getDoc(doc(db, COLLECTIONS.trips, slugOrId));
+      if (byId.exists() && byId.data().isActive === true) {
+        return { id: byId.id, ...(byId.data() as Omit<Trip, 'id'>) };
+      }
     } catch {
       // Fall back to curated catalog below
     }
@@ -50,24 +67,26 @@ export async function fetchTripBySlugOrId(slugOrId: string): Promise<Trip | null
   return SEED_TRIPS.find((t) => t.slug === slugOrId || t.id === slugOrId) ?? null;
 }
 
-export async function fetchTripsByAgency(agencyId: string): Promise<Trip[]> {
+export async function fetchTripsByAgency(
+  agencyId: string,
+  includeInactive = false
+): Promise<Trip[]> {
   if (db) {
     try {
-      const q = query(
-        collection(db, COLLECTIONS.trips),
-        where('agencyId', '==', agencyId),
-        where('isActive', '==', true)
-      );
+      const constraints = includeInactive
+        ? [where('agencyId', '==', agencyId)]
+        : [where('agencyId', '==', agencyId), where('isActive', '==', true)];
+      const q = query(collection(db, COLLECTIONS.trips), ...constraints);
       const snap = await getDocs(q);
-      if (!snap.empty) {
+      if (!snap.empty || includeInactive) {
         return snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Trip, 'id'>) }));
       }
     } catch {
-      // Fallback
+      // Fallback for seed showcase agencies
     }
   }
 
-  return SEED_TRIPS.filter((t) => t.agencyId === agencyId && t.isActive);
+  return SEED_TRIPS.filter((t) => t.agencyId === agencyId && (includeInactive || t.isActive));
 }
 
 export async function createTripInFirestore(
@@ -110,22 +129,40 @@ export async function createTripInFirestore(
   return { id: docRef.id, ...sanitized };
 }
 
-export async function fetchReviewsForTrip(tripId: string): Promise<TripReview[]> {
-  if (db) {
-    try {
-      const q = query(
-        collection(db, COLLECTIONS.reviews),
-        where('tripId', '==', tripId),
-        orderBy('createdAt', 'desc'),
-        limit(20)
-      );
-      const snap = await getDocs(q);
-      if (!snap.empty) {
-        return snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<TripReview, 'id'>) }));
-      }
-    } catch {
-      // Fallback
-    }
-  }
-  return SEED_REVIEWS.filter((r) => r.tripId === tripId);
+export type EditableTripFields = Partial<
+  Pick<
+    Trip,
+    | 'title'
+    | 'description'
+    | 'destination'
+    | 'price'
+    | 'durationDays'
+    | 'startDate'
+    | 'endDate'
+    | 'category'
+    | 'tags'
+    | 'images'
+    | 'boardingPoints'
+    | 'included'
+    | 'notIncluded'
+    | 'maxGuests'
+    | 'passengerConfig'
+    | 'isActive'
+  >
+>;
+
+export async function updateTripInFirestore(
+  tripId: string,
+  updates: EditableTripFields
+): Promise<void> {
+  if (!db) throw new Error('Firestore não configurado.');
+  await updateDoc(doc(db, COLLECTIONS.trips, tripId), {
+    ...updates,
+    updatedAt: serverTimestamp(),
+  });
+}
+
+export async function deleteTripInFirestore(tripId: string): Promise<void> {
+  if (!db) throw new Error('Firestore não configurado.');
+  await deleteDoc(doc(db, COLLECTIONS.trips, tripId));
 }

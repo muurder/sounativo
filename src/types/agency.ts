@@ -1,3 +1,5 @@
+import type { GuideDetails } from './user';
+
 export type PlanTier = 'STARTER' | 'BASIC' | 'PREMIUM';
 export type SubscriptionStatus = 'ACTIVE' | 'INACTIVE' | 'PENDING';
 
@@ -41,9 +43,10 @@ export interface Agency {
   state?: string;
   isGuide: boolean;
   cadastur?: string;
-  languages?: string[];
-  specialties?: string[];
-  experienceYears?: number;
+  languages?: GuideDetails['languages'];
+  specialties?: GuideDetails['specialties'];
+  experienceYears?: GuideDetails['experienceYears'];
+  availability?: GuideDetails['availability'];
   heroMode: 'TRIPS' | 'STATIC';
   heroBannerUrl?: string;
   heroTitle?: string;

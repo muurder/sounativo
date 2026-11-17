@@ -1,26 +1,30 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate, useOutletContext, useParams } from 'react-router-dom';
-import { ArrowLeft, CheckCircle2, Heart, MapPin, ShieldCheck, Star, XCircle } from 'lucide-react';
-import { fetchAgencyBySlug } from '@/services/agencyService';
-import { fetchReviewsForTrip, fetchTripBySlugOrId } from '@/services/tripService';
+import { ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useBookings } from '@/hooks/useBookings';
+import { useTripDetails } from '@/hooks/useTripDetails';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useToast } from '@/context/ToastContext';
-import { Agency, PaymentMethod, Trip, TripReview } from '@/types';
-import { CATEGORY_LABELS } from '@/utils/constants';
-import { Badge } from '@/components/ui/Badge';
-import { BookingCard } from '@/components/trips/BookingCard';
+import { BookingCard, ReservePayload } from '@/components/trips/BookingCard';
+import { StickyTripBar } from '@/components/trips/StickyTripBar';
+import { TripGallery } from '@/components/trips/TripGallery';
+import { TripHeader } from '@/components/trips/TripHeader';
+import { TripItinerarySection } from '@/components/trips/TripItinerarySection';
+import { TripReviewsSection } from '@/components/trips/TripReviewsSection';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { cn } from '@/utils/cn';
 
 interface OutletContextValue {
   openAuth: (mode: 'login' | 'signup') => void;
 }
 
 export const TripDetailsPage: React.FC = () => {
-  const { slug, tripSlug } = useParams<{ slug?: string; tripSlug?: string }>();
+  const { agencySlug, slug, tripSlug } = useParams<{
+    agencySlug?: string;
+    slug?: string;
+    tripSlug?: string;
+  }>();
   const targetSlug = tripSlug || slug;
   const navigate = useNavigate();
   const { openAuth } = useOutletContext<OutletContextValue>();
@@ -28,43 +32,8 @@ export const TripDetailsPage: React.FC = () => {
   const { profile, toggleFavorite } = useUserProfile();
   const { createBooking } = useBookings();
   const { showToast } = useToast();
-
-  const [trip, setTrip] = useState<Trip | null>(null);
-  const [agency, setAgency] = useState<Agency | null>(null);
-  const [reviews, setReviews] = useState<TripReview[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { trip, agency, reviews, setReviews, loading } = useTripDetails(targetSlug, agencySlug);
   const [submitting, setSubmitting] = useState(false);
-
-  useEffect(() => {
-    let active = true;
-    if (!targetSlug) {
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
-    fetchTripBySlugOrId(targetSlug)
-      .then(async (found) => {
-        if (!active) return;
-        setTrip(found);
-        if (found) {
-          const [foundAgency, foundReviews] = await Promise.all([
-            fetchAgencyBySlug(found.agencySlug),
-            fetchReviewsForTrip(found.id),
-          ]);
-          if (active) {
-            setAgency(foundAgency);
-            setReviews(foundReviews);
-          }
-        }
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-
-    return () => {
-      active = false;
-    };
-  }, [targetSlug]);
 
   if (loading) {
     return (
@@ -90,12 +59,17 @@ export const TripDetailsPage: React.FC = () => {
 
   const isFavorite = profile?.favorites.includes(trip.id) ?? false;
 
-  const handleReserve = async (payload: {
-    adults: number;
-    children: number;
-    totalPrice: number;
-    paymentMethod: PaymentMethod;
-  }) => {
+  const handleFavoriteClick = async () => {
+    try {
+      const added = await toggleFavorite(trip.id);
+      showToast(added ? 'Roteiro salvo nos favoritos.' : 'Removido dos favoritos.', 'success');
+    } catch {
+      showToast('Faça login para salvar favoritos.', 'info');
+      openAuth('login');
+    }
+  };
+
+  const handleReserve = async (payload: ReservePayload) => {
     if (!user) {
       showToast('Faça login com Google para solicitar sua reserva.', 'info');
       openAuth('login');
@@ -105,6 +79,19 @@ export const TripDetailsPage: React.FC = () => {
     setSubmitting(true);
     try {
       const voucher = `SN-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+      const passengerDetails = [
+        {
+          name: user.name,
+          phone: profile?.phone || '',
+          document: profile?.cpf || '',
+          type: 'adult' as const,
+        },
+        ...payload.companions.map((companion, idx) => ({
+          name: companion.name.trim() || `Acompanhante ${idx + 1}`,
+          type: companion.type,
+        })),
+      ];
+
       await createBooking({
         tripId: trip.id,
         tripTitle: trip.title,
@@ -121,14 +108,8 @@ export const TripDetailsPage: React.FC = () => {
         status: 'PENDING',
         paymentMethod: payload.paymentMethod,
         voucherCode: voucher,
-        passengerDetails: [
-          {
-            name: user.name,
-            phone: profile?.phone || '',
-            document: profile?.cpf || '',
-            type: 'adult',
-          },
-        ],
+        passengerDetails,
+        ...(payload.notes ? { notes: payload.notes } : {}),
       });
       showToast(`Reserva solicitada! Código: ${voucher}`, 'success');
       navigate('/dashboard');
@@ -143,142 +124,35 @@ export const TripDetailsPage: React.FC = () => {
   };
 
   return (
-    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-8 pb-24 md:py-12">
       <Link
-        to="/trips"
+        to={agencySlug ? `/${agencySlug}` : '/trips'}
         className="inline-flex items-center gap-2 text-sm font-semibold text-stone-600 hover:text-primary-600 mb-6"
       >
-        <ArrowLeft size={16} /> Voltar para viagens
+        <ArrowLeft size={16} />
+        {agencySlug ? `Voltar para ${agency?.name ?? 'agência'}` : 'Voltar para viagens'}
       </Link>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10">
         <div className="lg:col-span-8 space-y-8">
-          <div className="overflow-hidden rounded-3xl border border-stone-200 bg-stone-100 aspect-[16/9]">
-            <img src={trip.images[0]} alt={trip.title} className="h-full w-full object-cover" />
-          </div>
-
-          <div className="space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge tone="secondary">{CATEGORY_LABELS[trip.category]}</Badge>
-                <Badge tone="primary">
-                  <Star size={12} className="fill-current" /> {trip.rating.toFixed(1)} (
-                  {trip.totalReviews})
-                </Badge>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => void toggleFavorite(trip.id).catch(() => openAuth('login'))}
-                className="inline-flex items-center gap-2 min-h-[40px] rounded-xl border border-stone-200 bg-white px-3.5 text-xs font-semibold text-stone-700 hover:border-secondary-300"
-              >
-                <Heart
-                  size={16}
-                  className={cn(
-                    isFavorite ? 'fill-secondary-500 text-secondary-500' : 'text-stone-500'
-                  )}
-                />
-                {isFavorite ? 'Salvo nos favoritos' : 'Salvar roteiro'}
-              </button>
-            </div>
-
-            <h1 className="font-serif text-3xl sm:text-4xl font-bold text-stone-900 leading-tight">
-              {trip.title}
-            </h1>
-
-            <div className="flex flex-wrap items-center gap-4 text-sm text-stone-600">
-              <span className="inline-flex items-center gap-1.5 font-medium">
-                <MapPin size={16} className="text-secondary-600" />
-                {trip.destination}
-              </span>
-              <Link
-                to={`/${trip.agencySlug}`}
-                className="inline-flex items-center gap-1.5 font-semibold text-primary-600 hover:underline"
-              >
-                <ShieldCheck size={16} />
-                Operado por {trip.agencyName}
-              </Link>
-            </div>
-
-            <p className="text-base text-stone-700 leading-relaxed pt-2">{trip.description}</p>
-          </div>
-
-          {trip.itinerary.length > 0 && (
-            <section className="rounded-2xl border border-stone-200 bg-white p-6 space-y-4">
-              <h2 className="font-serif text-2xl font-bold text-stone-900">Roteiro Dia a Dia</h2>
-              <div className="space-y-4">
-                {trip.itinerary.map((step) => (
-                  <div key={step.day} className="flex gap-4">
-                    <span className="h-9 w-9 rounded-full bg-primary-50 text-primary-700 font-bold text-sm flex items-center justify-center shrink-0">
-                      D{step.day}
-                    </span>
-                    <div>
-                      <h3 className="font-semibold text-stone-900">{step.title}</h3>
-                      <p className="text-sm text-stone-600 mt-0.5">{step.description}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
-
-          <section className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <div className="rounded-2xl border border-stone-200 bg-white p-6">
-              <h2 className="font-serif text-lg font-bold text-stone-900 mb-3">
-                O que está incluído
-              </h2>
-              <ul className="space-y-2.5 text-sm text-stone-700">
-                {trip.included.map((item) => (
-                  <li key={item} className="flex items-start gap-2">
-                    <CheckCircle2 size={17} className="text-primary-600 shrink-0 mt-0.5" />
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="rounded-2xl border border-stone-200 bg-white p-6">
-              <h2 className="font-serif text-lg font-bold text-stone-900 mb-3">Não inclui</h2>
-              <ul className="space-y-2.5 text-sm text-stone-600">
-                {trip.notIncluded.map((item) => (
-                  <li key={item} className="flex items-start gap-2">
-                    <XCircle size={17} className="text-stone-400 shrink-0 mt-0.5" />
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </section>
-
-          {reviews.length > 0 && (
-            <section className="rounded-2xl border border-stone-200 bg-white p-6 space-y-4">
-              <h2 className="font-serif text-2xl font-bold text-stone-900">
-                Avaliações de Viajantes
-              </h2>
-              <div className="space-y-4">
-                {reviews.map((review) => (
-                  <div
-                    key={review.id}
-                    className="border-t border-stone-100 pt-4 first:border-t-0 first:pt-0"
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="font-semibold text-sm text-stone-900">
-                        {review.userName}
-                      </span>
-                      <span className="inline-flex items-center gap-1 text-xs font-bold text-amber-600">
-                        <Star size={13} className="fill-amber-400 text-amber-400" />
-                        {review.rating}.0
-                      </span>
-                    </div>
-                    <p className="mt-1 text-sm text-stone-600">{review.comment}</p>
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
+          <TripGallery images={trip.images} title={trip.title} />
+          <TripHeader
+            trip={trip}
+            isFavorite={isFavorite}
+            onToggleFavorite={() => void handleFavoriteClick()}
+          />
+          <TripItinerarySection trip={trip} />
+          <TripReviewsSection
+            tripId={trip.id}
+            agencyId={trip.agencyId}
+            reviews={reviews}
+            user={user}
+            onRequireAuth={() => openAuth('login')}
+            onReviewAdded={(created) => setReviews((prev) => [created, ...prev])}
+          />
         </div>
 
-        <div className="lg:col-span-4">
+        <div id="booking-card" className="lg:col-span-4 scroll-mt-24">
           <BookingCard
             trip={trip}
             agencyWhatsapp={agency?.whatsapp}
@@ -287,6 +161,16 @@ export const TripDetailsPage: React.FC = () => {
           />
         </div>
       </div>
+
+      <StickyTripBar
+        trip={trip}
+        agencyWhatsapp={agency?.whatsapp}
+        onScrollToBooking={() =>
+          document
+            .getElementById('booking-card')
+            ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        }
+      />
     </div>
   );
 };

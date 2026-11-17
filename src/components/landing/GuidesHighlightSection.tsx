@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, Award, MapPin } from 'lucide-react';
 import { useAgencies } from '@/hooks/useAgencies';
 import { Badge } from '@/components/ui/Badge';
+import { SafeImage } from '@/components/ui/SafeImage';
 
 export const GuidesHighlightSection: React.FC = () => {
   const { agencies: guides } = useAgencies(true);
@@ -36,7 +37,7 @@ export const GuidesHighlightSection: React.FC = () => {
               to={`/${guide.slug}`}
               className="group flex flex-col sm:flex-row items-start sm:items-center gap-5 rounded-2xl border border-stone-200 bg-accent-50/40 p-5 shadow-card hover:border-primary-300 hover:bg-white hover:shadow-editorial transition-all"
             >
-              <img
+              <SafeImage
                 src={guide.logo}
                 alt={guide.name}
                 loading="lazy"

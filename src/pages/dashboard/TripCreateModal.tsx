@@ -1,204 +1,202 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
-import { createTripInFirestore } from '@/services/tripService';
-import { Agency, Trip, TripCategory } from '@/types';
+import { createTripInFirestore, updateTripInFirestore } from '@/services/tripService';
+import { Agency, Trip } from '@/types';
 import { CATEGORY_LABELS } from '@/utils/constants';
 import { slugify } from '@/utils/slugUtils';
 import { useToast } from '@/context/ToastContext';
+import { TripFormFields, TripFormState } from './TripFormFields';
 
 interface TripCreateModalProps {
   isOpen: boolean;
   onClose: () => void;
   agency: Agency;
+  editingTrip?: Trip | null;
   onCreated: (trip: Trip) => void;
+  onUpdated?: (trip: Trip) => void;
+}
+
+const DEFAULT_COVER_URL =
+  'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=1200&q=80';
+
+const toDateInputValue = (iso?: string): string => {
+  const parsed = iso ? new Date(iso) : new Date(Date.now() + 7 * 86400000);
+  if (Number.isNaN(parsed.getTime()))
+    return new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
+  return parsed.toISOString().slice(0, 10);
+};
+
+function buildInitialState(editingTrip?: Trip | null): TripFormState {
+  if (!editingTrip) {
+    return {
+      title: '',
+      destination: '',
+      price: '1290',
+      durationDays: '3',
+      maxGuests: '16',
+      startDate: toDateInputValue(),
+      boardingTime: '07:00',
+      boardingLocation: '',
+      allowChildren: true,
+      category: 'NATUREZA',
+      imageUrl: DEFAULT_COVER_URL,
+      includedText: 'Guia credenciado SouNativo, Seguro viagem',
+      notIncludedText: 'Despesas pessoais',
+      description: '',
+    };
+  }
+  const primaryBoarding = editingTrip.boardingPoints[0];
+  return {
+    title: editingTrip.title,
+    destination: editingTrip.destination,
+    price: String(editingTrip.price),
+    durationDays: String(editingTrip.durationDays),
+    maxGuests: String(editingTrip.maxGuests || 16),
+    startDate: toDateInputValue(editingTrip.startDate),
+    boardingTime: primaryBoarding?.time ?? '07:00',
+    boardingLocation: primaryBoarding?.location ?? '',
+    allowChildren: editingTrip.passengerConfig.allowChildren,
+    category: editingTrip.category,
+    imageUrl: editingTrip.images[0] || DEFAULT_COVER_URL,
+    includedText: editingTrip.included.join(', '),
+    notIncludedText: editingTrip.notIncluded.join(', '),
+    description: editingTrip.description,
+  };
 }
 
 export const TripCreateModal: React.FC<TripCreateModalProps> = ({
   isOpen,
   onClose,
   agency,
+  editingTrip,
   onCreated,
+  onUpdated,
 }) => {
   const { showToast } = useToast();
-  const [title, setTitle] = useState('');
-  const [destination, setDestination] = useState('');
-  const [price, setPrice] = useState('1290');
-  const [durationDays, setDurationDays] = useState('3');
-  const [category, setCategory] = useState<TripCategory>('NATUREZA');
-  const [imageUrl, setImageUrl] = useState(
-    'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=1200&q=80'
-  );
-  const [description, setDescription] = useState('');
+  const [values, setValues] = useState<TripFormState>(() => buildInitialState(editingTrip));
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      setValues(buildInitialState(editingTrip));
+    }
+  }, [editingTrip, isOpen]);
+
+  const handleFieldChange = <K extends keyof TripFormState>(field: K, value: TripFormState[K]) => {
+    setValues((prev) => ({ ...prev, [field]: value }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
 
+    const parsedIncluded = values.includedText
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const parsedNotIncluded = values.notIncludedText
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const images = values.imageUrl.trim() ? [values.imageUrl.trim()] : [];
+    const durationDays = Math.max(1, Number(values.durationDays));
+    const maxGuests = Math.max(1, Number(values.maxGuests));
+    const numericPrice = Math.max(0, Number(values.price));
+    const startObj = new Date(`${values.startDate}T08:00:00Z`);
+    const endObj = new Date(startObj.getTime() + durationDays * 86400000);
+    const boardingPoints = values.boardingLocation.trim()
+      ? [
+          {
+            id: 'bp-1',
+            time: values.boardingTime || '07:00',
+            location: values.boardingLocation.trim(),
+          },
+        ]
+      : [];
+    const passengerConfig = {
+      allowChildren: values.allowChildren,
+      childAgeLimit: 12,
+      childPriceMultiplier: values.allowChildren ? 0.7 : 1,
+    };
+
     try {
-      const slug = `${slugify(title)}-${Date.now().toString(36).slice(-4)}`;
-      const now = new Date();
-      const end = new Date(now.getTime() + Number(durationDays) * 86400000);
-
-      const created = await createTripInFirestore({
-        agencyId: agency.id,
-        agencyName: agency.name,
-        agencySlug: agency.slug,
-        title: title.trim(),
-        slug,
-        description: description.trim(),
-        destination: destination.trim(),
-        price: Number(price),
-        startDate: now.toISOString(),
-        endDate: end.toISOString(),
-        durationDays: Math.max(1, Number(durationDays)),
-        images: imageUrl.trim() ? [imageUrl.trim()] : [],
-        category,
-        tags: [CATEGORY_LABELS[category]],
-        travelerTypes: ['CASAL', 'AMIGOS'],
-        itinerary: [],
-        boardingPoints: [],
-        paymentMethods: ['Pix', 'Cartão de Crédito'],
-        included: ['Guia credenciado SouNativo'],
-        notIncluded: ['Despesas pessoais'],
-        maxGuests: 16,
-        passengerConfig: { allowChildren: true, childAgeLimit: 12, childPriceMultiplier: 0.7 },
-        rating: 0,
-        totalReviews: 0,
-        featured: false,
-        isActive: true,
-      });
-
-      showToast('Pacote publicado com sucesso no Firestore!', 'success');
-      onCreated(created);
+      if (editingTrip) {
+        const updates = {
+          title: values.title.trim(),
+          destination: values.destination.trim(),
+          price: numericPrice,
+          durationDays,
+          startDate: startObj.toISOString(),
+          endDate: endObj.toISOString(),
+          maxGuests,
+          category: values.category,
+          tags: [CATEGORY_LABELS[values.category]],
+          images,
+          boardingPoints,
+          passengerConfig,
+          included: parsedIncluded.length > 0 ? parsedIncluded : ['Guia credenciado SouNativo'],
+          notIncluded: parsedNotIncluded.length > 0 ? parsedNotIncluded : ['Despesas pessoais'],
+          description: values.description.trim(),
+        };
+        await updateTripInFirestore(editingTrip.id, updates);
+        onUpdated?.({ ...editingTrip, ...updates });
+        showToast('Pacote atualizado no Firestore!', 'success');
+      } else {
+        const slug = `${slugify(values.title)}-${Date.now().toString(36).slice(-4)}`;
+        const created = await createTripInFirestore({
+          agencyId: agency.id,
+          agencyName: agency.name,
+          agencySlug: agency.slug,
+          title: values.title.trim(),
+          slug,
+          description: values.description.trim(),
+          destination: values.destination.trim(),
+          price: numericPrice,
+          startDate: startObj.toISOString(),
+          endDate: endObj.toISOString(),
+          durationDays,
+          images,
+          category: values.category,
+          tags: [CATEGORY_LABELS[values.category]],
+          travelerTypes: ['CASAL', 'AMIGOS'],
+          itinerary: [],
+          boardingPoints,
+          paymentMethods: ['Pix', 'Cartão de Crédito'],
+          included: parsedIncluded.length > 0 ? parsedIncluded : ['Guia credenciado SouNativo'],
+          notIncluded: parsedNotIncluded.length > 0 ? parsedNotIncluded : ['Despesas pessoais'],
+          maxGuests,
+          passengerConfig,
+          rating: 0,
+          totalReviews: 0,
+          featured: false,
+          isActive: true,
+        });
+        onCreated(created);
+        showToast('Pacote publicado com sucesso no Firestore!', 'success');
+      }
       onClose();
     } catch (err) {
-      showToast(err instanceof Error ? err.message : 'Erro ao publicar pacote.', 'error');
+      showToast(err instanceof Error ? err.message : 'Erro ao salvar pacote.', 'error');
     } finally {
       setSaving(false);
     }
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Publicar Nova Experiência">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={editingTrip ? 'Editar Experiência' : 'Publicar Nova Experiência'}
+    >
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label htmlFor="trip-title" className="block text-xs font-semibold text-stone-700 mb-1">
-            Título do pacote
-          </label>
-          <input
-            id="trip-title"
-            required
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Ex: Travessia Chapada Diamantina"
-            className="w-full min-h-[44px] rounded-xl border border-stone-300 px-3 text-sm"
-          />
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
-            <label htmlFor="trip-dest" className="block text-xs font-semibold text-stone-700 mb-1">
-              Destino
-            </label>
-            <input
-              id="trip-dest"
-              required
-              value={destination}
-              onChange={(e) => setDestination(e.target.value)}
-              placeholder="Lençóis, BA"
-              className="w-full min-h-[44px] rounded-xl border border-stone-300 px-3 text-sm"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="trip-cat" className="block text-xs font-semibold text-stone-700 mb-1">
-              Categoria
-            </label>
-            <select
-              id="trip-cat"
-              value={category}
-              onChange={(e) => setCategory(e.target.value as TripCategory)}
-              className="w-full min-h-[44px] rounded-xl border border-stone-300 bg-white px-3 text-sm"
-            >
-              {(Object.keys(CATEGORY_LABELS) as Array<keyof typeof CATEGORY_LABELS>)
-                .filter((k) => k !== 'ALL')
-                .map((key) => (
-                  <option key={key} value={key}>
-                    {CATEGORY_LABELS[key]}
-                  </option>
-                ))}
-            </select>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label htmlFor="trip-price" className="block text-xs font-semibold text-stone-700 mb-1">
-              Valor (R$)
-            </label>
-            <input
-              id="trip-price"
-              type="number"
-              min="0"
-              required
-              value={price}
-              onChange={(e) => setPrice(e.target.value)}
-              className="w-full min-h-[44px] rounded-xl border border-stone-300 px-3 text-sm"
-            />
-          </div>
-          <div>
-            <label htmlFor="trip-days" className="block text-xs font-semibold text-stone-700 mb-1">
-              Duração (dias)
-            </label>
-            <input
-              id="trip-days"
-              type="number"
-              min="1"
-              max="90"
-              required
-              value={durationDays}
-              onChange={(e) => setDurationDays(e.target.value)}
-              className="w-full min-h-[44px] rounded-xl border border-stone-300 px-3 text-sm"
-            />
-          </div>
-        </div>
-
-        <div>
-          <label htmlFor="trip-img" className="block text-xs font-semibold text-stone-700 mb-1">
-            URL da imagem de capa
-          </label>
-          <input
-            id="trip-img"
-            type="url"
-            value={imageUrl}
-            onChange={(e) => setImageUrl(e.target.value)}
-            className="w-full min-h-[44px] rounded-xl border border-stone-300 px-3 text-sm"
-          />
-        </div>
-
-        <div>
-          <label htmlFor="trip-desc" className="block text-xs font-semibold text-stone-700 mb-1">
-            Descrição da experiência
-          </label>
-          <textarea
-            id="trip-desc"
-            rows={3}
-            required
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Descreva os destaques e diferenciais do roteiro..."
-            className="w-full rounded-xl border border-stone-300 p-3 text-sm"
-          />
-        </div>
-
+        <TripFormFields values={values} onChange={handleFieldChange} />
         <div className="flex justify-end gap-3 pt-2">
           <Button variant="ghost" onClick={onClose}>
             Cancelar
           </Button>
           <Button type="submit" loading={saving}>
-            Publicar roteiro
+            {editingTrip ? 'Salvar alterações' : 'Publicar roteiro'}
           </Button>
         </div>
       </form>

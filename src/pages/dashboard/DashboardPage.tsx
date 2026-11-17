@@ -1,12 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { useOutletContext } from 'react-router-dom';
-import { Briefcase, Compass, User } from 'lucide-react';
+import { useOutletContext, useSearchParams } from 'react-router-dom';
+import { Briefcase, Compass, ShieldCheck, User } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/context/ToastContext';
+import { MASTER_ADMIN_EMAIL } from '@/services/firebase.config';
 import { GoogleSignInButton } from '@/components/ui/GoogleSignInButton';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { ClientDashboardView } from './ClientDashboardView';
 import { PartnerDashboardView } from './PartnerDashboardView';
+import { AdminDashboardView } from './AdminDashboardView';
 
 interface OutletContextValue {
   openAuth: (mode: 'login' | 'signup') => void;
@@ -14,14 +17,46 @@ interface OutletContextValue {
 
 export const DashboardPage: React.FC = () => {
   const { openAuth } = useOutletContext<OutletContextValue>();
+  const [searchParams] = useSearchParams();
   const { user, loading, signInWithGoogle } = useAuth();
-  const [viewMode, setViewMode] = useState<'traveler' | 'partner'>('traveler');
+  const { showToast } = useToast();
+  const [googleBusy, setGoogleBusy] = useState(false);
+
+  const isMasterAdmin = Boolean(
+    user &&
+    (user.role === 'ADMIN' ||
+      (MASTER_ADMIN_EMAIL && user.email.toLowerCase() === MASTER_ADMIN_EMAIL))
+  );
+
+  const [viewMode, setViewMode] = useState<'traveler' | 'partner' | 'admin'>(() =>
+    searchParams.get('mode') === 'partner' ? 'partner' : 'traveler'
+  );
 
   useEffect(() => {
-    if (user?.role === 'AGENCY' || user?.role === 'GUIDE') {
+    if (searchParams.get('mode') === 'admin' && isMasterAdmin) {
+      setViewMode('admin');
+    } else if (
+      searchParams.get('mode') === 'partner' ||
+      user?.role === 'AGENCY' ||
+      user?.role === 'GUIDE'
+    ) {
       setViewMode('partner');
+    } else {
+      setViewMode('traveler');
     }
-  }, [user?.role]);
+  }, [isMasterAdmin, searchParams, user?.role, user?.uid]);
+
+  const handleDashboardGoogle = async () => {
+    setGoogleBusy(true);
+    try {
+      const signed = await signInWithGoogle();
+      showToast(`Bem-vindo(a), ${signed.name}!`, 'success');
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Erro ao entrar com Google.', 'error');
+    } finally {
+      setGoogleBusy(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -44,7 +79,7 @@ export const DashboardPage: React.FC = () => {
           <p className="text-sm text-stone-600">
             Entre com sua conta Google para gerenciar reservas, favoritos ou operar sua agência.
           </p>
-          <GoogleSignInButton onClick={() => void signInWithGoogle()} />
+          <GoogleSignInButton loading={googleBusy} onClick={() => void handleDashboardGoogle()} />
           <Button variant="ghost" fullWidth onClick={() => openAuth('login')}>
             Entrar com e-mail e senha
           </Button>
@@ -59,12 +94,13 @@ export const DashboardPage: React.FC = () => {
         <div>
           <div className="flex items-center gap-2 mb-1">
             <Badge tone="primary">{user.role}</Badge>
+            {isMasterAdmin && user.role !== 'ADMIN' && <Badge tone="secondary">Admin Master</Badge>}
             <span className="text-xs text-stone-500">{user.email}</span>
           </div>
           <h1 className="font-serif text-3xl font-bold text-stone-900">Olá, {user.name}</h1>
         </div>
 
-        <div className="inline-flex rounded-xl border border-stone-200 bg-white p-1">
+        <div className="inline-flex flex-wrap rounded-xl border border-stone-200 bg-white p-1 gap-1">
           <button
             type="button"
             onClick={() => setViewMode('traveler')}
@@ -83,10 +119,23 @@ export const DashboardPage: React.FC = () => {
           >
             <Briefcase size={15} /> Modo Agência / Guia
           </button>
+          {isMasterAdmin && (
+            <button
+              type="button"
+              onClick={() => setViewMode('admin')}
+              className={`inline-flex items-center gap-2 min-h-[38px] px-4 rounded-lg text-xs font-semibold transition-colors ${
+                viewMode === 'admin' ? 'bg-primary-500 text-white' : 'text-stone-600'
+              }`}
+            >
+              <ShieldCheck size={15} /> Admin Master
+            </button>
+          )}
         </div>
       </div>
 
-      {viewMode === 'traveler' ? <ClientDashboardView /> : <PartnerDashboardView />}
+      {viewMode === 'traveler' && <ClientDashboardView />}
+      {viewMode === 'partner' && <PartnerDashboardView />}
+      {viewMode === 'admin' && isMasterAdmin && <AdminDashboardView />}
     </div>
   );
 };

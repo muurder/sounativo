@@ -1,19 +1,25 @@
-import React, { useMemo, useState } from 'react';
-import { Calendar, MessageCircle, ShieldCheck, Users } from 'lucide-react';
-import { PaymentMethod, Trip } from '@/types';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Calendar, Info, MessageCircle, ShieldCheck, Users } from 'lucide-react';
+import { PassengerDetail, PaymentMethod, Trip } from '@/types';
 import { formatCurrencyBRL, formatDateRange } from '@/utils/formatters';
 import { buildWhatsAppLink } from '@/utils/whatsapp';
 import { Button } from '@/components/ui/Button';
+import { GuestCounterRow } from './GuestCounterRow';
+import { CompanionFields } from './CompanionFields';
+
+export interface ReservePayload {
+  adults: number;
+  children: number;
+  totalPrice: number;
+  paymentMethod: PaymentMethod;
+  companions: PassengerDetail[];
+  notes: string;
+}
 
 interface BookingCardProps {
   trip: Trip;
   agencyWhatsapp?: string;
-  onReserve: (payload: {
-    adults: number;
-    children: number;
-    totalPrice: number;
-    paymentMethod: PaymentMethod;
-  }) => Promise<void>;
+  onReserve: (payload: ReservePayload) => Promise<void>;
   submitting: boolean;
 }
 
@@ -26,6 +32,25 @@ export const BookingCard: React.FC<BookingCardProps> = ({
   const [adults, setAdults] = useState(1);
   const [childrenCount, setChildrenCount] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('PIX');
+  const [companions, setCompanions] = useState<PassengerDetail[]>([]);
+  const [notes, setNotes] = useState('');
+
+  useEffect(() => {
+    const targetAdults = Math.max(0, adults - 1);
+    const desired: PassengerDetail[] = [
+      ...Array.from({ length: targetAdults }, (_, i) => ({
+        name: companions[i]?.name ?? '',
+        type: 'adult' as const,
+      })),
+      ...Array.from({ length: childrenCount }, (_, i) => ({
+        name: companions[targetAdults + i]?.name ?? '',
+        type: 'child' as const,
+      })),
+    ];
+    setCompanions(desired);
+    // Intentionally sync companion slots only when guest counts change
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [adults, childrenCount]);
 
   const totalPrice = useMemo(() => {
     const childMultiplier = trip.passengerConfig.allowChildren
@@ -35,6 +60,10 @@ export const BookingCard: React.FC<BookingCardProps> = ({
   }, [adults, childrenCount, trip.passengerConfig, trip.price]);
 
   const whatsappUrl = buildWhatsAppLink(agencyWhatsapp, trip);
+  const maxAdultsAllowed = Math.max(1, trip.maxGuests - childrenCount);
+  const maxChildrenAllowed = Math.max(0, trip.maxGuests - adults);
+  const hasCapacity = trip.isActive && trip.maxGuests >= 1;
+  const isShowcaseDemo = trip.id.startsWith('trip-');
 
   return (
     <aside className="rounded-2xl border border-stone-200 bg-white p-6 shadow-editorial sticky top-24">
@@ -48,7 +77,7 @@ export const BookingCard: React.FC<BookingCardProps> = ({
           </p>
         </div>
         <span className="text-xs font-semibold text-stone-600 bg-stone-100 px-2.5 py-1 rounded-full">
-          {trip.durationDays} dias
+          {trip.durationDays} dias · máx. {trip.maxGuests} vagas
         </span>
       </div>
 
@@ -64,66 +93,43 @@ export const BookingCard: React.FC<BookingCardProps> = ({
         </div>
 
         <div className="rounded-xl border border-stone-200 p-3.5 space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Users size={16} className="text-primary-600" />
-              <div>
-                <p className="text-sm font-semibold text-stone-900">Adultos</p>
-                <p className="text-xs text-stone-500">12 anos ou mais</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                aria-label="Diminuir adultos"
-                onClick={() => setAdults((v) => Math.max(1, v - 1))}
-                className="w-11 h-11 rounded-full border border-stone-300 font-bold text-stone-700 hover:bg-stone-100"
-              >
-                -
-              </button>
-              <span className="w-6 text-center text-sm font-bold">{adults}</span>
-              <button
-                type="button"
-                aria-label="Aumentar adultos"
-                onClick={() => setAdults((v) => Math.min(trip.maxGuests, v + 1))}
-                className="w-11 h-11 rounded-full border border-stone-300 font-bold text-stone-700 hover:bg-stone-100"
-              >
-                +
-              </button>
-            </div>
-          </div>
+          <GuestCounterRow
+            label="Adultos"
+            subtitle="12 anos ou mais"
+            count={adults}
+            min={1}
+            max={maxAdultsAllowed}
+            icon={Users}
+            decreaseLabel="Diminuir adultos"
+            increaseLabel="Aumentar adultos"
+            onChange={setAdults}
+          />
 
           {trip.passengerConfig.allowChildren && (
-            <div className="flex items-center justify-between pt-3 border-t border-stone-100">
-              <div>
-                <p className="text-sm font-semibold text-stone-900">Crianças</p>
-                <p className="text-xs text-stone-500">
-                  Até {trip.passengerConfig.childAgeLimit} anos (
-                  {Math.round(trip.passengerConfig.childPriceMultiplier * 100)}% do valor)
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  aria-label="Diminuir crianças"
-                  onClick={() => setChildrenCount((v) => Math.max(0, v - 1))}
-                  className="w-11 h-11 rounded-full border border-stone-300 font-bold text-stone-700 hover:bg-stone-100"
-                >
-                  -
-                </button>
-                <span className="w-6 text-center text-sm font-bold">{childrenCount}</span>
-                <button
-                  type="button"
-                  aria-label="Aumentar crianças"
-                  onClick={() => setChildrenCount((v) => Math.min(trip.maxGuests - adults, v + 1))}
-                  className="w-11 h-11 rounded-full border border-stone-300 font-bold text-stone-700 hover:bg-stone-100"
-                >
-                  +
-                </button>
-              </div>
-            </div>
+            <GuestCounterRow
+              withBorder
+              label="Crianças"
+              subtitle={`Até ${trip.passengerConfig.childAgeLimit} anos (${Math.round(trip.passengerConfig.childPriceMultiplier * 100)}% do valor)`}
+              count={childrenCount}
+              min={0}
+              max={maxChildrenAllowed}
+              decreaseLabel="Diminuir crianças"
+              increaseLabel="Aumentar crianças"
+              onChange={setChildrenCount}
+            />
           )}
         </div>
+
+        <CompanionFields
+          companions={companions}
+          notes={notes}
+          onNotesChange={setNotes}
+          onCompanionChange={(idx, value) =>
+            setCompanions((prev) =>
+              prev.map((item, i) => (i === idx ? { ...item, name: value } : item))
+            )
+          }
+        />
 
         <div>
           <label
@@ -151,15 +157,31 @@ export const BookingCard: React.FC<BookingCardProps> = ({
           </span>
         </div>
 
+        {isShowcaseDemo && (
+          <p className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-[11px] text-amber-900 leading-snug">
+            <Info size={14} className="shrink-0 mt-0.5" />
+            Roteiro curado demonstrativo. Para testar reserva gravada no Firestore, publique um
+            pacote no Modo Agência / Guia.
+          </p>
+        )}
+
         <Button
           fullWidth
           size="lg"
+          disabled={!hasCapacity}
           loading={submitting}
           onClick={() =>
-            void onReserve({ adults, children: childrenCount, totalPrice, paymentMethod })
+            void onReserve({
+              adults,
+              children: childrenCount,
+              totalPrice,
+              paymentMethod,
+              companions,
+              notes: notes.trim(),
+            })
           }
         >
-          Solicitar Reserva
+          {hasCapacity ? 'Solicitar Reserva' : 'Roteiro temporariamente indisponível'}
         </Button>
 
         {whatsappUrl && (

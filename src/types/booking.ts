@@ -38,7 +38,7 @@ export interface TripReview {
   agencyId: string;
   userUid: string;
   userName: string;
-  userPhoto?: string;
+  userPhotoURL?: string;
   rating: number;
   comment: string;
   createdAt?: string;

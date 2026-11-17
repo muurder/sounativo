@@ -5,7 +5,7 @@ import { useTheme } from '@/context/ThemeContext';
 import { Agency, Trip } from '@/types';
 
 export function useAgencyMicrosite(slug: string | undefined) {
-  const { setAgencyTheme, resetTheme } = useTheme();
+  const { setAgencyTheme, setAgencyBrand, resetTheme } = useTheme();
   const [agency, setAgency] = useState<Agency | null>(null);
   const [trips, setTrips] = useState<Trip[]>([]);
   const [loading, setLoading] = useState(true);
@@ -25,15 +25,15 @@ export function useAgencyMicrosite(slug: string | undefined) {
       .then(async (found) => {
         if (!active) return;
         setAgency(found);
-        if (found?.theme?.colors) {
-          setAgencyTheme(found.theme.colors);
-        } else {
-          resetTheme();
-        }
         if (found) {
+          setAgencyBrand({ name: found.name, slug: found.slug, logo: found.logo });
+          if (found.theme) {
+            setAgencyTheme(found.theme);
+          }
           const agencyTrips = await fetchTripsByAgency(found.id);
           if (active) setTrips(agencyTrips);
         } else {
+          resetTheme();
           setTrips([]);
         }
       })
@@ -45,7 +45,7 @@ export function useAgencyMicrosite(slug: string | undefined) {
       active = false;
       resetTheme();
     };
-  }, [resetTheme, setAgencyTheme, slug]);
+  }, [resetTheme, setAgencyBrand, setAgencyTheme, slug]);
 
   return { agency, trips, loading };
 }

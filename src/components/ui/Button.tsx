@@ -59,7 +59,7 @@ export const Button: React.FC<ButtonProps> = ({
       {...props}
     >
       {loading ? <Loader2 size={16} className="animate-spin" aria-hidden="true" /> : leftIcon}
-      <span>{children}</span>
+      <span className="inline-flex items-center justify-center gap-2">{children}</span>
       {!loading && rightIcon}
     </button>
   );
