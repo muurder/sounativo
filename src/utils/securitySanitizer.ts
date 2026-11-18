@@ -54,7 +54,7 @@ export function sanitizePlainText(raw: string | undefined | null, maxLength = 10
 
 /**
  * Generates or retrieves a cryptographically random 256-bit anti-CSRF session token.
- * Complements Firebase Auth Bearer ID tokens (immune to ambient cookie CSRF) for custom state checks.
+ * Complements Firebase Auth signed ID tokens (immune to ambient cookie CSRF) for custom state checks.
  */
 export function getOrCreateCsrfToken(): string {
   if (typeof window === 'undefined') return '';

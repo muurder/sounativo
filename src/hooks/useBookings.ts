@@ -11,16 +11,21 @@ export function useBookings() {
   const { user } = useAuth();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const loadBookings = useCallback(async () => {
     if (!user?.uid) {
       setBookings([]);
+      setError(null);
       return;
     }
     setLoading(true);
+    setError(null);
     try {
       const items = await fetchUserBookings(user.uid);
-      setBookings(items);
+      setBookings(Array.isArray(items) ? items : []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Não foi possível carregar suas reservas.');
     } finally {
       setLoading(false);
     }
@@ -39,14 +44,24 @@ export function useBookings() {
     []
   );
 
-  const updateStatus = useCallback(async (bookingId: string, status: BookingStatus) => {
-    await updateBookingStatusInFirestore(bookingId, status);
-    setBookings((prev) => prev.map((b) => (b.id === bookingId ? { ...b, status } : b)));
-  }, []);
+  const updateStatus = useCallback(
+    async (bookingId: string, status: BookingStatus, cancellationReason?: string) => {
+      await updateBookingStatusInFirestore(bookingId, status, cancellationReason);
+      setBookings((prev) =>
+        prev.map((b) =>
+          b.id === bookingId
+            ? { ...b, status, ...(cancellationReason ? { cancellationReason } : {}) }
+            : b
+        )
+      );
+    },
+    []
+  );
 
   return {
     bookings,
     loading,
+    error,
     reload: loadBookings,
     createBooking,
     updateStatus,

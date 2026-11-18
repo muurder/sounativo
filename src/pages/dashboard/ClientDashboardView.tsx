@@ -11,22 +11,32 @@ import { PrivacySettings } from './PrivacySettings';
 
 export const ClientDashboardView: React.FC = () => {
   const { profile, saving, updateProfile, toggleFavorite } = useUserProfile();
-  const { bookings, loading: bookingsLoading, updateStatus } = useBookings();
-  const { allTrips } = useTrips();
+  const {
+    bookings,
+    loading: bookingsLoading,
+    error: bookingsError,
+    reload: reloadBookings,
+    updateStatus,
+  } = useBookings();
+  const { allTrips, loading: tripsLoading } = useTrips();
   const { showToast } = useToast();
 
   const [activeTab, setActiveTab] = useState<'bookings' | 'favorites' | 'profile' | 'privacy'>(
     'bookings'
   );
 
-  const favoriteTrips = allTrips.filter((t) => profile?.favorites.includes(t.id));
+  const safeFavorites = Array.isArray(profile?.favorites) ? profile.favorites : [];
+  const favoriteTrips = allTrips.filter((t) => Boolean(t?.id && safeFavorites.includes(t.id)));
 
   const handleToggleFavorite = async (tripId: string) => {
     try {
       const added = await toggleFavorite(tripId);
       showToast(added ? 'Roteiro salvo nos favoritos.' : 'Removido dos favoritos.', 'info');
-    } catch {
-      showToast('Não foi possível atualizar seus favoritos.', 'error');
+    } catch (err) {
+      showToast(
+        err instanceof Error ? err.message : 'Não foi possível atualizar seus favoritos.',
+        'error'
+      );
     }
   };
 
@@ -63,6 +73,8 @@ export const ClientDashboardView: React.FC = () => {
         <ClientBookingsTab
           bookings={bookings}
           loading={bookingsLoading}
+          error={bookingsError}
+          onReload={reloadBookings}
           onUpdateStatus={updateStatus}
         />
       )}
@@ -70,8 +82,8 @@ export const ClientDashboardView: React.FC = () => {
       {activeTab === 'favorites' && (
         <TripGrid
           trips={favoriteTrips}
-          loading={false}
-          favorites={profile?.favorites ?? []}
+          loading={tripsLoading}
+          favorites={safeFavorites}
           onToggleFavorite={(id) => void handleToggleFavorite(id)}
         />
       )}

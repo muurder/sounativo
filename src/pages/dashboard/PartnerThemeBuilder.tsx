@@ -1,25 +1,28 @@
 import React, { useState } from 'react';
-import { Palette, Upload } from 'lucide-react';
+import { Lock, Palette, Upload } from 'lucide-react';
 import { Agency, AgencyTheme } from '@/types';
 import { updateAgencyThemeInFirestore } from '@/services/agencyService';
 import { extractColorsFromImage } from '@/utils/colorExtractor';
+import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/context/ToastContext';
 
 interface PartnerThemeBuilderProps {
   agency: Agency;
+  canCustomizeTheme?: boolean;
   onThemeUpdated: (theme: AgencyTheme) => void;
 }
 
 export const PartnerThemeBuilder: React.FC<PartnerThemeBuilderProps> = ({
   agency,
+  canCustomizeTheme = true,
   onThemeUpdated,
 }) => {
   const { showToast } = useToast();
-  const initialTheme = agency.theme;
+  const initialTheme = agency?.theme;
 
-  const [primaryHex, setPrimaryHex] = useState(initialTheme?.colors.primary ?? '#0F4C3A');
-  const [secondaryHex, setSecondaryHex] = useState(initialTheme?.colors.secondary ?? '#C66B3D');
+  const [primaryHex, setPrimaryHex] = useState(initialTheme?.colors?.primary ?? '#0F4C3A');
+  const [secondaryHex, setSecondaryHex] = useState(initialTheme?.colors?.secondary ?? '#C66B3D');
   const [fontPair, setFontPair] = useState<AgencyTheme['fontPair']>(
     initialTheme?.fontPair ?? 'classic'
   );
@@ -50,6 +53,11 @@ export const PartnerThemeBuilder: React.FC<PartnerThemeBuilderProps> = ({
   };
 
   const handleSaveTheme = async () => {
+    if (!canCustomizeTheme) {
+      showToast('Personalização whitelabel completa disponível a partir do plano Básico.', 'info');
+      return;
+    }
+
     setSaving(true);
     const nextTheme: AgencyTheme = {
       colors: {
@@ -80,6 +88,11 @@ export const PartnerThemeBuilder: React.FC<PartnerThemeBuilderProps> = ({
         <div className="flex items-center gap-2">
           <Palette size={20} className="text-secondary-600" />
           <h3 className="font-serif text-xl font-bold text-stone-900">Smart Site Builder</h3>
+          {!canCustomizeTheme && (
+            <Badge tone="neutral">
+              <Lock size={11} /> Plano Básico+
+            </Badge>
+          )}
         </div>
 
         <label className="inline-flex items-center gap-1.5 rounded-xl border border-stone-300 px-3 py-1.5 text-xs font-semibold text-stone-700 hover:bg-stone-50 cursor-pointer">
@@ -156,6 +169,7 @@ export const PartnerThemeBuilder: React.FC<PartnerThemeBuilderProps> = ({
           >
             <option value="solid">Sólido</option>
             <option value="outline">Contorno</option>
+            <option value="ghost">Translúcido</option>
           </select>
         </label>
 
@@ -172,8 +186,15 @@ export const PartnerThemeBuilder: React.FC<PartnerThemeBuilderProps> = ({
         </label>
       </div>
 
-      <Button variant="outline" loading={saving} onClick={() => void handleSaveTheme()}>
-        Salvar identidade do microsite
+      <Button
+        variant="outline"
+        loading={saving}
+        disabled={!canCustomizeTheme}
+        onClick={() => void handleSaveTheme()}
+      >
+        {canCustomizeTheme
+          ? 'Salvar identidade do microsite'
+          : 'Disponível no Plano Básico ou Premium'}
       </Button>
     </section>
   );

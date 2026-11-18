@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { LayoutDashboard, LogOut, Menu } from 'lucide-react';
 import { Logo } from '@/components/ui/Logo';
 import { Button } from '@/components/ui/Button';
+import { SafeImage } from '@/components/ui/SafeImage';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { useAuth } from '@/hooks/useAuth';
 import { getInitials } from '@/utils/formatters';
@@ -24,6 +25,7 @@ const NAV_LINKS = [
 export const Navbar: React.FC<NavbarProps> = ({ onOpenMenu, onOpenAuth, agencyBrand }) => {
   const { user, logout } = useAuth();
   const { pathname } = useLocation();
+  const [avatarFailed, setAvatarFailed] = useState(false);
 
   return (
     <header className="sticky top-0 z-40 border-b border-stone-200/80 bg-white/95 backdrop-blur-md pt-[env(safe-area-inset-top)]">
@@ -50,7 +52,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenMenu, onOpenAuth, agencyBr
 
           {agencyBrand ? (
             <Link to={`/${agencyBrand.slug}`} className="flex items-center gap-2.5 group">
-              <img
+              <SafeImage
                 src={agencyBrand.logo}
                 alt={agencyBrand.name}
                 className="h-9 w-9 rounded-full object-cover border border-stone-200"
@@ -117,8 +119,13 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenMenu, onOpenAuth, agencyBr
                 aria-label={`Perfil de ${user.name}`}
                 className="h-9 w-9 rounded-full overflow-hidden border-2 border-primary-200 bg-primary-500 text-white text-xs font-bold flex items-center justify-center shrink-0"
               >
-                {user.photoURL ? (
-                  <img src={user.photoURL} alt={user.name} className="h-full w-full object-cover" />
+                {user.photoURL && !avatarFailed ? (
+                  <img
+                    src={user.photoURL}
+                    alt={user.name}
+                    onError={() => setAvatarFailed(true)}
+                    className="h-full w-full object-cover"
+                  />
                 ) : (
                   getInitials(user.name)
                 )}

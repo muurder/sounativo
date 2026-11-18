@@ -16,9 +16,12 @@ export const BookingVoucherModal: React.FC<BookingVoucherModalProps> = ({ bookin
 
   if (!booking) return null;
 
+  const passengers = Array.isArray(booking.passengerDetails) ? booking.passengerDetails : [];
+  const totalGuests = (booking.adults ?? 1) + (booking.children ?? 0);
+
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(booking.voucherCode);
+      await navigator.clipboard.writeText(booking.voucherCode || '');
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
@@ -41,7 +44,7 @@ export const BookingVoucherModal: React.FC<BookingVoucherModalProps> = ({ bookin
               Código Voucher
             </p>
             <p className="font-mono text-2xl font-extrabold text-primary-900">
-              {booking.voucherCode}
+              {booking.voucherCode || 'SN-PENDENTE'}
             </p>
           </div>
           <Button
@@ -78,15 +81,22 @@ export const BookingVoucherModal: React.FC<BookingVoucherModalProps> = ({ bookin
 
         <div className="rounded-xl border border-stone-200 p-3.5 space-y-2">
           <p className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-stone-500">
-            <Users size={13} /> Passageiros ({booking.adults + booking.children})
+            <Users size={13} /> Passageiros ({totalGuests})
           </p>
-          <ul className="space-y-1 text-xs text-stone-700">
-            {booking.passengerDetails.map((p, idx) => (
-              <li key={`${p.name}-${idx}`}>
-                {idx + 1}. {p.name} ({p.type === 'child' ? 'Criança' : 'Adulto'})
-              </li>
-            ))}
-          </ul>
+          {passengers.length === 0 ? (
+            <p className="text-xs text-stone-500">
+              Titular: {booking.clientName || 'Viajante SouNativo'}
+            </p>
+          ) : (
+            <ul className="space-y-1 text-xs text-stone-700">
+              {passengers.map((p, idx) => (
+                <li key={`${p?.name ?? 'pax'}-${idx}`}>
+                  {idx + 1}. {p?.name || `Passageiro ${idx + 1}`} (
+                  {p?.type === 'child' ? 'Criança' : 'Adulto'})
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       </div>
     </Modal>

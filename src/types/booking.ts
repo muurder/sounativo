@@ -28,6 +28,7 @@ export interface Booking {
   voucherCode: string;
   passengerDetails: PassengerDetail[];
   notes?: string;
+  cancellationReason?: string;
   createdAt?: string;
   updatedAt?: string;
 }

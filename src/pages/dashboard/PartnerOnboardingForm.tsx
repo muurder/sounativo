@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { createAgencyInFirestore } from '@/services/agencyService';
+import { createAgencyInFirestore, sanitizeAgencySlug } from '@/services/agencyService';
 import { Agency, UserProfile } from '@/types';
 import { isValidSlug, slugify } from '@/utils/slugUtils';
 import { Badge } from '@/components/ui/Badge';
@@ -8,9 +8,12 @@ import { useToast } from '@/context/ToastContext';
 
 interface PartnerOnboardingFormProps {
   profile: UserProfile;
-  onUpdateProfile: (updates: { agencyId: string; role: 'AGENCY' | 'GUIDE' }) => Promise<void>;
+  onUpdateProfile: (updates: { agencyId: string; role?: 'AGENCY' | 'GUIDE' }) => Promise<void>;
   onCreated: (agency: Agency) => void;
 }
+
+const DEFAULT_PARTNER_LOGO =
+  'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=400&q=80';
 
 export const PartnerOnboardingForm: React.FC<PartnerOnboardingFormProps> = ({
   profile,
@@ -21,23 +24,32 @@ export const PartnerOnboardingForm: React.FC<PartnerOnboardingFormProps> = ({
   const [orgName, setOrgName] = useState('');
   const [customSlug, setCustomSlug] = useState('');
   const [city, setCity] = useState('');
+  const [uf, setUf] = useState('SP');
   const [whatsapp, setWhatsapp] = useState('');
   const [isGuide, setIsGuide] = useState(profile.role === 'GUIDE');
   const [cadastur, setCadastur] = useState('');
   const [creatingOrg, setCreatingOrg] = useState(false);
 
+  const cleanUidSuffix =
+    profile.uid
+      .replace(/[^a-zA-Z0-9]/g, '')
+      .slice(0, 4)
+      .toLowerCase() || 'br';
   const baseSlug = slugify(customSlug || orgName);
-  const uidSuffix = profile.uid.slice(0, 4).toLowerCase();
-  const previewSlug = `${baseSlug || 'parceiro'}-${uidSuffix}`;
+  const previewSlug = sanitizeAgencySlug(
+    `${baseSlug || 'parceiro'}-${cleanUidSuffix}`,
+    cleanUidSuffix
+  );
+
   const validPhotoLogo =
     profile.photoURL && /^https?:\/\//i.test(profile.photoURL)
       ? profile.photoURL
-      : 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=400&q=80';
+      : DEFAULT_PARTNER_LOGO;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isValidSlug(previewSlug)) {
-      showToast('O identificador do microsite deve usar apenas letras e hífens.', 'error');
+      showToast('O identificador do microsite deve usar apenas letras, números e hífens.', 'error');
       return;
     }
 
@@ -53,7 +65,7 @@ export const PartnerOnboardingForm: React.FC<PartnerOnboardingFormProps> = ({
         logo: validPhotoLogo,
         whatsapp: whatsapp.trim(),
         city: city.trim(),
-        state: 'BR',
+        state: uf.trim().toUpperCase() || 'BR',
         isGuide,
         cadastur: isGuide ? cadastur.trim() : '',
         heroMode: 'TRIPS',
@@ -62,9 +74,10 @@ export const PartnerOnboardingForm: React.FC<PartnerOnboardingFormProps> = ({
         isActive: true,
       });
 
+      // Preserve ADMIN role when a platform administrator tests partner onboarding
       await onUpdateProfile({
         agencyId: created.id,
-        role: isGuide ? 'GUIDE' : 'AGENCY',
+        ...(profile.role !== 'ADMIN' ? { role: isGuide ? 'GUIDE' : 'AGENCY' } : {}),
       });
 
       onCreated(created);
@@ -78,7 +91,7 @@ export const PartnerOnboardingForm: React.FC<PartnerOnboardingFormProps> = ({
 
   return (
     <form
-      onSubmit={handleSubmit}
+      onSubmit={(e) => void handleSubmit(e)}
       className="max-w-xl rounded-2xl border border-stone-200 bg-white p-6 shadow-card space-y-4"
     >
       <Badge tone="secondary">Onboarding de Parceiro</Badge>
@@ -126,6 +139,7 @@ export const PartnerOnboardingForm: React.FC<PartnerOnboardingFormProps> = ({
           id="partner-org-name"
           required
           minLength={2}
+          maxLength={120}
           value={orgName}
           onChange={(e) => setOrgName(e.target.value)}
           placeholder={isGuide ? 'Seu nome profissional' : 'Nome da agência'}
@@ -139,6 +153,7 @@ export const PartnerOnboardingForm: React.FC<PartnerOnboardingFormProps> = ({
         </label>
         <input
           id="partner-slug"
+          maxLength={80}
           value={customSlug}
           onChange={(e) => setCustomSlug(e.target.value)}
           placeholder={slugify(orgName) || 'minha-agencia'}
@@ -146,18 +161,33 @@ export const PartnerOnboardingForm: React.FC<PartnerOnboardingFormProps> = ({
         />
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div>
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+        <div className="sm:col-span-2">
           <label htmlFor="partner-city" className="block text-xs font-semibold text-stone-700 mb-1">
             Cidade base
           </label>
           <input
             id="partner-city"
             required
+            maxLength={100}
             value={city}
             onChange={(e) => setCity(e.target.value)}
-            placeholder="Cidade base (ex: Paraty)"
+            placeholder="Ex: Paraty"
             className="w-full min-h-[44px] rounded-xl border border-stone-300 px-3 text-sm"
+          />
+        </div>
+        <div>
+          <label htmlFor="partner-uf" className="block text-xs font-semibold text-stone-700 mb-1">
+            UF
+          </label>
+          <input
+            id="partner-uf"
+            required
+            maxLength={2}
+            value={uf}
+            onChange={(e) => setUf(e.target.value.toUpperCase())}
+            placeholder="RJ"
+            className="w-full min-h-[44px] rounded-xl border border-stone-300 px-3 text-sm uppercase"
           />
         </div>
         <div>
@@ -165,10 +195,11 @@ export const PartnerOnboardingForm: React.FC<PartnerOnboardingFormProps> = ({
             htmlFor="partner-whatsapp"
             className="block text-xs font-semibold text-stone-700 mb-1"
           >
-            WhatsApp com DDD
+            WhatsApp
           </label>
           <input
             id="partner-whatsapp"
+            maxLength={30}
             value={whatsapp}
             onChange={(e) => setWhatsapp(e.target.value)}
             placeholder="5511999999999"
@@ -187,6 +218,7 @@ export const PartnerOnboardingForm: React.FC<PartnerOnboardingFormProps> = ({
           </label>
           <input
             id="partner-cadastur"
+            maxLength={50}
             value={cadastur}
             onChange={(e) => setCadastur(e.target.value)}
             placeholder="Número Cadastur (opcional)"

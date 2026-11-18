@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { fetchActiveTrips } from '@/services/tripService';
 import { Trip, TripSearchFilters } from '@/types';
 import { filterAndSortTrips } from '@/utils/tripFilters';
@@ -6,16 +6,41 @@ import { filterAndSortTrips } from '@/utils/tripFilters';
 export function useTrips(filters?: TripSearchFilters) {
   const [trips, setTrips] = useState<Trip[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadTrips = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await fetchActiveTrips();
+      setTrips(Array.isArray(data) ? data : []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Não foi possível carregar o catálogo.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     let active = true;
+    setLoading(true);
+    setError(null);
+
     fetchActiveTrips()
       .then((data) => {
-        if (active) setTrips(data);
+        if (active) {
+          setTrips(Array.isArray(data) ? data : []);
+        }
+      })
+      .catch((err) => {
+        if (active) {
+          setError(err instanceof Error ? err.message : 'Não foi possível carregar o catálogo.');
+        }
       })
       .finally(() => {
         if (active) setLoading(false);
       });
+
     return () => {
       active = false;
     };
@@ -46,13 +71,7 @@ export function useTrips(filters?: TripSearchFilters) {
     trips: filteredTrips,
     allTrips: trips,
     loading,
-    reload: async () => {
-      setLoading(true);
-      try {
-        setTrips(await fetchActiveTrips());
-      } finally {
-        setLoading(false);
-      }
-    },
+    error,
+    reload: loadTrips,
   };
 }

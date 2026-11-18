@@ -1,6 +1,41 @@
-import { collection, doc, getDocs, limit, query, updateDoc } from 'firebase/firestore';
-import { COLLECTIONS, db, serverTimestamp } from './firebase';
-import { Agency, PlanTier, Trip, UserProfile, UserRole } from '@/types';
+import {
+  collection,
+  deleteDoc,
+  doc,
+  getDocs,
+  limit,
+  orderBy,
+  query,
+  updateDoc,
+} from 'firebase/firestore';
+import {
+  COLLECTIONS,
+  db,
+  isMissingIndexError,
+  mapFirestoreError,
+  serverTimestamp,
+  stripUndefined,
+} from './firebase';
+import { normalizeAgencyDoc } from './agencyService';
+import { normalizeBookingDoc } from './bookingService';
+import {
+  ContactMessageRecord,
+  ContactMessageStatus,
+  normalizeContactMessageDoc,
+} from './contactService';
+import { normalizeReviewDoc } from './reviewService';
+import { normalizeTripDoc } from './tripService';
+import { normalizeUserProfileDoc } from './userService';
+import {
+  Agency,
+  Booking,
+  PlanTier,
+  SubscriptionStatus,
+  Trip,
+  TripReview,
+  UserProfile,
+  UserRole,
+} from '@/types';
 
 export interface AdminManagedUser extends UserProfile {
   status?: 'ACTIVE' | 'SUSPENDED';
@@ -12,8 +47,18 @@ export interface AdminManagedAgency extends Agency {
 
 export async function fetchAllUsersForAdmin(): Promise<AdminManagedUser[]> {
   if (!db) return [];
-  const snap = await getDocs(query(collection(db, COLLECTIONS.users), limit(50)));
-  return snap.docs.map((d) => ({ uid: d.id, ...(d.data() as Omit<AdminManagedUser, 'uid'>) }));
+  try {
+    const snap = await getDocs(query(collection(db, COLLECTIONS.users), limit(100)));
+    return snap.docs.map((d) => {
+      const raw = d.data() as Record<string, unknown>;
+      const base = normalizeUserProfileDoc(d.id, raw);
+      const status =
+        raw.status === 'SUSPENDED' || raw.status === 'ACTIVE' ? raw.status : ('ACTIVE' as const);
+      return { ...base, status };
+    });
+  } catch (err: unknown) {
+    throw mapFirestoreError(err, 'Erro ao listar usuários no console administrativo.');
+  }
 }
 
 export async function updateUserRoleAsAdmin(
@@ -22,44 +67,218 @@ export async function updateUserRoleAsAdmin(
   status?: 'ACTIVE' | 'SUSPENDED'
 ): Promise<void> {
   if (!db) throw new Error('Firestore não configurado.');
-  await updateDoc(doc(db, COLLECTIONS.users, uid), {
-    role,
-    ...(status ? { status } : {}),
-    updatedAt: serverTimestamp(),
-  });
+  if (!uid) throw new Error('UID do usuário inválido.');
+
+  try {
+    await updateDoc(doc(db, COLLECTIONS.users, uid), {
+      ...stripUndefined({
+        role,
+        ...(status ? { status } : {}),
+      }),
+      updatedAt: serverTimestamp(),
+    });
+  } catch (err: unknown) {
+    throw mapFirestoreError(err, 'Erro ao atualizar papel ou status do usuário.');
+  }
 }
 
 export async function fetchAllAgenciesForAdmin(): Promise<AdminManagedAgency[]> {
   if (!db) return [];
-  const snap = await getDocs(query(collection(db, COLLECTIONS.agencies), limit(50)));
-  return snap.docs.map((d) => ({
-    id: d.id,
-    ...(d.data() as Omit<AdminManagedAgency, 'id'>),
-  }));
+  try {
+    const snap = await getDocs(query(collection(db, COLLECTIONS.agencies), limit(100)));
+    return snap.docs.map((d) => {
+      const raw = d.data() as Record<string, unknown>;
+      const base = normalizeAgencyDoc(d.id, raw);
+      return {
+        ...base,
+        verified: Boolean(raw.verified || raw.isVerified),
+      };
+    });
+  } catch (err: unknown) {
+    throw mapFirestoreError(err, 'Erro ao listar agências e guias no console administrativo.');
+  }
 }
 
 export async function updateAgencyAdminControls(
   agencyId: string,
-  updates: { verified?: boolean; isActive?: boolean; subscriptionPlan?: PlanTier }
+  updates: {
+    verified?: boolean;
+    isActive?: boolean;
+    subscriptionPlan?: PlanTier;
+    subscriptionStatus?: SubscriptionStatus;
+  }
 ): Promise<void> {
   if (!db) throw new Error('Firestore não configurado.');
-  await updateDoc(doc(db, COLLECTIONS.agencies, agencyId), {
-    ...updates,
-    ...(updates.subscriptionPlan ? { subscriptionStatus: 'ACTIVE' } : {}),
-    updatedAt: serverTimestamp(),
-  });
+  if (!agencyId) throw new Error('Identificador da agência inválido.');
+
+  const resolvedSubscriptionStatus =
+    updates.subscriptionStatus ?? (updates.subscriptionPlan ? ('ACTIVE' as const) : undefined);
+
+  try {
+    await updateDoc(doc(db, COLLECTIONS.agencies, agencyId), {
+      ...stripUndefined({
+        ...updates,
+        ...(updates.verified !== undefined ? { isVerified: updates.verified } : {}),
+        ...(resolvedSubscriptionStatus ? { subscriptionStatus: resolvedSubscriptionStatus } : {}),
+      }),
+      updatedAt: serverTimestamp(),
+    });
+  } catch (err: unknown) {
+    throw mapFirestoreError(err, 'Erro ao aplicar controles administrativos na agência.');
+  }
 }
 
 export async function fetchAllTripsForAdmin(): Promise<Trip[]> {
   if (!db) return [];
-  const snap = await getDocs(query(collection(db, COLLECTIONS.trips), limit(50)));
-  return snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Trip, 'id'>) }));
+  try {
+    const snap = await getDocs(query(collection(db, COLLECTIONS.trips), limit(100)));
+    return snap.docs.map((d) => normalizeTripDoc(d.id, d.data() as Record<string, unknown>));
+  } catch (err: unknown) {
+    throw mapFirestoreError(err, 'Erro ao listar pacotes no console administrativo.');
+  }
 }
 
 export async function toggleTripFeaturedAsAdmin(tripId: string, featured: boolean): Promise<void> {
+  return updateTripAdminControls(tripId, { featured });
+}
+
+export async function updateTripAdminControls(
+  tripId: string,
+  updates: { featured?: boolean; isActive?: boolean }
+): Promise<void> {
   if (!db) throw new Error('Firestore não configurado.');
-  await updateDoc(doc(db, COLLECTIONS.trips, tripId), {
-    featured,
-    updatedAt: serverTimestamp(),
+  if (!tripId) throw new Error('Identificador do pacote inválido.');
+
+  try {
+    await updateDoc(doc(db, COLLECTIONS.trips, tripId), {
+      ...stripUndefined({
+        ...(updates.featured !== undefined ? { featured: Boolean(updates.featured) } : {}),
+        ...(updates.isActive !== undefined ? { isActive: Boolean(updates.isActive) } : {}),
+      }),
+      updatedAt: serverTimestamp(),
+    });
+  } catch (err: unknown) {
+    throw mapFirestoreError(err, 'Erro ao atualizar pacote no console administrativo.');
+  }
+}
+
+export async function deleteTripAsAdmin(tripId: string): Promise<void> {
+  if (!db) throw new Error('Firestore não configurado.');
+  if (!tripId) throw new Error('Identificador do pacote inválido.');
+
+  try {
+    await deleteDoc(doc(db, COLLECTIONS.trips, tripId));
+  } catch (err: unknown) {
+    throw mapFirestoreError(err, 'Erro ao excluir pacote no console administrativo.');
+  }
+}
+
+function sortByCreatedAtDesc<T extends { createdAt?: string }>(items: T[]): T[] {
+  return [...items].sort((a, b) => {
+    const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+    const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+    return timeB - timeA;
   });
+}
+
+export async function fetchAllBookingsForAdmin(): Promise<Booking[]> {
+  if (!db) return [];
+  try {
+    const snap = await getDocs(
+      query(collection(db, COLLECTIONS.bookings), orderBy('createdAt', 'desc'), limit(100))
+    );
+    return snap.docs.map((d) => normalizeBookingDoc(d.id, d.data() as Record<string, unknown>));
+  } catch (err: unknown) {
+    if (isMissingIndexError(err)) {
+      const fallbackSnap = await getDocs(query(collection(db, COLLECTIONS.bookings), limit(100)));
+      return sortByCreatedAtDesc(
+        fallbackSnap.docs.map((d) => normalizeBookingDoc(d.id, d.data() as Record<string, unknown>))
+      );
+    }
+    throw mapFirestoreError(err, 'Erro ao listar reservas no console administrativo.');
+  }
+}
+
+export async function fetchAllContactMessagesForAdmin(): Promise<ContactMessageRecord[]> {
+  if (!db) return [];
+  try {
+    const snap = await getDocs(
+      query(collection(db, COLLECTIONS.contactMessages), orderBy('createdAt', 'desc'), limit(100))
+    );
+    return snap.docs.map((d) =>
+      normalizeContactMessageDoc(d.id, d.data() as Record<string, unknown>)
+    );
+  } catch (err: unknown) {
+    if (isMissingIndexError(err)) {
+      const fallbackSnap = await getDocs(
+        query(collection(db, COLLECTIONS.contactMessages), limit(100))
+      );
+      return sortByCreatedAtDesc(
+        fallbackSnap.docs.map((d) =>
+          normalizeContactMessageDoc(d.id, d.data() as Record<string, unknown>)
+        )
+      );
+    }
+    throw mapFirestoreError(
+      err,
+      'Erro ao listar mensagens e solicitações no console administrativo.'
+    );
+  }
+}
+
+export async function updateContactMessageStatusAsAdmin(
+  messageId: string,
+  status: ContactMessageStatus
+): Promise<void> {
+  if (!db) throw new Error('Firestore não configurado.');
+  if (!messageId) throw new Error('Identificador da mensagem inválido.');
+
+  try {
+    await updateDoc(doc(db, COLLECTIONS.contactMessages, messageId), {
+      status,
+      updatedAt: serverTimestamp(),
+    });
+  } catch (err: unknown) {
+    throw mapFirestoreError(err, 'Erro ao atualizar status da solicitação.');
+  }
+}
+
+export async function deleteContactMessageAsAdmin(messageId: string): Promise<void> {
+  if (!db) throw new Error('Firestore não configurado.');
+  if (!messageId) throw new Error('Identificador da mensagem inválido.');
+
+  try {
+    await deleteDoc(doc(db, COLLECTIONS.contactMessages, messageId));
+  } catch (err: unknown) {
+    throw mapFirestoreError(err, 'Erro ao excluir solicitação de atendimento.');
+  }
+}
+
+export async function fetchAllReviewsForAdmin(): Promise<TripReview[]> {
+  if (!db) return [];
+  try {
+    const snap = await getDocs(
+      query(collection(db, COLLECTIONS.reviews), orderBy('createdAt', 'desc'), limit(100))
+    );
+    return snap.docs.map((d) => normalizeReviewDoc(d.id, d.data() as Record<string, unknown>));
+  } catch (err: unknown) {
+    if (isMissingIndexError(err)) {
+      const fallbackSnap = await getDocs(query(collection(db, COLLECTIONS.reviews), limit(100)));
+      return sortByCreatedAtDesc(
+        fallbackSnap.docs.map((d) => normalizeReviewDoc(d.id, d.data() as Record<string, unknown>))
+      );
+    }
+    throw mapFirestoreError(err, 'Erro ao listar avaliações no console administrativo.');
+  }
+}
+
+export async function deleteReviewAsAdmin(reviewId: string): Promise<void> {
+  if (!db) throw new Error('Firestore não configurado.');
+  if (!reviewId) throw new Error('Identificador da avaliação inválido.');
+
+  try {
+    await deleteDoc(doc(db, COLLECTIONS.reviews, reviewId));
+  } catch (err: unknown) {
+    throw mapFirestoreError(err, 'Erro ao excluir avaliação.');
+  }
 }

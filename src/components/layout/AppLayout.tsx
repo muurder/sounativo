@@ -6,6 +6,7 @@ import { BottomNav } from './BottomNav';
 import { Footer } from './Footer';
 import { AuthModal } from '@/components/auth/AuthModal';
 import { CookieBanner } from '@/components/privacy/CookieBanner';
+import { ErrorBoundary } from '@/components/feedback/ErrorBoundary';
 import { useTheme } from '@/context/ThemeContext';
 
 export const AppLayout: React.FC = () => {
@@ -51,7 +52,9 @@ export const AppLayout: React.FC = () => {
       />
 
       <main id="main-content" className="flex-1 w-full">
-        <Outlet context={{ openAuth: (mode: 'login' | 'signup') => setAuthModalMode(mode) }} />
+        <ErrorBoundary resetKey={pathname}>
+          <Outlet context={{ openAuth: (mode: 'login' | 'signup') => setAuthModalMode(mode) }} />
+        </ErrorBoundary>
       </main>
 
       <Footer />

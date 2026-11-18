@@ -9,7 +9,7 @@ import { SafeImage } from '@/components/ui/SafeImage';
 import { HeroSearchBar } from './HeroSearchBar';
 
 interface HeroSectionProps {
-  highlightTrip?: Trip;
+  highlightTrip?: Trip | null;
 }
 
 const HERO_TRUST_POINTS = [
@@ -76,7 +76,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ highlightTrip }) => {
                 className="group flex items-center gap-3.5 rounded-2xl border border-white/25 bg-primary-950/75 p-3.5 backdrop-blur-md shadow-2xl hover:bg-primary-950/90 transition-colors"
               >
                 <SafeImage
-                  src={highlightTrip.images[0]}
+                  src={highlightTrip.images?.[0] || heroImage}
                   alt={highlightTrip.title}
                   className="h-20 w-20 rounded-xl object-cover shrink-0 border border-white/15"
                 />
@@ -90,7 +90,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ highlightTrip }) => {
                   </h2>
                   <p className="inline-flex items-center gap-1 text-xs text-stone-300">
                     <MapPin size={11} className="text-secondary-300 shrink-0" />
-                    <span className="truncate">{highlightTrip.destination}</span>
+                    <span className="truncate">{highlightTrip.destination || 'Brasil'}</span>
                   </p>
                   <p className="text-xs text-stone-200">
                     <strong className="text-sm font-extrabold text-white">

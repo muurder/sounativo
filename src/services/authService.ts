@@ -38,6 +38,12 @@ export function mapFirebaseAuthError(code: string): string {
       return 'Este e-mail já está cadastrado.';
     case 'auth/weak-password':
       return 'A senha deve ter no mínimo 6 caracteres.';
+    case 'auth/user-disabled':
+      return 'Esta conta foi suspensa pela administração. Entre em contato com o suporte.';
+    case 'auth/requires-recent-login':
+      return 'Por segurança, esta operação exige um login recente. Saia e entre novamente.';
+    case 'auth/network-request-failed':
+      return 'Falha de conexão de rede ao contatar o Firebase Auth. Verifique sua internet.';
     case 'auth/too-many-requests':
       return 'Muitas tentativas seguidas. Aguarde alguns instantes.';
     default:
@@ -110,7 +116,10 @@ export async function registerWithEmail(
   role: Exclude<UserRole, 'ADMIN'> = 'CLIENT'
 ): Promise<UserProfile> {
   if (!auth) throw new Error('Firebase Auth não configurado.');
-  const cleanName = name.trim();
+  const cleanName = name.trim().slice(0, 120);
+  if (!cleanName) {
+    throw new Error('Informe seu nome completo.');
+  }
   setPendingProfileMeta({ name: cleanName, role });
 
   let credential: UserCredential;
@@ -134,13 +143,22 @@ export async function registerWithEmail(
 export async function logoutFirebase(): Promise<void> {
   setPendingProfileMeta(null);
   if (!auth) return;
-  await signOut(auth);
+  try {
+    await signOut(auth);
+  } catch (err: unknown) {
+    const code = (err as { code?: string }).code ?? '';
+    throw new Error(mapFirebaseAuthError(code));
+  }
 }
 
 export async function requestPasswordReset(email: string): Promise<void> {
   if (!auth) throw new Error('Firebase Auth não configurado.');
+  const cleanEmail = email.trim();
+  if (!cleanEmail) {
+    throw new Error('Informe um endereço de e-mail válido.');
+  }
   try {
-    await sendPasswordResetEmail(auth, email.trim());
+    await sendPasswordResetEmail(auth, cleanEmail);
   } catch (err: unknown) {
     const code = (err as { code?: string }).code ?? '';
     throw new Error(mapFirebaseAuthError(code));

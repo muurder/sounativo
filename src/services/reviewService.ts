@@ -1,26 +1,139 @@
 import { addDoc, collection, getDocs, limit, orderBy, query, where } from 'firebase/firestore';
-import { COLLECTIONS, db, serverTimestamp } from './firebase';
+import {
+  COLLECTIONS,
+  db,
+  isMissingIndexError,
+  mapFirestoreError,
+  serverTimestamp,
+  stripUndefined,
+  toIsoTimestamp,
+} from './firebase';
+import { isSeedShowcaseTrip } from './bookingService';
 import { SEED_REVIEWS } from './seedCatalog';
 import { TripReview } from '@/types';
 
+export function normalizeReviewDoc(id: string, raw: Record<string, unknown>): TripReview {
+  const createdAt = toIsoTimestamp(raw.createdAt);
+  const numericRating = Math.round(Number(raw.rating) || 5);
+
+  return {
+    id,
+    tripId: typeof raw.tripId === 'string' ? raw.tripId : '',
+    agencyId: typeof raw.agencyId === 'string' ? raw.agencyId : '',
+    userUid: typeof raw.userUid === 'string' ? raw.userUid : '',
+    userName:
+      typeof raw.userName === 'string' && raw.userName.trim()
+        ? raw.userName.trim()
+        : 'Viajante SouNativo',
+    ...(typeof raw.userPhotoURL === 'string' && raw.userPhotoURL.length > 0
+      ? { userPhotoURL: raw.userPhotoURL }
+      : {}),
+    rating: Math.max(1, Math.min(5, numericRating)),
+    comment: typeof raw.comment === 'string' ? raw.comment : '',
+    ...(createdAt ? { createdAt } : {}),
+  };
+}
+
+function sortReviewsByRecent(items: TripReview[]): TripReview[] {
+  return [...items].sort((a, b) => {
+    const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+    const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+    return timeB - timeA;
+  });
+}
+
+export function computeReviewStats(reviews: TripReview[]): {
+  rating: number;
+  totalReviews: number;
+} {
+  if (!Array.isArray(reviews) || reviews.length === 0) {
+    return { rating: 0, totalReviews: 0 };
+  }
+  const sum = reviews.reduce((acc, r) => acc + (Number(r.rating) || 0), 0);
+  const avg = Math.round((sum / reviews.length) * 10) / 10;
+  return { rating: avg, totalReviews: reviews.length };
+}
+
 export async function fetchReviewsForTrip(tripId: string): Promise<TripReview[]> {
+  if (!tripId) return [];
+
   if (db) {
     try {
-      const q = query(
-        collection(db, COLLECTIONS.reviews),
-        where('tripId', '==', tripId),
-        orderBy('createdAt', 'desc'),
-        limit(20)
-      );
-      const snap = await getDocs(q);
-      if (!snap.empty) {
-        return snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<TripReview, 'id'>) }));
+      let liveReviews: TripReview[] = [];
+      try {
+        const q = query(
+          collection(db, COLLECTIONS.reviews),
+          where('tripId', '==', tripId),
+          orderBy('createdAt', 'desc'),
+          limit(30)
+        );
+        const snap = await getDocs(q);
+        liveReviews = snap.docs.map((d) =>
+          normalizeReviewDoc(d.id, d.data() as Record<string, unknown>)
+        );
+      } catch (innerErr: unknown) {
+        if (!isMissingIndexError(innerErr)) throw innerErr;
+        console.warn(
+          '[reviewService.fetchReviewsForTrip] Índice composto pendente; ordenando em memória.'
+        );
+        const fallbackSnap = await getDocs(
+          query(collection(db, COLLECTIONS.reviews), where('tripId', '==', tripId), limit(30))
+        );
+        liveReviews = sortReviewsByRecent(
+          fallbackSnap.docs.map((d) =>
+            normalizeReviewDoc(d.id, d.data() as Record<string, unknown>)
+          )
+        );
       }
-    } catch {
-      // Fallback to curated showcase reviews
+
+      if (liveReviews.length > 0) {
+        return liveReviews;
+      }
+    } catch (err) {
+      console.warn('[reviewService.fetchReviewsForTrip] Fallback para avaliações curadas:', err);
     }
   }
   return SEED_REVIEWS.filter((r) => r.tripId === tripId);
+}
+
+export async function fetchReviewsByAgency(agencyId: string): Promise<TripReview[]> {
+  if (!agencyId) return [];
+
+  if (db) {
+    try {
+      let liveReviews: TripReview[] = [];
+      try {
+        const q = query(
+          collection(db, COLLECTIONS.reviews),
+          where('agencyId', '==', agencyId),
+          orderBy('createdAt', 'desc'),
+          limit(50)
+        );
+        const snap = await getDocs(q);
+        liveReviews = snap.docs.map((d) =>
+          normalizeReviewDoc(d.id, d.data() as Record<string, unknown>)
+        );
+      } catch (innerErr: unknown) {
+        if (!isMissingIndexError(innerErr)) throw innerErr;
+        const fallbackSnap = await getDocs(
+          query(collection(db, COLLECTIONS.reviews), where('agencyId', '==', agencyId), limit(50))
+        );
+        liveReviews = sortReviewsByRecent(
+          fallbackSnap.docs.map((d) =>
+            normalizeReviewDoc(d.id, d.data() as Record<string, unknown>)
+          )
+        );
+      }
+
+      if (liveReviews.length > 0) {
+        return liveReviews;
+      }
+    } catch (err) {
+      console.warn('[reviewService.fetchReviewsByAgency] Fallback para avaliações curadas:', err);
+    }
+  }
+
+  return SEED_REVIEWS.filter((r) => r.agencyId === agencyId);
 }
 
 export async function fetchRecentReviews(): Promise<TripReview[]> {
@@ -29,12 +142,14 @@ export async function fetchRecentReviews(): Promise<TripReview[]> {
       const q = query(collection(db, COLLECTIONS.reviews), orderBy('createdAt', 'desc'), limit(8));
       const snap = await getDocs(q);
       if (!snap.empty) {
-        const live = snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<TripReview, 'id'>) }));
+        const live = snap.docs.map((d) =>
+          normalizeReviewDoc(d.id, d.data() as Record<string, unknown>)
+        );
         const seen = new Set(live.map((r) => r.id));
         return [...live, ...SEED_REVIEWS.filter((r) => !seen.has(r.id))].slice(0, 8);
       }
-    } catch {
-      // Fallback to showcase reviews
+    } catch (err) {
+      console.warn('[reviewService.fetchRecentReviews] Fallback para avaliações curadas:', err);
     }
   }
   return SEED_REVIEWS;
@@ -55,19 +170,46 @@ export async function createReviewInFirestore(input: CreateReviewInput): Promise
     throw new Error('Conecte o Firebase (.env.local) para publicar avaliações.');
   }
 
+  if (isSeedShowcaseTrip(input.tripId)) {
+    throw new Error(
+      'Este pacote faz parte da vitrine ilustrativa. Avaliações públicas estão habilitadas em pacotes publicados no Firestore.'
+    );
+  }
+
+  const cleanComment = input.comment.trim().slice(0, 2000);
+  if (cleanComment.length < 3) {
+    throw new Error('Escreva um comentário com pelo menos 3 caracteres.');
+  }
+
+  // Anti-spam check: prevent duplicate reviews on the same trip by the same user
+  const existingUserReviews = await getDocs(
+    query(collection(db, COLLECTIONS.reviews), where('userUid', '==', input.userUid), limit(50))
+  );
+  const alreadyReviewed = existingUserReviews.docs.some(
+    (docSnap) => docSnap.data().tripId === input.tripId
+  );
+  if (alreadyReviewed) {
+    throw new Error('Você já publicou uma avaliação para este roteiro.');
+  }
+
+  const validPhoto =
+    input.userPhotoURL && /^https?:\/\//i.test(input.userPhotoURL)
+      ? input.userPhotoURL.slice(0, 2048)
+      : undefined;
+
   const sanitized = {
-    tripId: input.tripId,
-    agencyId: input.agencyId,
-    userUid: input.userUid,
-    userName: input.userName.trim().slice(0, 120),
-    ...(input.userPhotoURL ? { userPhotoURL: input.userPhotoURL } : {}),
+    tripId: input.tripId.trim().slice(0, 128),
+    agencyId: input.agencyId.trim().slice(0, 128),
+    userUid: input.userUid.trim().slice(0, 128),
+    userName: (input.userName.trim() || 'Viajante SouNativo').slice(0, 120),
+    ...(validPhoto ? { userPhotoURL: validPhoto } : {}),
     rating: Math.max(1, Math.min(5, Math.round(input.rating))),
-    comment: input.comment.trim().slice(0, 2000),
+    comment: cleanComment,
   };
 
   try {
     const ref = await addDoc(collection(db, COLLECTIONS.reviews), {
-      ...sanitized,
+      ...stripUndefined(sanitized as unknown as Record<string, unknown>),
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     });
@@ -80,9 +222,9 @@ export async function createReviewInFirestore(input: CreateReviewInput): Promise
     const code = (err as { code?: string }).code ?? '';
     if (code === 'permission-denied') {
       throw new Error(
-        'Este pacote faz parte da vitrine ilustrativa. Avaliações públicas estão habilitadas em pacotes publicados no Firestore.'
+        'Não foi possível publicar sua avaliação: verifique se o roteiro está ativo e se sua sessão está autenticada.'
       );
     }
-    throw err;
+    throw mapFirestoreError(err, 'Erro ao publicar sua avaliação.');
   }
 }

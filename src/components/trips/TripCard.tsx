@@ -16,18 +16,27 @@ interface TripCardProps {
   basePath?: string;
 }
 
+const FALLBACK_TRIP_COVER =
+  'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=1000&q=80';
+
 export const TripCard: React.FC<TripCardProps> = ({
   trip,
   isFavorite = false,
   onToggleFavorite,
   basePath = '/viagem',
 }) => {
+  if (!trip) return null;
+
   const detailPath = `${basePath}/${trip.slug || trip.id}`;
-  const coverImage =
-    trip.images[0] ||
-    'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=1000&q=80';
-  const boardingCity = trip.boardingPoints[0]?.location;
-  const smallGroup = trip.maxGuests <= 12;
+  const coverImage = trip.images?.[0] || FALLBACK_TRIP_COVER;
+  const boardingCity = trip.boardingPoints?.[0]?.location;
+  const maxGuests = trip.maxGuests ?? 16;
+  const smallGroup = maxGuests <= 12;
+  const price = trip.price ?? 0;
+  const numericRating =
+    typeof trip.rating === 'number' && Number.isFinite(trip.rating) ? trip.rating : 0;
+  const hasRating = numericRating > 0 || (trip.totalReviews ?? 0) > 0;
+  const categoryLabel = CATEGORY_LABELS[trip.category] ?? 'Experiência';
 
   return (
     <article className="group flex flex-col overflow-hidden rounded-2xl border border-stone-200/90 bg-white shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:border-primary-300 hover:shadow-editorial">
@@ -51,7 +60,7 @@ export const TripCard: React.FC<TripCardProps> = ({
             tone="neutral"
             className="bg-white/95 text-stone-900 border-white/60 backdrop-blur-sm"
           >
-            {CATEGORY_LABELS[trip.category]}
+            {categoryLabel}
           </Badge>
           {smallGroup && (
             <Badge
@@ -85,13 +94,13 @@ export const TripCard: React.FC<TripCardProps> = ({
         )}
 
         <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-white text-xs font-medium">
-          <span className="inline-flex items-center gap-1 rounded-full bg-stone-950/60 px-2.5 py-1 backdrop-blur-sm">
-            <MapPin size={13} className="text-secondary-300" />
-            {trip.destination}
+          <span className="inline-flex items-center gap-1 rounded-full bg-stone-950/60 px-2.5 py-1 backdrop-blur-sm max-w-[70%] truncate">
+            <MapPin size={13} className="text-secondary-300 shrink-0" />
+            <span className="truncate">{trip.destination || 'Brasil'}</span>
           </span>
           <span className="inline-flex items-center gap-1 rounded-full bg-stone-950/60 px-2.5 py-1 backdrop-blur-sm">
             <Star size={13} className="fill-amber-400 text-amber-400" />
-            {trip.rating.toFixed(1)}
+            {hasRating ? numericRating.toFixed(1) : 'Novo'}
           </span>
         </div>
       </div>
@@ -99,7 +108,7 @@ export const TripCard: React.FC<TripCardProps> = ({
       <div className="flex flex-1 flex-col p-5">
         <div className="flex items-center gap-1.5 text-xs font-semibold text-primary-700 mb-1.5">
           <ShieldCheck size={14} aria-hidden="true" />
-          <span className="truncate">{trip.agencyName}</span>
+          <span className="truncate">{trip.agencyName || 'Agência Verificada'}</span>
         </div>
 
         <Link to={detailPath} className="group/title">
@@ -115,15 +124,15 @@ export const TripCard: React.FC<TripCardProps> = ({
               {formatDateRange(trip.startDate, trip.endDate)}
             </span>
             <span className="text-stone-400">·</span>
-            <span>{trip.durationDays} dias</span>
+            <span>{trip.durationDays ?? 1} dias</span>
           </div>
           <div className="flex items-center justify-between gap-2 text-stone-500">
             <span className="truncate">
-              {boardingCity ? `Saída: ${boardingCity}` : `Até ${trip.maxGuests} vagas`}
+              {boardingCity ? `Saída: ${boardingCity}` : `Até ${maxGuests} vagas`}
             </span>
             <span className="inline-flex items-center gap-1 shrink-0 font-medium text-stone-600">
               <Users size={13} className="text-stone-400" />
-              máx. {trip.maxGuests}
+              máx. {maxGuests}
             </span>
           </div>
         </div>
@@ -134,10 +143,10 @@ export const TripCard: React.FC<TripCardProps> = ({
               Por pessoa · Pix ou cartão
             </p>
             <p className="text-2xl font-extrabold text-primary-700 tabular-nums leading-tight">
-              {formatCurrencyBRL(trip.price)}
+              {formatCurrencyBRL(price)}
             </p>
             <p className="text-[11px] text-stone-500">
-              ou até 10x de {formatCurrencyBRL(Math.ceil(trip.price / 10))}
+              ou até 10x de {formatCurrencyBRL(Math.ceil(price / 10))}
             </p>
           </div>
 

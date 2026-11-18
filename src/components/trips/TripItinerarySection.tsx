@@ -15,6 +15,11 @@ const DEFAULT_PACKING_ITEMS = [
 ] as const;
 
 export const TripItinerarySection: React.FC<TripItinerarySectionProps> = ({ trip }) => {
+  const itinerary = Array.isArray(trip?.itinerary) ? trip.itinerary : [];
+  const boardingPoints = Array.isArray(trip?.boardingPoints) ? trip.boardingPoints : [];
+  const included = Array.isArray(trip?.included) ? trip.included : [];
+  const notIncluded = Array.isArray(trip?.notIncluded) ? trip.notIncluded : [];
+
   return (
     <div className="space-y-8">
       <section className="rounded-2xl border border-primary-200 bg-primary-50/60 p-4 sm:p-5 flex items-start gap-3.5">
@@ -27,24 +32,24 @@ export const TripItinerarySection: React.FC<TripItinerarySectionProps> = ({ trip
           </h2>
           <p className="text-xs sm:text-sm text-stone-600 leading-relaxed">
             Seu pedido registra a pré-reserva diretamente com{' '}
-            <strong className="text-stone-800">{trip.agencyName}</strong> sem taxas ocultas de
-            plataforma. Confirme detalhes climáticos, vagas e pagamento direto no painel ou
-            WhatsApp.
+            <strong className="text-stone-800">{trip?.agencyName || 'a operadora parceira'}</strong>{' '}
+            sem taxas ocultas de plataforma. Confirme detalhes climáticos, vagas e pagamento direto
+            no painel ou WhatsApp.
           </p>
         </div>
       </section>
 
-      {trip.itinerary.length > 0 && (
+      {itinerary.length > 0 && (
         <section className="space-y-4">
           <h2 className="font-serif text-2xl font-bold text-stone-900">Roteiro dia a dia</h2>
           <div className="space-y-3">
-            {trip.itinerary.map((day) => (
+            {itinerary.map((day, idx) => (
               <div
-                key={day.day}
+                key={`${day.day ?? idx}-${day.title}`}
                 className="flex gap-4 rounded-2xl border border-stone-200 bg-white p-4 shadow-card"
               >
                 <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary-600 text-xs font-bold text-white">
-                  D{day.day}
+                  D{day.day ?? idx + 1}
                 </span>
                 <div>
                   <h3 className="font-semibold text-stone-900">{day.title}</h3>
@@ -56,20 +61,20 @@ export const TripItinerarySection: React.FC<TripItinerarySectionProps> = ({ trip
         </section>
       )}
 
-      {trip.boardingPoints.length > 0 && (
+      {boardingPoints.length > 0 && (
         <section className="space-y-3">
           <h2 className="font-serif text-2xl font-bold text-stone-900">Pontos de embarque</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {trip.boardingPoints.map((bp) => (
+            {boardingPoints.map((bp, idx) => (
               <div
-                key={bp.id}
+                key={bp.id || `bp-${idx}`}
                 className="flex items-start gap-3 rounded-2xl border border-stone-200 bg-white p-4"
               >
                 <MapPin size={18} className="text-secondary-500 mt-0.5 shrink-0" />
                 <div className="text-sm">
                   <p className="font-semibold text-stone-900">{bp.location}</p>
                   <p className="inline-flex items-center gap-1 text-xs text-stone-500 mt-0.5">
-                    <Clock size={12} /> Horário previsto: {bp.time}
+                    <Clock size={12} /> Horário previsto: {bp.time || 'A combinar'}
                   </p>
                 </div>
               </div>
@@ -78,31 +83,41 @@ export const TripItinerarySection: React.FC<TripItinerarySectionProps> = ({ trip
         </section>
       )}
 
-      <section className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        <div className="rounded-2xl border border-emerald-200 bg-emerald-50/50 p-5 space-y-2.5">
-          <h3 className="font-serif text-lg font-bold text-emerald-950">O que está incluso</h3>
-          <ul className="space-y-2 text-sm text-stone-700">
-            {trip.included.map((item) => (
-              <li key={item} className="flex items-start gap-2">
-                <Check size={16} className="text-emerald-600 mt-0.5 shrink-0" />
-                <span>{item}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
+      {(included.length > 0 || notIncluded.length > 0) && (
+        <section className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div className="rounded-2xl border border-emerald-200 bg-emerald-50/50 p-5 space-y-2.5">
+            <h3 className="font-serif text-lg font-bold text-emerald-950">O que está incluso</h3>
+            {included.length === 0 ? (
+              <p className="text-xs text-stone-500">Consulte a operadora parceira.</p>
+            ) : (
+              <ul className="space-y-2 text-sm text-stone-700">
+                {included.map((item, idx) => (
+                  <li key={`${item}-${idx}`} className="flex items-start gap-2">
+                    <Check size={16} className="text-emerald-600 mt-0.5 shrink-0" />
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
 
-        <div className="rounded-2xl border border-stone-200 bg-stone-50 p-5 space-y-2.5">
-          <h3 className="font-serif text-lg font-bold text-stone-900">Não incluso</h3>
-          <ul className="space-y-2 text-sm text-stone-600">
-            {trip.notIncluded.map((item) => (
-              <li key={item} className="flex items-start gap-2">
-                <X size={16} className="text-stone-400 mt-0.5 shrink-0" />
-                <span>{item}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </section>
+          <div className="rounded-2xl border border-stone-200 bg-stone-50 p-5 space-y-2.5">
+            <h3 className="font-serif text-lg font-bold text-stone-900">Não incluso</h3>
+            {notIncluded.length === 0 ? (
+              <p className="text-xs text-stone-500">Despesas pessoais não mencionadas acima.</p>
+            ) : (
+              <ul className="space-y-2 text-sm text-stone-600">
+                {notIncluded.map((item, idx) => (
+                  <li key={`${item}-${idx}`} className="flex items-start gap-2">
+                    <X size={16} className="text-stone-400 mt-0.5 shrink-0" />
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </section>
+      )}
 
       <details className="group rounded-2xl border border-stone-200 bg-white p-5 shadow-card">
         <summary className="flex cursor-pointer list-none items-center justify-between gap-3 font-serif text-lg font-bold text-stone-900">

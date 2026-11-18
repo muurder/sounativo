@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Calendar, Info, MessageCircle, ShieldCheck, Users } from 'lucide-react';
+import { isSeedShowcaseTrip } from '@/services/bookingService';
 import { PassengerDetail, PaymentMethod, Trip } from '@/types';
 import { formatCurrencyBRL, formatDateRange } from '@/utils/formatters';
 import { buildWhatsAppLink } from '@/utils/whatsapp';
@@ -35,6 +36,14 @@ export const BookingCard: React.FC<BookingCardProps> = ({
   const [companions, setCompanions] = useState<PassengerDetail[]>([]);
   const [notes, setNotes] = useState('');
 
+  const passengerCfg = trip?.passengerConfig ?? {
+    allowChildren: false,
+    childAgeLimit: 12,
+    childPriceMultiplier: 1,
+  };
+  const maxGuests = Math.max(0, trip?.maxGuests ?? 16);
+  const unitPrice = trip?.price ?? 0;
+
   useEffect(() => {
     const targetAdults = Math.max(0, adults - 1);
     const desired: PassengerDetail[] = [
@@ -53,17 +62,23 @@ export const BookingCard: React.FC<BookingCardProps> = ({
   }, [adults, childrenCount]);
 
   const totalPrice = useMemo(() => {
-    const childMultiplier = trip.passengerConfig.allowChildren
-      ? trip.passengerConfig.childPriceMultiplier
+    const childMultiplier = passengerCfg.allowChildren
+      ? (passengerCfg.childPriceMultiplier ?? 0.7)
       : 1;
-    return Math.round(trip.price * (adults + childrenCount * childMultiplier));
-  }, [adults, childrenCount, trip.passengerConfig, trip.price]);
+    return Math.round(unitPrice * (adults + childrenCount * childMultiplier));
+  }, [
+    adults,
+    childrenCount,
+    passengerCfg.allowChildren,
+    passengerCfg.childPriceMultiplier,
+    unitPrice,
+  ]);
 
   const whatsappUrl = buildWhatsAppLink(agencyWhatsapp, trip);
-  const maxAdultsAllowed = Math.max(1, trip.maxGuests - childrenCount);
-  const maxChildrenAllowed = Math.max(0, trip.maxGuests - adults);
-  const hasCapacity = trip.isActive && trip.maxGuests >= 1;
-  const isShowcaseDemo = trip.id.startsWith('trip-');
+  const maxAdultsAllowed = Math.max(1, maxGuests - childrenCount);
+  const maxChildrenAllowed = Math.max(0, maxGuests - adults);
+  const hasCapacity = Boolean(trip?.isActive) && maxGuests >= 1;
+  const isShowcaseDemo = isSeedShowcaseTrip(trip?.id ?? '');
 
   return (
     <aside className="rounded-2xl border border-stone-200 bg-white p-6 shadow-editorial sticky top-24">
@@ -72,12 +87,10 @@ export const BookingCard: React.FC<BookingCardProps> = ({
           <span className="text-xs font-semibold uppercase tracking-wider text-stone-500">
             Valor por adulto
           </span>
-          <p className="text-3xl font-extrabold text-primary-600">
-            {formatCurrencyBRL(trip.price)}
-          </p>
+          <p className="text-3xl font-extrabold text-primary-600">{formatCurrencyBRL(unitPrice)}</p>
         </div>
         <span className="text-xs font-semibold text-stone-600 bg-stone-100 px-2.5 py-1 rounded-full">
-          {trip.durationDays} dias · máx. {trip.maxGuests} vagas
+          {trip?.durationDays ?? 1} dias · máx. {maxGuests} vagas
         </span>
       </div>
 
@@ -87,7 +100,7 @@ export const BookingCard: React.FC<BookingCardProps> = ({
           <div>
             <p className="text-[11px] font-bold uppercase tracking-wider text-stone-500">Período</p>
             <p className="text-sm font-semibold text-stone-900">
-              {formatDateRange(trip.startDate, trip.endDate)}
+              {formatDateRange(trip?.startDate, trip?.endDate)}
             </p>
           </div>
         </div>
@@ -105,11 +118,11 @@ export const BookingCard: React.FC<BookingCardProps> = ({
             onChange={setAdults}
           />
 
-          {trip.passengerConfig.allowChildren && (
+          {passengerCfg.allowChildren && (
             <GuestCounterRow
               withBorder
               label="Crianças"
-              subtitle={`Até ${trip.passengerConfig.childAgeLimit} anos (${Math.round(trip.passengerConfig.childPriceMultiplier * 100)}% do valor)`}
+              subtitle={`Até ${passengerCfg.childAgeLimit ?? 12} anos (${Math.round((passengerCfg.childPriceMultiplier ?? 0.7) * 100)}% do valor)`}
               count={childrenCount}
               min={0}
               max={maxChildrenAllowed}
@@ -168,7 +181,7 @@ export const BookingCard: React.FC<BookingCardProps> = ({
         <Button
           fullWidth
           size="lg"
-          disabled={!hasCapacity}
+          disabled={!hasCapacity || submitting}
           loading={submitting}
           onClick={() =>
             void onReserve({

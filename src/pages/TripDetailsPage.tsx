@@ -32,7 +32,10 @@ export const TripDetailsPage: React.FC = () => {
   const { profile, toggleFavorite } = useUserProfile();
   const { createBooking } = useBookings();
   const { showToast } = useToast();
-  const { trip, agency, reviews, setReviews, loading } = useTripDetails(targetSlug, agencySlug);
+  const { trip, agency, reviews, setReviews, loading, error, reload } = useTripDetails(
+    targetSlug,
+    agencySlug
+  );
   const [submitting, setSubmitting] = useState(false);
 
   if (loading) {
@@ -40,6 +43,19 @@ export const TripDetailsPage: React.FC = () => {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10 space-y-6">
         <Skeleton className="h-8 w-48" />
         <Skeleton className="h-96 w-full rounded-3xl" />
+      </div>
+    );
+  }
+
+  if (error && !trip) {
+    return (
+      <div className="mx-auto max-w-3xl px-4 py-16">
+        <EmptyState
+          title="Falha ao carregar roteiro"
+          description={error}
+          actionLabel="Tentar novamente"
+          onAction={() => void reload()}
+        />
       </div>
     );
   }
@@ -57,7 +73,9 @@ export const TripDetailsPage: React.FC = () => {
     );
   }
 
-  const isFavorite = profile?.favorites.includes(trip.id) ?? false;
+  const isFavorite = Array.isArray(profile?.favorites)
+    ? profile.favorites.includes(trip.id)
+    : false;
 
   const handleFavoriteClick = async () => {
     try {
@@ -71,7 +89,7 @@ export const TripDetailsPage: React.FC = () => {
 
   const handleReserve = async (payload: ReservePayload) => {
     if (!user) {
-      showToast('Faça login com Google para solicitar sua reserva.', 'info');
+      showToast('Faça login para solicitar sua reserva.', 'info');
       openAuth('login');
       return;
     }
@@ -81,7 +99,7 @@ export const TripDetailsPage: React.FC = () => {
       const voucher = `SN-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
       const passengerDetails = [
         {
-          name: user.name,
+          name: user.name || 'Titular',
           phone: profile?.phone || '',
           document: profile?.cpf || '',
           type: 'adult' as const,
@@ -95,13 +113,13 @@ export const TripDetailsPage: React.FC = () => {
       await createBooking({
         tripId: trip.id,
         tripTitle: trip.title,
-        tripSlug: trip.slug,
-        tripImage: trip.images[0] || '',
+        tripSlug: trip.slug || trip.id,
+        tripImage: trip.images?.[0] || '',
         agencyId: trip.agencyId,
         agencyName: trip.agencyName,
         clientUid: user.uid,
-        clientName: user.name,
-        clientEmail: user.email,
+        clientName: user.name || 'Viajante',
+        clientEmail: user.email || '',
         adults: payload.adults,
         children: payload.children,
         totalPrice: payload.totalPrice,

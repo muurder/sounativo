@@ -1,18 +1,32 @@
 import { deleteUser } from 'firebase/auth';
 import {
+  DocumentReference,
   addDoc,
   collection,
-  deleteDoc,
   doc,
   getDoc,
   getDocs,
+  limit,
   query,
   updateDoc,
   where,
+  writeBatch,
 } from 'firebase/firestore';
-import { auth, COLLECTIONS, db, serverTimestamp } from './firebase';
+import {
+  auth,
+  COLLECTIONS,
+  db,
+  mapFirestoreError,
+  serverTimestamp,
+  toIsoTimestamp,
+} from './firebase';
 import { UserProfile } from '@/types';
-import { ConsentCategories } from '@/types/consent';
+import {
+  CONSENT_STORAGE_KEY,
+  ConsentCategories,
+  CURRENT_CONSENT_VERSION,
+  UserConsentState,
+} from '@/types/consent';
 
 export interface ExportedDataPackage {
   metadata: {
@@ -26,6 +40,32 @@ export interface ExportedDataPackage {
   bookings: unknown[];
   reviews: unknown[];
   consentHistory: unknown[];
+}
+
+const MAX_AUTH_AGE_FOR_DELETE_MS = 4.5 * 60 * 1000;
+const FIRESTORE_BATCH_LIMIT = 450;
+
+function normalizeExportRecord(id: string, raw: Record<string, unknown>): Record<string, unknown> {
+  const normalized: Record<string, unknown> = { id, ...raw };
+  if ('createdAt' in raw) {
+    normalized.createdAt = toIsoTimestamp(raw.createdAt, String(raw.createdAt ?? ''));
+  }
+  if ('updatedAt' in raw) {
+    normalized.updatedAt = toIsoTimestamp(raw.updatedAt, String(raw.updatedAt ?? ''));
+  }
+  return normalized;
+}
+
+async function commitDeletesInChunks(refs: DocumentReference[]): Promise<void> {
+  if (!db || refs.length === 0) return;
+  for (let i = 0; i < refs.length; i += FIRESTORE_BATCH_LIMIT) {
+    const batch = writeBatch(db);
+    const slice = refs.slice(i, i + FIRESTORE_BATCH_LIMIT);
+    for (const ref of slice) {
+      batch.delete(ref);
+    }
+    await batch.commit();
+  }
 }
 
 /**
@@ -54,18 +94,52 @@ export async function recordConsentAuditLog(
       createdAt: serverTimestamp(),
     });
 
-    await updateDoc(doc(db, COLLECTIONS.users, currentUser.uid), {
-      privacyConsent: {
-        essential: true,
-        analytics: Boolean(categories.analytics),
-        marketing: Boolean(categories.marketing),
-        version: consentVersion.slice(0, 50),
-        updatedAt: isoNow,
-      },
-      updatedAt: serverTimestamp(),
-    });
+    const userRef = doc(db, COLLECTIONS.users, currentUser.uid);
+    const userSnap = await getDoc(userRef);
+    if (userSnap.exists()) {
+      await updateDoc(userRef, {
+        privacyConsent: {
+          essential: true,
+          analytics: Boolean(categories.analytics),
+          marketing: Boolean(categories.marketing),
+          version: consentVersion.slice(0, 50),
+          updatedAt: isoNow,
+        },
+        updatedAt: serverTimestamp(),
+      });
+    }
   } catch {
     // Non-blocking audit sync; localStorage preference remains enforced immediately
+  }
+}
+
+/**
+ * Ensures pre-login CookieBanner decisions stored in localStorage are audited in Firestore
+ * once the user authenticates, if no consent audit record exists yet for this account.
+ */
+export async function syncStoredConsentOnAuth(userUid: string): Promise<void> {
+  if (!db || !userUid || typeof window === 'undefined') return;
+  try {
+    const raw = localStorage.getItem(CONSENT_STORAGE_KEY);
+    if (!raw) return;
+    const parsed = JSON.parse(raw) as Partial<UserConsentState>;
+    if (!parsed?.hasResponded || !parsed.categories) return;
+
+    const existingSnap = await getDocs(
+      query(collection(db, COLLECTIONS.userConsents), where('userUid', '==', userUid), limit(1))
+    );
+    if (!existingSnap.empty) return;
+
+    await recordConsentAuditLog(
+      {
+        essential: true,
+        analytics: Boolean(parsed.categories.analytics),
+        marketing: Boolean(parsed.categories.marketing),
+      },
+      parsed.version || CURRENT_CONSENT_VERSION
+    );
+  } catch {
+    // Non-blocking background sync
   }
 }
 
@@ -86,7 +160,13 @@ export async function exportUserData(
     try {
       const userSnap = await getDoc(doc(db, COLLECTIONS.users, userUid));
       if (userSnap.exists()) {
-        profile = { uid: userUid, ...(userSnap.data() as Omit<UserProfile, 'uid'>) };
+        const rawUser = userSnap.data() as Record<string, unknown>;
+        profile = {
+          uid: userUid,
+          ...(rawUser as Omit<UserProfile, 'uid'>),
+          ...(rawUser.createdAt ? { createdAt: toIsoTimestamp(rawUser.createdAt) } : {}),
+          ...(rawUser.updatedAt ? { updatedAt: toIsoTimestamp(rawUser.updatedAt) } : {}),
+        };
       }
 
       const [bookingsSnap, reviewsSnap, consentsSnap] = await Promise.all([
@@ -95,9 +175,17 @@ export async function exportUserData(
         getDocs(query(collection(db, COLLECTIONS.userConsents), where('userUid', '==', userUid))),
       ]);
 
-      bookingsSnap.forEach((docItem) => bookings.push({ id: docItem.id, ...docItem.data() }));
-      reviewsSnap.forEach((docItem) => reviews.push({ id: docItem.id, ...docItem.data() }));
-      consentsSnap.forEach((docItem) => consentHistory.push({ id: docItem.id, ...docItem.data() }));
+      bookingsSnap.forEach((docItem) =>
+        bookings.push(normalizeExportRecord(docItem.id, docItem.data() as Record<string, unknown>))
+      );
+      reviewsSnap.forEach((docItem) =>
+        reviews.push(normalizeExportRecord(docItem.id, docItem.data() as Record<string, unknown>))
+      );
+      consentsSnap.forEach((docItem) =>
+        consentHistory.push(
+          normalizeExportRecord(docItem.id, docItem.data() as Record<string, unknown>)
+        )
+      );
     } catch (err) {
       console.warn('Erro ao carregar dados do banco para exportação:', err);
     }
@@ -139,6 +227,9 @@ export async function exportUserData(
  * Permanently deletes the user's Firestore documents (owned trips, agencies, reviews, consents, profile)
  * and deletes the Firebase Auth account.
  * LGPD Art. 18, VI / GDPR Art. 17 (Direito à Eliminação dos Dados Pessoais).
+ *
+ * Pre-validates recent authentication BEFORE touching Firestore so a stale token never leaves
+ * a zombie Auth account with destroyed Firestore records.
  */
 export async function deleteUserAccountPermanently(userUid: string): Promise<void> {
   const currentUser = auth?.currentUser;
@@ -146,31 +237,49 @@ export async function deleteUserAccountPermanently(userUid: string): Promise<voi
     throw new Error('Sessão inválida para exclusão de conta.');
   }
 
-  if (db) {
-    // 1. Delete owned agencies and their trips (if partner account)
-    const agenciesSnap = await getDocs(
-      query(collection(db, COLLECTIONS.agencies), where('ownerUid', '==', userUid))
-    );
-    for (const agencyDoc of agenciesSnap.docs) {
-      const tripsSnap = await getDocs(
-        query(collection(db, COLLECTIONS.trips), where('agencyId', '==', agencyDoc.id))
+  // 0. Pre-flight check: ensure recent sign-in BEFORE deleting any Firestore documents
+  const lastSignInIso = currentUser.metadata?.lastSignInTime;
+  if (lastSignInIso) {
+    const lastSignInMs = new Date(lastSignInIso).getTime();
+    if (!Number.isNaN(lastSignInMs) && Date.now() - lastSignInMs > MAX_AUTH_AGE_FOR_DELETE_MS) {
+      throw new Error(
+        'Por segurança, a exclusão definitiva exige login recente (últimos 5 minutos). Saia e entre novamente antes de excluir sua conta.'
       );
-      await Promise.all(tripsSnap.docs.map((t) => deleteDoc(t.ref)));
-      await deleteDoc(agencyDoc.ref);
     }
+  }
 
-    // 2. Delete authored reviews and consent audit records
-    const [reviewsSnap, consentsSnap] = await Promise.all([
-      getDocs(query(collection(db, COLLECTIONS.reviews), where('userUid', '==', userUid))),
-      getDocs(query(collection(db, COLLECTIONS.userConsents), where('userUid', '==', userUid))),
-    ]);
-    await Promise.all([
-      ...reviewsSnap.docs.map((r) => deleteDoc(r.ref)),
-      ...consentsSnap.docs.map((c) => deleteDoc(c.ref)),
-    ]);
+  if (db) {
+    try {
+      const refsToDelete: DocumentReference[] = [];
 
-    // 3. Delete user profile document
-    await deleteDoc(doc(db, COLLECTIONS.users, userUid));
+      // 1. Collect owned agencies and their trips (if partner account)
+      const agenciesSnap = await getDocs(
+        query(collection(db, COLLECTIONS.agencies), where('ownerUid', '==', userUid))
+      );
+      for (const agencyDoc of agenciesSnap.docs) {
+        const tripsSnap = await getDocs(
+          query(collection(db, COLLECTIONS.trips), where('agencyId', '==', agencyDoc.id))
+        );
+        tripsSnap.docs.forEach((t) => refsToDelete.push(t.ref));
+        refsToDelete.push(agencyDoc.ref);
+      }
+
+      // 2. Collect authored reviews and consent audit records
+      const [reviewsSnap, consentsSnap] = await Promise.all([
+        getDocs(query(collection(db, COLLECTIONS.reviews), where('userUid', '==', userUid))),
+        getDocs(query(collection(db, COLLECTIONS.userConsents), where('userUid', '==', userUid))),
+      ]);
+      reviewsSnap.docs.forEach((r) => refsToDelete.push(r.ref));
+      consentsSnap.docs.forEach((c) => refsToDelete.push(c.ref));
+
+      // 3. Collect user profile document
+      refsToDelete.push(doc(db, COLLECTIONS.users, userUid));
+
+      // Commit atomic chunked batches
+      await commitDeletesInChunks(refsToDelete);
+    } catch (err: unknown) {
+      throw mapFirestoreError(err, 'Falha ao eliminar seus registros no banco de dados.');
+    }
   }
 
   // 4. Delete Firebase Auth identity
@@ -183,7 +292,7 @@ export async function deleteUserAccountPermanently(userUid: string): Promise<voi
         'Por segurança, a exclusão definitiva exige login recente. Saia e entre novamente antes de excluir sua conta.'
       );
     }
-    throw err;
+    throw mapFirestoreError(err, 'Falha ao remover credencial de autenticação.');
   }
 
   // 5. Purge browser storage

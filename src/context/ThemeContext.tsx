@@ -20,9 +20,13 @@ const DEFAULT_AGENCY_THEME: AgencyTheme = {
   headerStyle: 'solid',
 };
 
-function hexToRgb(hex: string): [number, number, number] {
-  const match = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-  if (!match) return [15, 76, 58];
+function hexToRgb(
+  hex: string | undefined | null,
+  fallback: [number, number, number]
+): [number, number, number] {
+  if (!hex || typeof hex !== 'string') return fallback;
+  const match = hex.trim().match(/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i);
+  if (!match) return fallback;
   return [parseInt(match[1], 16), parseInt(match[2], 16), parseInt(match[3], 16)];
 }
 
@@ -34,6 +38,54 @@ const tint = (rgb: [number, number, number], weight: number): string =>
 
 const shade = (rgb: [number, number, number], weight: number): string =>
   `${mixChannel(rgb[0], 0, weight)} ${mixChannel(rgb[1], 0, weight)} ${mixChannel(rgb[2], 0, weight)}`;
+
+function normalizeThemeInput(
+  themeOrColors?: Partial<AgencyTheme> | Partial<ThemeColors> | null
+): AgencyTheme {
+  if (!themeOrColors || typeof themeOrColors !== 'object') {
+    return DEFAULT_AGENCY_THEME;
+  }
+
+  if (
+    'colors' in themeOrColors &&
+    themeOrColors.colors &&
+    typeof themeOrColors.colors === 'object'
+  ) {
+    const candidate = themeOrColors as Partial<AgencyTheme>;
+    return {
+      colors: {
+        primary: candidate.colors?.primary || DEFAULT_AGENCY_THEME.colors.primary,
+        secondary: candidate.colors?.secondary || DEFAULT_AGENCY_THEME.colors.secondary,
+        background: candidate.colors?.background || DEFAULT_AGENCY_THEME.colors.background,
+        text: candidate.colors?.text || DEFAULT_AGENCY_THEME.colors.text,
+      },
+      fontPair:
+        candidate.fontPair === 'modern' || candidate.fontPair === 'playful'
+          ? candidate.fontPair
+          : 'classic',
+      borderRadius:
+        candidate.borderRadius === 'none' || candidate.borderRadius === 'full'
+          ? candidate.borderRadius
+          : 'soft',
+      buttonStyle:
+        candidate.buttonStyle === 'outline' || candidate.buttonStyle === 'ghost'
+          ? candidate.buttonStyle
+          : 'solid',
+      headerStyle: candidate.headerStyle === 'transparent' ? 'transparent' : 'solid',
+    };
+  }
+
+  const rawColors = themeOrColors as Partial<ThemeColors>;
+  return {
+    ...DEFAULT_AGENCY_THEME,
+    colors: {
+      primary: rawColors.primary || DEFAULT_AGENCY_THEME.colors.primary,
+      secondary: rawColors.secondary || DEFAULT_AGENCY_THEME.colors.secondary,
+      background: rawColors.background || DEFAULT_AGENCY_THEME.colors.background,
+      text: rawColors.text || DEFAULT_AGENCY_THEME.colors.text,
+    },
+  };
+}
 
 interface ThemeContextValue {
   colors: ThemeColors;
@@ -53,9 +105,10 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [isCustomAgencyTheme, setIsCustomAgencyTheme] = useState(false);
 
   useEffect(() => {
+    if (typeof document === 'undefined') return;
     const root = document.documentElement;
-    const primary = hexToRgb(agencyTheme.colors.primary);
-    const secondary = hexToRgb(agencyTheme.colors.secondary);
+    const primary = hexToRgb(agencyTheme?.colors?.primary, [15, 76, 58]);
+    const secondary = hexToRgb(agencyTheme?.colors?.secondary, [198, 107, 61]);
 
     root.style.setProperty('--color-primary-50', tint(primary, 0.9));
     root.style.setProperty('--color-primary-100', tint(primary, 0.8));
@@ -80,11 +133,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, [agencyTheme]);
 
   const setAgencyTheme = useCallback((themeOrColors: AgencyTheme | ThemeColors) => {
-    if ('colors' in themeOrColors) {
-      setAgencyThemeState(themeOrColors);
-    } else {
-      setAgencyThemeState({ ...DEFAULT_AGENCY_THEME, colors: themeOrColors });
-    }
+    setAgencyThemeState(normalizeThemeInput(themeOrColors));
     setIsCustomAgencyTheme(true);
   }, []);
 
@@ -97,8 +146,8 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   return (
     <ThemeContext.Provider
       value={{
-        colors: agencyTheme.colors,
-        agencyTheme,
+        colors: agencyTheme?.colors ?? DEFAULT_AGENCY_THEME.colors,
+        agencyTheme: agencyTheme ?? DEFAULT_AGENCY_THEME,
         agencyBrand,
         isCustomAgencyTheme,
         setAgencyTheme,

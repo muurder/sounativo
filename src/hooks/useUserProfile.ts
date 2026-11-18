@@ -1,7 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { COLLECTIONS, db } from '@/services/firebase';
-import { saveUserProfile, toggleFavoriteInFirestore } from '@/services/userService';
+import {
+  normalizeUserProfileDoc,
+  saveUserProfile,
+  toggleFavoriteInFirestore,
+} from '@/services/userService';
 import { useAuth } from './useAuth';
 import { UserProfile } from '@/types';
 
@@ -10,16 +14,19 @@ export function useUserProfile() {
   const [profile, setProfile] = useState<UserProfile | null>(user);
   const [loading, setLoading] = useState<boolean>(Boolean(user));
   const [saving, setSaving] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user?.uid) {
       setProfile(null);
+      setError(null);
       setLoading(false);
       return;
     }
 
     if (!db) {
       setProfile(user);
+      setError(null);
       setLoading(false);
       return;
     }
@@ -30,13 +37,17 @@ export function useUserProfile() {
       ref,
       (snap) => {
         if (snap.exists()) {
-          setProfile({ uid: user.uid, ...(snap.data() as Omit<UserProfile, 'uid'>) });
+          setProfile(
+            normalizeUserProfileDoc(user.uid, snap.data() as Record<string, unknown>, user.email)
+          );
         } else {
           setProfile(user);
         }
+        setError(null);
         setLoading(false);
       },
-      () => {
+      (snapshotErr) => {
+        setError(snapshotErr.message || 'Não foi possível sincronizar seu perfil em tempo real.');
         setProfile(user);
         setLoading(false);
       }
@@ -63,9 +74,14 @@ export function useUserProfile() {
     ) => {
       if (!user?.uid) throw new Error('Faça login para salvar seu perfil.');
       setSaving(true);
+      setError(null);
       try {
         await saveUserProfile(user.uid, updates);
         await refreshProfile();
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Erro ao salvar perfil.';
+        setError(message);
+        throw err;
       } finally {
         setSaving(false);
       }
@@ -75,8 +91,8 @@ export function useUserProfile() {
 
   const toggleFavorite = useCallback(
     async (tripId: string) => {
-      if (!user?.uid) throw new Error('Faça login com Google para salvar favoritos.');
-      const current = profile?.favorites ?? [];
+      if (!user?.uid) throw new Error('Faça login para salvar favoritos.');
+      const current = Array.isArray(profile?.favorites) ? profile.favorites : [];
       const isFav = current.includes(tripId);
       await toggleFavoriteInFirestore(user.uid, tripId, isFav);
       return !isFav;
@@ -88,6 +104,7 @@ export function useUserProfile() {
     profile,
     loading,
     saving,
+    error,
     updateProfile,
     toggleFavorite,
   };

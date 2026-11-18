@@ -11,8 +11,8 @@ rules_version = '2';
 //   - name: string (required, 1..120 chars)
 //   - email: string (optional/nullable, valid email, <= 254 chars)
 //   - role: string (required, 'CLIENT' | 'AGENCY' | 'GUIDE' | 'ADMIN';
-//       non-admins can create 'CLIENT' | 'AGENCY' | 'GUIDE' and may only
-//       transition 'CLIENT' -> 'AGENCY' | 'GUIDE'; 'ADMIN' locked to admin claims)
+//       non-admins can create/switch among 'CLIENT' | 'AGENCY' | 'GUIDE';
+//       'ADMIN' locked to token admins or existing ADMIN users)
 //   - phone: string (optional/nullable, <= 30 chars)
 //   - cpf: string (optional/nullable, <= 20 chars)
 //   - photoURL: string (optional/nullable, http/https URL or empty, <= 2048 chars)
@@ -21,6 +21,7 @@ rules_version = '2';
 //   - birthDate: string (optional/nullable, <= 30 chars)
 //   - address: map (optional/nullable, <= 15 keys)
 //   - notificationsEnabled: bool (optional/nullable)
+//   - privacyConsent: map (optional/nullable, <= 10 keys)
 //   - status: string (optional/nullable, 'ACTIVE' | 'SUSPENDED', admin-controlled)
 //   - createdAt: timestamp | ISO string (optional, immutable)
 //   - updatedAt: timestamp | ISO string (optional)
@@ -84,11 +85,12 @@ rules_version = '2';
 //   - slug: string (optional/nullable, ^[a-z0-9-]{2,180}$)
 //   - description: string (optional/nullable, <= 10000 chars)
 //   - destination: string (optional/nullable, <= 160 chars)
+//   - state: string (optional/nullable, <= 50 chars)
 //   - origin: string (optional/nullable, <= 160 chars)
 //   - departureCity: string (optional/nullable, <= 160 chars)
 //   - price: number (required, 0..1000000)
-//   - startDate: timestamp | ISO string (optional/nullable)
-//   - endDate: timestamp | ISO string (optional/nullable)
+//   - startDate: timestamp | ISO string (optional/nullable, <= 40 chars)
+//   - endDate: timestamp | ISO string (optional/nullable, <= 40 chars)
 //   - durationDays: number (required, > 0 && <= 365)
 //   - images: list<string> (optional/nullable, <= 20 items)
 //   - coverImage: string (optional/nullable, URL or empty, <= 2048 chars)
@@ -132,18 +134,18 @@ rules_version = '2';
 //   - agencyId: string (required, <= 128 chars, must match trip's agencyId, immutable)
 //   - status: string (required, 'PENDING' on create; client -> 'CANCELLED';
 //       agency -> 'CONFIRMED' | 'CANCELLED')
-//   - adults: int (required, 1..100)
+//   - adults: int (required, 1..100; adults + children <= trip.maxGuests when maxGuests > 0)
 //   - children: int (optional/nullable, 0..100)
 //   - passengers: int | list (optional/nullable, 1..200 or <= 100 items)
 //   - passengerDetails: list<map> (optional/nullable, <= 100 items)
-//   - totalPrice: number (required, 0..1000000, immutable for non-admins)
+//   - totalPrice: number (required, 0..1000000, >= trip.price * adults * 0.5 when trip.price > 0, immutable)
 //   - paymentMethod: string (optional/nullable, <= 40 chars)
 //   - voucherCode: string (optional/nullable, <= 40 chars)
-//   - date: timestamp | ISO string (optional/nullable)
-//   - tripDate: timestamp | ISO string (optional/nullable)
-//   - departureDate: timestamp | ISO string (optional/nullable)
+//   - date: timestamp | ISO string (optional/nullable, <= 40 chars)
+//   - tripDate: timestamp | ISO string (optional/nullable, <= 40 chars)
+//   - departureDate: timestamp | ISO string (optional/nullable, <= 40 chars)
 //   - tripTitle: string (optional/nullable, <= 160 chars)
-//   - tripSlug: string (optional/nullable, <= 160 chars)
+//   - tripSlug: string (optional/nullable, <= 180 chars)
 //   - tripImage: string (optional/nullable, URL or empty, <= 2048 chars)
 //   - agencyName: string (optional/nullable, <= 120 chars)
 //   - clientName: string (optional/nullable, <= 120 chars)
@@ -163,9 +165,37 @@ rules_version = '2';
 //   - tripId: string (optional, <= 128 chars, references existing trip, immutable)
 //   - agencyId: string (optional, <= 128 chars, references existing agency, immutable)
 //   - rating: int (required, 1..5)
-//   - comment: string (required, 0..2000 chars)
+//   - comment: string (required, trimmed 3..2000 chars)
 //   - userName: string (optional/nullable, <= 120 chars)
 //   - userPhotoURL: string (optional/nullable, URL or empty, <= 2048 chars)
+//   - createdAt: timestamp | ISO string (optional, immutable)
+//   - updatedAt: timestamp | ISO string (optional)
+//
+// Collection: user_consents
+// Document ID: {consentId}
+// Fields:
+//   - id: string (optional, <= 128 chars, immutable)
+//   - userUid: string (required, matches request.auth.uid on create, immutable)
+//   - essential: bool (required, must be true)
+//   - analytics: bool (required)
+//   - marketing: bool (required)
+//   - consentVersion: string (required, 1..50 chars)
+//   - ipHash: string (optional/nullable, <= 128 chars)
+//   - userAgent: string (optional/nullable, <= 300 chars)
+//   - timestamp: timestamp | ISO string (optional/nullable, <= 40 chars)
+//   - createdAt: timestamp | ISO string (optional, immutable)
+//   - updatedAt: timestamp | ISO string (optional)
+//
+// Collection: contact_messages
+// Document ID: {messageId}
+// Fields:
+//   - id: string (optional, <= 128 chars, immutable)
+//   - name: string (required, trimmed 2..120 chars)
+//   - email: string (required, valid email <= 254 chars)
+//   - message: string (required, trimmed 5..2000 chars)
+//   - source: string (optional/nullable, 'CONTACT_FORM' | 'GROUP_QUOTE')
+//   - userUid: string (optional/nullable, matches request.auth.uid when set)
+//   - status: string (required, 'NEW' on public create; admin-managed thereafter)
 //   - createdAt: timestamp | ISO string (optional, immutable)
 //   - updatedAt: timestamp | ISO string (optional)
 //
@@ -182,15 +212,24 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    // Trusted admin authority derived exclusively from Firebase Auth custom claims
-    // or the cryptographically signed verified master administrator email
-    function isAdmin() {
+    // Trusted token-level admin check (custom claim or verified bootstrap admin email).
+    // Kept separate to avoid unnecessary get() reads when token authority already holds.
+    function isTokenAdmin() {
       return isAuthenticated() &&
              (('admin' in request.auth.token && request.auth.token.admin == true) ||
               ('email' in request.auth.token &&
                'email_verified' in request.auth.token &&
                request.auth.token.email == 'juannicolas1@gmail.com' &&
                request.auth.token.email_verified == true));
+    }
+
+    // Trusted admin authority: token claims/bootstrap email OR admin-assigned role in users/{uid}.
+    // Non-admins can never self-assign role == 'ADMIN' on create or update.
+    function isAdmin() {
+      return isTokenAdmin() ||
+             (isAuthenticated() &&
+              exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+              get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'ADMIN');
     }
 
     function isOwner(userId) {
@@ -260,12 +299,17 @@ service cloud.firestore {
              (!('sales' in d) || d.sales == null || d.sales == 0);
     }
 
-    function isValidBookingTarget(tripId, agencyId) {
-      let trip = get(/databases/$(database)/documents/trips/$(tripId));
-      return exists(/databases/$(database)/documents/agencies/$(agencyId)) &&
+    function isValidBookingTarget(d) {
+      let trip = get(/databases/$(database)/documents/trips/$(d.tripId));
+      let guests = d.adults + (('children' in d && d.children is int) ? d.children : 0);
+      return exists(/databases/$(database)/documents/agencies/$(d.agencyId)) &&
              trip != null &&
              trip.data.isActive == true &&
-             trip.data.agencyId == agencyId;
+             trip.data.agencyId == d.agencyId &&
+             (!('maxGuests' in trip.data) || !(trip.data.maxGuests is int) || trip.data.maxGuests <= 0 ||
+              guests <= trip.data.maxGuests) &&
+             (!(trip.data.price is number) || trip.data.price <= 0 ||
+              d.totalPrice >= trip.data.price * d.adults * 0.5);
     }
 
     function isValidReviewTarget(d) {
@@ -293,9 +337,13 @@ service cloud.firestore {
              d.name is string && d.name.size() >= 1 && d.name.size() <= 120 &&
              (!('email' in d) || d.email == null || d.email == '' || isValidEmail(d.email)) &&
              d.role in ['CLIENT', 'AGENCY', 'GUIDE', 'ADMIN'] &&
+             (!('phone' in d) || d.phone == null || (d.phone is string && d.phone.size() <= 30)) &&
+             (!('cpf' in d) || d.cpf == null || (d.cpf is string && d.cpf.size() <= 20)) &&
              (!('photoURL' in d) || d.photoURL == null || d.photoURL == '' || isValidUrl(d.photoURL, 2048)) &&
              (!('favorites' in d) || d.favorites == null || (d.favorites is list && d.favorites.size() <= 200)) &&
              (!('agencyId' in d) || d.agencyId == null || (d.agencyId is string && d.agencyId.size() <= 128)) &&
+             (!('birthDate' in d) || d.birthDate == null || (d.birthDate is string && d.birthDate.size() <= 30)) &&
+             (!('address' in d) || d.address == null || (d.address is map && d.address.keys().size() <= 15)) &&
              (!('notificationsEnabled' in d) || d.notificationsEnabled == null || d.notificationsEnabled is bool) &&
              (!('privacyConsent' in d) || d.privacyConsent == null || (d.privacyConsent is map && d.privacyConsent.keys().size() <= 10)) &&
              (!('status' in d) || d.status == null || d.status in ['ACTIVE', 'SUSPENDED']);
@@ -320,23 +368,43 @@ service cloud.firestore {
              d.ownerUid is string && d.ownerUid.size() > 0 && d.ownerUid.size() <= 128 &&
              d.name is string && d.name.size() >= 2 && d.name.size() <= 120 &&
              d.slug is string && d.slug.matches("^[a-z0-9-]{2,100}$") &&
+             (!('type' in d) || d.type == null || (d.type is string && d.type.size() <= 30)) &&
              (!('isGuide' in d) || d.isGuide == null || d.isGuide is bool) &&
              (!('isActive' in d) || d.isActive == null || d.isActive is bool) &&
              (!('verified' in d) || d.verified == null || d.verified is bool) &&
              (!('isVerified' in d) || d.isVerified == null || d.isVerified is bool) &&
              (!('description' in d) || d.description == null || (d.description is string && d.description.size() <= 5000)) &&
              (!('logo' in d) || d.logo == null || d.logo == '' || isValidUrl(d.logo, 2048)) &&
+             (!('logoUrl' in d) || d.logoUrl == null || d.logoUrl == '' || isValidUrl(d.logoUrl, 2048)) &&
+             (!('logoURL' in d) || d.logoURL == null || d.logoURL == '' || isValidUrl(d.logoURL, 2048)) &&
+             (!('coverImage' in d) || d.coverImage == null || d.coverImage == '' || isValidUrl(d.coverImage, 2048)) &&
+             (!('bannerUrl' in d) || d.bannerUrl == null || d.bannerUrl == '' || isValidUrl(d.bannerUrl, 2048)) &&
              (!('whatsapp' in d) || d.whatsapp == null || (d.whatsapp is string && d.whatsapp.size() <= 30)) &&
+             (!('phone' in d) || d.phone == null || (d.phone is string && d.phone.size() <= 30)) &&
              (!('email' in d) || d.email == null || d.email == '' || isValidEmail(d.email)) &&
              (!('website' in d) || d.website == null || d.website == '' || isValidUrl(d.website, 500)) &&
+             (!('cnpj' in d) || d.cnpj == null || (d.cnpj is string && d.cnpj.size() <= 25)) &&
              (!('cadastur' in d) || d.cadastur == null || (d.cadastur is string && d.cadastur.size() <= 50)) &&
              (!('city' in d) || d.city == null || (d.city is string && d.city.size() <= 100)) &&
+             (!('state' in d) || d.state == null || (d.state is string && d.state.size() <= 50)) &&
+             (!('address' in d) || d.address == null || (d.address is map && d.address.keys().size() <= 15) || (d.address is string && d.address.size() <= 300)) &&
              (!('languages' in d) || d.languages == null || (d.languages is list && d.languages.size() <= 20)) &&
              (!('specialties' in d) || d.specialties == null || (d.specialties is list && d.specialties.size() <= 20)) &&
+             (!('certifications' in d) || d.certifications == null || (d.certifications is list && d.certifications.size() <= 20)) &&
+             (!('experienceYears' in d) || d.experienceYears == null || (d.experienceYears is number && d.experienceYears >= 0 && d.experienceYears <= 100)) &&
+             (!('availability' in d) || d.availability == null || d.availability in ['FULL_TIME', 'PART_TIME', 'ON_DEMAND']) &&
              (!('heroMode' in d) || d.heroMode == null || d.heroMode in ['TRIPS', 'STATIC']) &&
+             (!('heroBannerUrl' in d) || d.heroBannerUrl == null || d.heroBannerUrl == '' || isValidUrl(d.heroBannerUrl, 2048)) &&
+             (!('heroTitle' in d) || d.heroTitle == null || (d.heroTitle is string && d.heroTitle.size() <= 150)) &&
+             (!('heroSubtitle' in d) || d.heroSubtitle == null || (d.heroSubtitle is string && d.heroSubtitle.size() <= 300)) &&
+             (!('primaryColor' in d) || d.primaryColor == null || (d.primaryColor is string && d.primaryColor.size() <= 30)) &&
+             (!('secondaryColor' in d) || d.secondaryColor == null || (d.secondaryColor is string && d.secondaryColor.size() <= 30)) &&
              (!('theme' in d) || d.theme == null || (d.theme is map && d.theme.keys().size() <= 20)) &&
+             (!('customSettings' in d) || d.customSettings == null || (d.customSettings is map && d.customSettings.keys().size() <= 20)) &&
+             (!('socialLinks' in d) || d.socialLinks == null || (d.socialLinks is map && d.socialLinks.keys().size() <= 10)) &&
              (!('subscriptionPlan' in d) || d.subscriptionPlan == null || d.subscriptionPlan in ['STARTER', 'BASIC', 'PREMIUM']) &&
              (!('subscriptionStatus' in d) || d.subscriptionStatus == null || d.subscriptionStatus in ['ACTIVE', 'INACTIVE', 'PENDING']) &&
+             (!('subscriptionExpiresAt' in d) || d.subscriptionExpiresAt == null || d.subscriptionExpiresAt is timestamp || (d.subscriptionExpiresAt is string && d.subscriptionExpiresAt.size() <= 40)) &&
              (!('rating' in d) || d.rating == null || (d.rating is number && d.rating >= 0 && d.rating <= 5)) &&
              (!('totalReviews' in d) || d.totalReviews == null || (d.totalReviews is int && d.totalReviews >= 0 && d.totalReviews <= 1000000));
     }
@@ -344,7 +412,7 @@ service cloud.firestore {
     function isValidTrip(d) {
       return d.keys().hasOnly([
                'id', 'agencyId', 'title', 'slug', 'description', 'destination',
-               'origin', 'departureCity', 'price', 'startDate', 'endDate',
+               'state', 'origin', 'departureCity', 'price', 'startDate', 'endDate',
                'durationDays', 'images', 'coverImage', 'imageUrl', 'category',
                'categories', 'tags', 'travelerTypes', 'itinerary', 'boardingPoints',
                'paymentMethods', 'included', 'notIncluded', 'isActive',
@@ -360,19 +428,43 @@ service cloud.firestore {
              (!('slug' in d) || d.slug == null || (d.slug is string && d.slug.matches("^[a-z0-9-]{2,180}$"))) &&
              (!('description' in d) || d.description == null || (d.description is string && d.description.size() <= 10000)) &&
              (!('destination' in d) || d.destination == null || (d.destination is string && d.destination.size() <= 160)) &&
+             (!('state' in d) || d.state == null || (d.state is string && d.state.size() <= 50)) &&
+             (!('origin' in d) || d.origin == null || (d.origin is string && d.origin.size() <= 160)) &&
+             (!('departureCity' in d) || d.departureCity == null || (d.departureCity is string && d.departureCity.size() <= 160)) &&
              d.price is number && d.price >= 0 && d.price <= 1000000 &&
+             (!('startDate' in d) || d.startDate == null || d.startDate is timestamp || (d.startDate is string && d.startDate.size() <= 40)) &&
+             (!('endDate' in d) || d.endDate == null || d.endDate is timestamp || (d.endDate is string && d.endDate.size() <= 40)) &&
              d.durationDays is number && d.durationDays > 0 && d.durationDays <= 365 &&
              (!('images' in d) || d.images == null || (d.images is list && d.images.size() <= 20)) &&
+             (!('coverImage' in d) || d.coverImage == null || d.coverImage == '' || isValidUrl(d.coverImage, 2048)) &&
+             (!('imageUrl' in d) || d.imageUrl == null || d.imageUrl == '' || isValidUrl(d.imageUrl, 2048)) &&
+             (!('category' in d) || d.category == null || (d.category is string && d.category.size() <= 50)) &&
+             (!('categories' in d) || d.categories == null || (d.categories is list && d.categories.size() <= 15)) &&
+             (!('tags' in d) || d.tags == null || (d.tags is list && d.tags.size() <= 30)) &&
+             (!('travelerTypes' in d) || d.travelerTypes == null || (d.travelerTypes is list && d.travelerTypes.size() <= 10)) &&
              (!('itinerary' in d) || d.itinerary == null || (d.itinerary is list && d.itinerary.size() <= 60)) &&
              (!('boardingPoints' in d) || d.boardingPoints == null || (d.boardingPoints is list && d.boardingPoints.size() <= 30)) &&
+             (!('paymentMethods' in d) || d.paymentMethods == null || (d.paymentMethods is list && d.paymentMethods.size() <= 10)) &&
              (!('included' in d) || d.included == null || (d.included is list && d.included.size() <= 50)) &&
              (!('notIncluded' in d) || d.notIncluded == null || (d.notIncluded is list && d.notIncluded.size() <= 50)) &&
              d.isActive is bool &&
              (!('maxGuests' in d) || d.maxGuests == null || (d.maxGuests is int && d.maxGuests >= 0 && d.maxGuests <= 10000)) &&
+             (!('maxSpots' in d) || d.maxSpots == null || (d.maxSpots is int && d.maxSpots >= 0 && d.maxSpots <= 10000)) &&
+             (!('availableSpots' in d) || d.availableSpots == null || (d.availableSpots is int && d.availableSpots >= 0 && d.availableSpots <= 10000)) &&
+             (!('latitude' in d) || d.latitude == null || (d.latitude is number && d.latitude >= -90 && d.latitude <= 90)) &&
+             (!('longitude' in d) || d.longitude == null || (d.longitude is number && d.longitude >= -180 && d.longitude <= 180)) &&
              (!('passengerConfig' in d) || d.passengerConfig == null || (d.passengerConfig is map && d.passengerConfig.keys().size() <= 20)) &&
+             (!('operationalData' in d) || d.operationalData == null || (d.operationalData is map && d.operationalData.keys().size() <= 20)) &&
+             (!('agencyName' in d) || d.agencyName == null || (d.agencyName is string && d.agencyName.size() <= 120)) &&
+             (!('agencySlug' in d) || d.agencySlug == null || (d.agencySlug is string && d.agencySlug.size() <= 100)) &&
+             (!('agencyLogo' in d) || d.agencyLogo == null || d.agencyLogo == '' || isValidUrl(d.agencyLogo, 2048)) &&
              (!('featured' in d) || d.featured == null || d.featured is bool) &&
+             (!('featuredInHero' in d) || d.featuredInHero == null || d.featuredInHero is bool) &&
+             (!('popularNearSP' in d) || d.popularNearSP == null || d.popularNearSP is bool) &&
              (!('rating' in d) || d.rating == null || (d.rating is number && d.rating >= 0 && d.rating <= 5)) &&
-             (!('totalReviews' in d) || d.totalReviews == null || (d.totalReviews is int && d.totalReviews >= 0 && d.totalReviews <= 1000000));
+             (!('totalReviews' in d) || d.totalReviews == null || (d.totalReviews is int && d.totalReviews >= 0 && d.totalReviews <= 1000000)) &&
+             (!('views' in d) || d.views == null || (d.views is int && d.views >= 0 && d.views <= 100000000)) &&
+             (!('sales' in d) || d.sales == null || (d.sales is int && d.sales >= 0 && d.sales <= 10000000));
     }
 
     function isValidBooking(d) {
@@ -393,13 +485,24 @@ service cloud.firestore {
              d.status in ['PENDING', 'CONFIRMED', 'CANCELLED'] &&
              d.adults is int && d.adults >= 1 && d.adults <= 100 &&
              (!('children' in d) || d.children == null || (d.children is int && d.children >= 0 && d.children <= 100)) &&
+             (!('passengers' in d) || d.passengers == null || (d.passengers is int && d.passengers >= 1 && d.passengers <= 200) || (d.passengers is list && d.passengers.size() <= 100)) &&
              (!('passengerDetails' in d) || d.passengerDetails == null || (d.passengerDetails is list && d.passengerDetails.size() <= 100)) &&
              d.totalPrice is number && d.totalPrice >= 0 && d.totalPrice <= 1000000 &&
              (!('paymentMethod' in d) || d.paymentMethod == null || (d.paymentMethod is string && d.paymentMethod.size() <= 40)) &&
              (!('voucherCode' in d) || d.voucherCode == null || (d.voucherCode is string && d.voucherCode.size() <= 40)) &&
+             (!('date' in d) || d.date == null || d.date is timestamp || (d.date is string && d.date.size() <= 40)) &&
+             (!('tripDate' in d) || d.tripDate == null || d.tripDate is timestamp || (d.tripDate is string && d.tripDate.size() <= 40)) &&
+             (!('departureDate' in d) || d.departureDate == null || d.departureDate is timestamp || (d.departureDate is string && d.departureDate.size() <= 40)) &&
+             (!('tripTitle' in d) || d.tripTitle == null || (d.tripTitle is string && d.tripTitle.size() <= 160)) &&
+             (!('tripSlug' in d) || d.tripSlug == null || (d.tripSlug is string && d.tripSlug.size() <= 180)) &&
              (!('tripImage' in d) || d.tripImage == null || d.tripImage == '' || isValidUrl(d.tripImage, 2048)) &&
+             (!('agencyName' in d) || d.agencyName == null || (d.agencyName is string && d.agencyName.size() <= 120)) &&
+             (!('clientName' in d) || d.clientName == null || (d.clientName is string && d.clientName.size() <= 120)) &&
              (!('clientEmail' in d) || d.clientEmail == null || d.clientEmail == '' || isValidEmail(d.clientEmail)) &&
-             (!('notes' in d) || d.notes == null || (d.notes is string && d.notes.size() <= 1000));
+             (!('clientPhone' in d) || d.clientPhone == null || (d.clientPhone is string && d.clientPhone.size() <= 30)) &&
+             (!('notes' in d) || d.notes == null || (d.notes is string && d.notes.size() <= 1000)) &&
+             (!('specialRequests' in d) || d.specialRequests == null || (d.specialRequests is string && d.specialRequests.size() <= 1000)) &&
+             (!('cancellationReason' in d) || d.cancellationReason == null || (d.cancellationReason is string && d.cancellationReason.size() <= 500));
     }
 
     function isValidReview(d) {
@@ -414,7 +517,7 @@ service cloud.firestore {
              (!('tripId' in d) || d.tripId == null || (d.tripId is string && d.tripId.size() > 0 && d.tripId.size() <= 128)) &&
              (!('agencyId' in d) || d.agencyId == null || (d.agencyId is string && d.agencyId.size() > 0 && d.agencyId.size() <= 128)) &&
              d.rating is int && d.rating >= 1 && d.rating <= 5 &&
-             d.comment is string && d.comment.size() <= 2000 &&
+             d.comment is string && d.comment.trim().size() >= 3 && d.comment.size() <= 2000 &&
              (!('userName' in d) || d.userName == null || (d.userName is string && d.userName.size() <= 120)) &&
              (!('userPhotoURL' in d) || d.userPhotoURL == null || d.userPhotoURL == '' || isValidUrl(d.userPhotoURL, 2048));
     }
@@ -422,7 +525,8 @@ service cloud.firestore {
     function isValidConsent(d) {
       return d.keys().hasOnly([
                'id', 'userUid', 'essential', 'analytics', 'marketing',
-               'consentVersion', 'ipHash', 'userAgent', 'timestamp', 'createdAt'
+               'consentVersion', 'ipHash', 'userAgent', 'timestamp',
+               'createdAt', 'updatedAt'
              ]) &&
              d.keys().hasAll(['userUid', 'essential', 'analytics', 'marketing', 'consentVersion']) &&
              (!('id' in d) || (d.id is string && d.id.size() > 0 && d.id.size() <= 128)) &&
@@ -430,7 +534,25 @@ service cloud.firestore {
              d.essential == true &&
              d.analytics is bool &&
              d.marketing is bool &&
-             d.consentVersion is string && d.consentVersion.size() <= 50;
+             d.consentVersion is string && d.consentVersion.size() >= 1 && d.consentVersion.size() <= 50 &&
+             (!('ipHash' in d) || d.ipHash == null || (d.ipHash is string && d.ipHash.size() <= 128)) &&
+             (!('userAgent' in d) || d.userAgent == null || (d.userAgent is string && d.userAgent.size() <= 300)) &&
+             (!('timestamp' in d) || d.timestamp == null || d.timestamp is timestamp || (d.timestamp is string && d.timestamp.size() <= 40));
+    }
+
+    function isValidContactMessage(d) {
+      return d.keys().hasOnly([
+               'id', 'name', 'email', 'message', 'source',
+               'userUid', 'status', 'createdAt', 'updatedAt'
+             ]) &&
+             d.keys().hasAll(['name', 'email', 'message', 'status']) &&
+             (!('id' in d) || (d.id is string && d.id.size() > 0 && d.id.size() <= 128)) &&
+             d.name is string && d.name.trim().size() >= 2 && d.name.size() <= 120 &&
+             isValidEmail(d.email) &&
+             d.message is string && d.message.trim().size() >= 5 && d.message.size() <= 2000 &&
+             (!('source' in d) || d.source == null || (d.source is string && d.source in ['CONTACT_FORM', 'GROUP_QUOTE'])) &&
+             (!('userUid' in d) || d.userUid == null || (d.userUid is string && d.userUid.size() > 0 && d.userUid.size() <= 128)) &&
+             d.status is string && d.status.size() >= 2 && d.status.size() <= 40;
     }
 
     // ========================================================================
@@ -458,9 +580,8 @@ service cloud.firestore {
                        (
                          (isOwner(uid) &&
                           areImmutableFieldsUnchanged(['status']) &&
-                          request.resource.data.role in ['CLIENT', 'AGENCY', 'GUIDE'] &&
-                          (request.resource.data.role == resource.data.role ||
-                           (resource.data.role == 'CLIENT' && request.resource.data.role in ['AGENCY', 'GUIDE']))) ||
+                          resource.data.role in ['CLIENT', 'AGENCY', 'GUIDE'] &&
+                          request.resource.data.role in ['CLIENT', 'AGENCY', 'GUIDE']) ||
                          isAdmin()
                        );
 
@@ -500,7 +621,14 @@ service cloud.firestore {
 
     // 3. trips/{tripId} — Public active listings, owner agency full CRUD
     match /trips/{tripId} {
-      allow read: if resource.data.isActive == true ||
+      // Split get vs list so getDoc() on non-existent/seed IDs (resource == null)
+      // returns a clean empty snapshot instead of throwing a Null Value Error.
+      allow get: if resource == null ||
+                    resource.data.isActive == true ||
+                    isAgencyOwner(resource.data.agencyId) ||
+                    isAdmin();
+
+      allow list: if resource.data.isActive == true ||
                      isAgencyOwner(resource.data.agencyId) ||
                      isAdmin();
 
@@ -541,7 +669,7 @@ service cloud.firestore {
                        request.resource.data.clientUid == request.auth.uid &&
                        request.resource.data.status == 'PENDING' &&
                        isValidCreatedAndUpdatedOnCreate() &&
-                       isValidBookingTarget(request.resource.data.tripId, request.resource.data.agencyId);
+                       isValidBookingTarget(request.resource.data);
 
       allow update: if isAuthenticated() &&
                        isValidBooking(request.resource.data) &&
@@ -587,15 +715,39 @@ service cloud.firestore {
     // 6. user_consents/{consentId} — LGPD Art. 8 audit trail (append-only proof of consent)
     match /user_consents/{consentId} {
       allow read: if isAuthenticated() && (resource.data.userUid == request.auth.uid || isAdmin());
+
       allow create: if isAuthenticated() &&
                        isValidConsent(request.resource.data) &&
                        request.resource.data.userUid == request.auth.uid &&
-                       (!('id' in request.resource.data) || request.resource.data.id == consentId);
+                       (!('id' in request.resource.data) || request.resource.data.id == consentId) &&
+                       isValidCreatedAndUpdatedOnCreate();
+
       allow update: if false; // Append-only immutable log for legal audit compliance
+
       allow delete: if isAuthenticated() && (resource.data.userUid == request.auth.uid || isAdmin());
     }
 
-    // 6. Default deny-all fallback
+    // 7. contact_messages/{messageId} — Public lead/support intake, admin-only triage
+    match /contact_messages/{messageId} {
+      allow read: if isAdmin();
+
+      allow create: if isValidContactMessage(request.resource.data) &&
+                       (!('id' in request.resource.data) || request.resource.data.id == messageId) &&
+                       request.resource.data.status == 'NEW' &&
+                       (!('userUid' in request.resource.data) ||
+                        request.resource.data.userUid == null ||
+                        (isAuthenticated() && request.resource.data.userUid == request.auth.uid)) &&
+                       isValidCreatedAndUpdatedOnCreate();
+
+      allow update: if isAdmin() &&
+                       isValidContactMessage(request.resource.data) &&
+                       areImmutableFieldsUnchanged(['id', 'createdAt']) &&
+                       isValidUpdatedOnUpdate();
+
+      allow delete: if isAdmin();
+    }
+
+    // 8. Default deny-all fallback
     match /{document=**} {
       allow read, write: if false;
     }

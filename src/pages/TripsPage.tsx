@@ -1,8 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { useOutletContext, useSearchParams } from 'react-router-dom';
-import { CalendarDays, Search, SlidersHorizontal, Users } from 'lucide-react';
+import {
+  AlertCircle,
+  CalendarDays,
+  RefreshCw,
+  Search,
+  SlidersHorizontal,
+  Users,
+} from 'lucide-react';
 import { InterestFilterBar } from '@/components/landing/InterestFilterBar';
 import { TripGrid } from '@/components/trips/TripGrid';
+import { Button } from '@/components/ui/Button';
 import { useTrips } from '@/hooks/useTrips';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useUserProfile } from '@/hooks/useUserProfile';
@@ -41,7 +49,7 @@ export const TripsPage: React.FC = () => {
   }, [searchParams]);
 
   const debouncedQuery = useDebounce(query, 250);
-  const { trips, loading } = useTrips({
+  const { trips, allTrips, loading, error, reload } = useTrips({
     query: debouncedQuery,
     category,
     sortBy,
@@ -51,6 +59,28 @@ export const TripsPage: React.FC = () => {
   });
   const { profile, toggleFavorite } = useUserProfile();
   const { showToast } = useToast();
+
+  const monthOptions = React.useMemo(() => {
+    const months = new Set<string>(['2026-12', '2027-01']);
+    for (const t of allTrips) {
+      if (typeof t.startDate === 'string' && /^\d{4}-\d{2}/.test(t.startDate)) {
+        months.add(t.startDate.slice(0, 7));
+      }
+    }
+    return Array.from(months)
+      .sort()
+      .map((ym) => {
+        const [yearStr, monthStr] = ym.split('-');
+        const dt = new Date(Number(yearStr), Number(monthStr) - 1, 1);
+        const label = dt.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+        return {
+          value: ym,
+          label: label.charAt(0).toUpperCase() + label.slice(1),
+        };
+      });
+  }, [allTrips]);
+
+  const safeFavorites = Array.isArray(profile?.favorites) ? profile.favorites : [];
 
   const handleToggleFavorite = async (tripId: string) => {
     try {
@@ -81,6 +111,26 @@ export const TripsPage: React.FC = () => {
           Encontre roteiros verificados por destino, mês de saída, interesse ou investimento.
         </p>
       </div>
+
+      {error && (
+        <div
+          role="alert"
+          className="mb-6 rounded-2xl border border-red-200 bg-red-50/70 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+        >
+          <div className="flex items-start gap-2.5 text-xs text-red-900">
+            <AlertCircle size={18} className="text-red-600 shrink-0 mt-0.5" />
+            <span>{error}</span>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            leftIcon={<RefreshCw size={14} />}
+            onClick={() => void reload()}
+          >
+            Tentar novamente
+          </Button>
+        </div>
+      )}
 
       <div className="rounded-2xl border border-stone-200 bg-white p-4 shadow-card mb-6 space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
@@ -114,8 +164,11 @@ export const TripsPage: React.FC = () => {
               className="w-full min-h-[44px] rounded-xl border border-stone-300 bg-white px-3 text-sm"
             >
               <option value="">Qualquer mês</option>
-              <option value="2026-12">Dezembro 2026</option>
-              <option value="2027-01">Janeiro 2027</option>
+              {monthOptions.map((item) => (
+                <option key={item.value} value={item.value}>
+                  {item.label}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -184,7 +237,7 @@ export const TripsPage: React.FC = () => {
       <TripGrid
         trips={trips}
         loading={loading}
-        favorites={profile?.favorites ?? []}
+        favorites={safeFavorites}
         onToggleFavorite={(id) => void handleToggleFavorite(id)}
         onResetFilters={resetAllFilters}
       />

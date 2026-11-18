@@ -1,16 +1,22 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { getDailyHeroImage } from '@/utils/dailyHeroImage';
 import { cn } from '@/utils/cn';
 
 interface TripGalleryProps {
-  images: string[];
+  images?: string[] | null;
   title: string;
 }
 
 export const TripGallery: React.FC<TripGalleryProps> = ({ images, title }) => {
-  const gallery = images.length > 0 ? images : [getDailyHeroImage()];
+  const safeImages = Array.isArray(images) ? images.filter(Boolean) : [];
+  const gallery = safeImages.length > 0 ? safeImages : [getDailyHeroImage()];
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [fallbackActive, setFallbackActive] = useState(false);
+
+  useEffect(() => {
+    setSelectedIndex(0);
+    setFallbackActive(false);
+  }, [images]);
 
   const activeSrc = fallbackActive ? getDailyHeroImage() : (gallery[selectedIndex] ?? gallery[0]);
 
