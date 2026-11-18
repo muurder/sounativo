@@ -49,7 +49,15 @@ export default defineConfig({
         clientsClaim: true,
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         navigateFallback: '/index.html',
-        navigateFallbackDenylist: [/^\/api\//],
+        navigateFallbackDenylist: [
+          /^\/api\//,
+          /^\/robots\.txt$/,
+          /^\/sitemap\.xml$/,
+          // Rotas reservadas do Firebase Hosting (Auth handler, init.js etc.).
+          // Sem isto, o service worker intercepta o popup/redirect do Google
+          // e serve o SPA no lugar do handler de autenticação.
+          /^\/__/,
+        ],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
@@ -78,6 +86,15 @@ export default defineConfig({
               cacheableResponse: { statuses: [0, 200] },
             },
           },
+          {
+            urlPattern: /^https:\/\/firebasestorage\.googleapis\.com\/.*/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'firebase-storage-images-cache',
+              expiration: { maxEntries: 150, maxAgeSeconds: 60 * 60 * 24 * 30 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
         ],
       },
     }),
@@ -96,6 +113,12 @@ export default defineConfig({
       output: {
         manualChunks: (id) => {
           if (!id.includes('node_modules')) return undefined;
+          if (id.includes('@firebase/storage') || id.includes('firebase/storage')) {
+            return 'vendor-firebase-storage';
+          }
+          if (id.includes('@firebase/auth') || id.includes('firebase/auth')) {
+            return 'vendor-firebase-auth';
+          }
           if (id.includes('firebase')) return 'vendor-firebase';
           if (id.includes('react-router')) return 'vendor-router';
           if (id.includes('lucide-react')) return 'vendor-icons';
