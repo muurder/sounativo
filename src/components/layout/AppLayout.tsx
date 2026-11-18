@@ -5,6 +5,7 @@ import { MobileDrawer } from './MobileDrawer';
 import { BottomNav } from './BottomNav';
 import { Footer } from './Footer';
 import { AuthModal } from '@/components/auth/AuthModal';
+import { CookieBanner } from '@/components/privacy/CookieBanner';
 import { useTheme } from '@/context/ThemeContext';
 
 export const AppLayout: React.FC = () => {
@@ -62,6 +63,8 @@ export const AppLayout: React.FC = () => {
         initialMode={authModalMode ?? 'login'}
         onClose={closeAuth}
       />
+
+      <CookieBanner />
     </div>
   );
 };

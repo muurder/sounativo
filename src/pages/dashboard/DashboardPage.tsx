@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useOutletContext, useSearchParams } from 'react-router-dom';
-import { Briefcase, Compass, ShieldCheck, User } from 'lucide-react';
+import { Briefcase, Compass, Lock, ShieldCheck, User } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/context/ToastContext';
 import { MASTER_ADMIN_EMAIL } from '@/services/firebase.config';
@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/Badge';
 import { ClientDashboardView } from './ClientDashboardView';
 import { PartnerDashboardView } from './PartnerDashboardView';
 import { AdminDashboardView } from './AdminDashboardView';
+import { PrivacySettings } from './PrivacySettings';
 
 interface OutletContextValue {
   openAuth: (mode: 'login' | 'signup') => void;
@@ -28,18 +29,19 @@ export const DashboardPage: React.FC = () => {
       (MASTER_ADMIN_EMAIL && user.email.toLowerCase() === MASTER_ADMIN_EMAIL))
   );
 
-  const [viewMode, setViewMode] = useState<'traveler' | 'partner' | 'admin'>(() =>
-    searchParams.get('mode') === 'partner' ? 'partner' : 'traveler'
-  );
+  const [viewMode, setViewMode] = useState<'traveler' | 'partner' | 'admin' | 'privacy'>(() => {
+    const mode = searchParams.get('mode');
+    if (mode === 'privacy') return 'privacy';
+    return mode === 'partner' ? 'partner' : 'traveler';
+  });
 
   useEffect(() => {
-    if (searchParams.get('mode') === 'admin' && isMasterAdmin) {
+    const mode = searchParams.get('mode');
+    if (mode === 'privacy') {
+      setViewMode('privacy');
+    } else if (mode === 'admin' && isMasterAdmin) {
       setViewMode('admin');
-    } else if (
-      searchParams.get('mode') === 'partner' ||
-      user?.role === 'AGENCY' ||
-      user?.role === 'GUIDE'
-    ) {
+    } else if (mode === 'partner' || user?.role === 'AGENCY' || user?.role === 'GUIDE') {
       setViewMode('partner');
     } else {
       setViewMode('traveler');
@@ -77,7 +79,8 @@ export const DashboardPage: React.FC = () => {
             Acesse seu Painel SouNativo
           </h1>
           <p className="text-sm text-stone-600">
-            Entre com sua conta Google para gerenciar reservas, favoritos ou operar sua agência.
+            Entre com sua conta Google para gerenciar reservas, favoritos, privacidade ou operar sua
+            agência.
           </p>
           <GoogleSignInButton loading={googleBusy} onClick={() => void handleDashboardGoogle()} />
           <Button variant="ghost" fullWidth onClick={() => openAuth('login')}>
@@ -119,6 +122,15 @@ export const DashboardPage: React.FC = () => {
           >
             <Briefcase size={15} /> Modo Agência / Guia
           </button>
+          <button
+            type="button"
+            onClick={() => setViewMode('privacy')}
+            className={`inline-flex items-center gap-2 min-h-[38px] px-4 rounded-lg text-xs font-semibold transition-colors ${
+              viewMode === 'privacy' ? 'bg-primary-500 text-white' : 'text-stone-600'
+            }`}
+          >
+            <Lock size={15} /> Minha Privacidade
+          </button>
           {isMasterAdmin && (
             <button
               type="button"
@@ -135,6 +147,7 @@ export const DashboardPage: React.FC = () => {
 
       {viewMode === 'traveler' && <ClientDashboardView />}
       {viewMode === 'partner' && <PartnerDashboardView />}
+      {viewMode === 'privacy' && <PrivacySettings />}
       {viewMode === 'admin' && isMasterAdmin && <AdminDashboardView />}
     </div>
   );

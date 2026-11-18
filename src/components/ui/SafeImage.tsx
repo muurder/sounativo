@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { getDailyHeroImage } from '@/utils/dailyHeroImage';
+import { sanitizeImageSrc } from '@/utils/securitySanitizer';
 
 interface SafeImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
   fallbackSrc?: string;
@@ -7,10 +8,10 @@ interface SafeImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
 
 export const SafeImage: React.FC<SafeImageProps> = ({ src, alt = '', fallbackSrc, ...props }) => {
   const defaultFallback = fallbackSrc || getDailyHeroImage();
-  const [imgSrc, setImgSrc] = useState(src || defaultFallback);
+  const [imgSrc, setImgSrc] = useState(() => sanitizeImageSrc(src, defaultFallback));
 
   useEffect(() => {
-    setImgSrc(src || defaultFallback);
+    setImgSrc(sanitizeImageSrc(src, defaultFallback));
   }, [defaultFallback, src]);
 
   return (

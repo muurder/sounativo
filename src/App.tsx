@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { ToastProvider } from '@/context/ToastContext';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { AuthProvider } from '@/context/AuthContext';
+import { ConsentProvider } from '@/context/ConsentContext';
 import { AppLayout } from '@/components/layout/AppLayout';
 
 const HomePage = lazy(() => import('@/pages/HomePage'));
@@ -26,6 +27,9 @@ const TermsPage = lazy(() =>
 const PrivacyPage = lazy(() =>
   import('@/pages/InstitutionalPage').then((m) => ({ default: m.PrivacyPage }))
 );
+const CookiePolicyPage = lazy(() =>
+  import('@/pages/InstitutionalPage').then((m) => ({ default: m.CookiePolicyPage }))
+);
 
 const PageLoader: React.FC = () => (
   <div className="flex min-h-[55vh] items-center justify-center">
@@ -42,39 +46,53 @@ export const App: React.FC = () => {
     <ToastProvider>
       <ThemeProvider>
         <AuthProvider>
-          <BrowserRouter>
-            <Suspense fallback={<PageLoader />}>
-              <Routes>
-                <Route path="/" element={<AppLayout />}>
-                  <Route index element={<HomePage />} />
-                  <Route path="trips" element={<TripsPage />} />
-                  <Route path="trips/:slug" element={<TripDetailsPage />} />
-                  <Route path="viagem/:slug" element={<TripDetailsPage />} />
-                  <Route path="agencies" element={<AgenciesPage />} />
-                  <Route path="guides" element={<GuidesPage />} />
-                  <Route path="dashboard" element={<DashboardPage />} />
+          <ConsentProvider>
+            <BrowserRouter>
+              <Suspense fallback={<PageLoader />}>
+                <Routes>
+                  <Route path="/" element={<AppLayout />}>
+                    <Route index element={<HomePage />} />
+                    <Route path="trips" element={<TripsPage />} />
+                    <Route path="trips/:slug" element={<TripDetailsPage />} />
+                    <Route path="viagem/:slug" element={<TripDetailsPage />} />
+                    <Route path="agencies" element={<AgenciesPage />} />
+                    <Route path="guides" element={<GuidesPage />} />
+                    <Route path="dashboard" element={<DashboardPage />} />
 
-                  <Route path="about" element={<AboutPage />} />
-                  <Route path="contact" element={<ContactPage />} />
-                  <Route path="terms" element={<TermsPage />} />
-                  <Route path="privacy" element={<PrivacyPage />} />
+                    <Route path="about" element={<AboutPage />} />
+                    <Route path="contact" element={<ContactPage />} />
+                    <Route path="terms" element={<TermsPage />} />
+                    <Route path="termos" element={<TermsPage />} />
+                    <Route path="privacy" element={<PrivacyPage />} />
+                    <Route path="politica-de-privacidade" element={<PrivacyPage />} />
+                    <Route path="cookies" element={<CookiePolicyPage />} />
+                    <Route path="politica-de-cookies" element={<CookiePolicyPage />} />
+                    <Route
+                      path="minha-privacidade"
+                      element={<Navigate to="/dashboard?mode=privacy" replace />}
+                    />
+                    <Route
+                      path="privacy-settings"
+                      element={<Navigate to="/dashboard?mode=privacy" replace />}
+                    />
 
-                  {/* Legacy route redirects */}
-                  <Route path="client/*" element={<Navigate to="/dashboard" replace />} />
-                  <Route path="agency/*" element={<Navigate to="/dashboard" replace />} />
-                  <Route path="guide/*" element={<Navigate to="/dashboard" replace />} />
-                  <Route path="admin/*" element={<Navigate to="/dashboard" replace />} />
-                  <Route path="settings" element={<Navigate to="/dashboard" replace />} />
+                    {/* Legacy route redirects */}
+                    <Route path="client/*" element={<Navigate to="/dashboard" replace />} />
+                    <Route path="agency/*" element={<Navigate to="/dashboard" replace />} />
+                    <Route path="guide/*" element={<Navigate to="/dashboard" replace />} />
+                    <Route path="admin/*" element={<Navigate to="/dashboard" replace />} />
+                    <Route path="settings" element={<Navigate to="/dashboard" replace />} />
 
-                  {/* Whitelabel agency microsite */}
-                  <Route path=":agencySlug" element={<AgencyMicrositePage />} />
-                  <Route path=":agencySlug/viagem/:tripSlug" element={<TripDetailsPage />} />
+                    {/* Whitelabel agency microsite */}
+                    <Route path=":agencySlug" element={<AgencyMicrositePage />} />
+                    <Route path=":agencySlug/viagem/:tripSlug" element={<TripDetailsPage />} />
 
-                  <Route path="*" element={<NotFoundPage />} />
-                </Route>
-              </Routes>
-            </Suspense>
-          </BrowserRouter>
+                    <Route path="*" element={<NotFoundPage />} />
+                  </Route>
+                </Routes>
+              </Suspense>
+            </BrowserRouter>
+          </ConsentProvider>
         </AuthProvider>
       </ThemeProvider>
     </ToastProvider>

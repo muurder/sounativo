@@ -285,7 +285,7 @@ service cloud.firestore {
       return d.keys().hasOnly([
                'uid', 'name', 'email', 'role', 'phone', 'cpf',
                'photoURL', 'favorites', 'agencyId', 'birthDate',
-               'address', 'notificationsEnabled', 'status',
+               'address', 'notificationsEnabled', 'status', 'privacyConsent',
                'createdAt', 'updatedAt'
              ]) &&
              d.keys().hasAll(['name', 'role']) &&
@@ -297,6 +297,7 @@ service cloud.firestore {
              (!('favorites' in d) || d.favorites == null || (d.favorites is list && d.favorites.size() <= 200)) &&
              (!('agencyId' in d) || d.agencyId == null || (d.agencyId is string && d.agencyId.size() <= 128)) &&
              (!('notificationsEnabled' in d) || d.notificationsEnabled == null || d.notificationsEnabled is bool) &&
+             (!('privacyConsent' in d) || d.privacyConsent == null || (d.privacyConsent is map && d.privacyConsent.keys().size() <= 10)) &&
              (!('status' in d) || d.status == null || d.status in ['ACTIVE', 'SUSPENDED']);
     }
 
@@ -418,6 +419,20 @@ service cloud.firestore {
              (!('userPhotoURL' in d) || d.userPhotoURL == null || d.userPhotoURL == '' || isValidUrl(d.userPhotoURL, 2048));
     }
 
+    function isValidConsent(d) {
+      return d.keys().hasOnly([
+               'id', 'userUid', 'essential', 'analytics', 'marketing',
+               'consentVersion', 'ipHash', 'userAgent', 'timestamp', 'createdAt'
+             ]) &&
+             d.keys().hasAll(['userUid', 'essential', 'analytics', 'marketing', 'consentVersion']) &&
+             (!('id' in d) || (d.id is string && d.id.size() > 0 && d.id.size() <= 128)) &&
+             d.userUid is string && d.userUid.size() > 0 && d.userUid.size() <= 128 &&
+             d.essential == true &&
+             d.analytics is bool &&
+             d.marketing is bool &&
+             d.consentVersion is string && d.consentVersion.size() <= 50;
+    }
+
     // ========================================================================
     // Collection Rules
     // ========================================================================
@@ -449,7 +464,8 @@ service cloud.firestore {
                          isAdmin()
                        );
 
-      allow delete: if isAdmin();
+      // LGPD Art. 18, VI & GDPR Art. 17: Right to Erasure / Direito à Eliminação
+      allow delete: if isOwner(uid) || isAdmin();
     }
 
     // 2. agencies/{agencyId} — Public marketplace microsites, owner-managed profiles
@@ -566,6 +582,17 @@ service cloud.firestore {
 
       allow delete: if isAuthenticated() &&
                        (resource.data.userUid == request.auth.uid || isAdmin());
+    }
+
+    // 6. user_consents/{consentId} — LGPD Art. 8 audit trail (append-only proof of consent)
+    match /user_consents/{consentId} {
+      allow read: if isAuthenticated() && (resource.data.userUid == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() &&
+                       isValidConsent(request.resource.data) &&
+                       request.resource.data.userUid == request.auth.uid &&
+                       (!('id' in request.resource.data) || request.resource.data.id == consentId);
+      allow update: if false; // Append-only immutable log for legal audit compliance
+      allow delete: if isAuthenticated() && (resource.data.userUid == request.auth.uid || isAdmin());
     }
 
     // 6. Default deny-all fallback

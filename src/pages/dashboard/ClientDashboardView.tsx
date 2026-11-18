@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Calendar, Heart, UserCheck } from 'lucide-react';
+import { Calendar, Heart, ShieldCheck, UserCheck } from 'lucide-react';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useBookings } from '@/hooks/useBookings';
 import { useTrips } from '@/hooks/useTrips';
@@ -7,6 +7,7 @@ import { useToast } from '@/context/ToastContext';
 import { TripGrid } from '@/components/trips/TripGrid';
 import { ClientBookingsTab } from './ClientBookingsTab';
 import { ClientProfileForm } from './ClientProfileForm';
+import { PrivacySettings } from './PrivacySettings';
 
 export const ClientDashboardView: React.FC = () => {
   const { profile, saving, updateProfile, toggleFavorite } = useUserProfile();
@@ -14,7 +15,9 @@ export const ClientDashboardView: React.FC = () => {
   const { allTrips } = useTrips();
   const { showToast } = useToast();
 
-  const [activeTab, setActiveTab] = useState<'bookings' | 'favorites' | 'profile'>('bookings');
+  const [activeTab, setActiveTab] = useState<'bookings' | 'favorites' | 'profile' | 'privacy'>(
+    'bookings'
+  );
 
   const favoriteTrips = allTrips.filter((t) => profile?.favorites.includes(t.id));
 
@@ -34,6 +37,7 @@ export const ClientDashboardView: React.FC = () => {
           { id: 'bookings', label: `Minhas Reservas (${bookings.length})`, icon: Calendar },
           { id: 'favorites', label: `Favoritos (${favoriteTrips.length})`, icon: Heart },
           { id: 'profile', label: 'Meus Dados', icon: UserCheck },
+          { id: 'privacy', label: 'Privacidade & LGPD', icon: ShieldCheck },
         ].map((tab) => {
           const Icon = tab.icon;
           const active = activeTab === tab.id;
@@ -75,6 +79,8 @@ export const ClientDashboardView: React.FC = () => {
       {activeTab === 'profile' && (
         <ClientProfileForm profile={profile} saving={saving} onSave={updateProfile} />
       )}
+
+      {activeTab === 'privacy' && <PrivacySettings />}
     </div>
   );
 };

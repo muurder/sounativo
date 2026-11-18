@@ -42,6 +42,7 @@ export const COLLECTIONS = {
   trips: 'trips',
   bookings: 'bookings',
   reviews: 'reviews',
+  userConsents: 'user_consents',
 } as const;
 
 export { auth, db, firebaseApp, googleProvider, isFirebaseConfigured, serverTimestamp };

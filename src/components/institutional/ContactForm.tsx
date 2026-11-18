@@ -3,22 +3,38 @@ import { useSearchParams } from 'react-router-dom';
 import { CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/context/ToastContext';
+import {
+  getOrCreateCsrfToken,
+  sanitizePlainText,
+  verifyCsrfToken,
+} from '@/utils/securitySanitizer';
 
 export const ContactForm: React.FC = () => {
   const { showToast } = useToast();
   const [searchParams] = useSearchParams();
+  const [csrfToken] = useState(() => getOrCreateCsrfToken());
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [message, setMessage] = useState(() => searchParams.get('msg') ?? '');
+  const [message, setMessage] = useState(() => sanitizePlainText(searchParams.get('msg'), 2000));
   const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
     const prefill = searchParams.get('msg');
-    if (prefill) setMessage(prefill);
+    if (prefill) setMessage(sanitizePlainText(prefill, 2000));
   }, [searchParams]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (csrfToken && !verifyCsrfToken(csrfToken)) {
+      showToast('Sessão expirada. Recarregue a página e tente novamente.', 'error');
+      return;
+    }
+    const cleanName = sanitizePlainText(name, 120);
+    const cleanMessage = sanitizePlainText(message, 2000);
+    if (!cleanName || cleanMessage.length < 5) {
+      showToast('Preencha nome e mensagem válidos.', 'error');
+      return;
+    }
     setSubmitted(true);
     showToast('Mensagem recebida pela equipe SouNativo!', 'success');
     setName('');

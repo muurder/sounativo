@@ -72,32 +72,6 @@ export const ContactPage: React.FC = () => (
   </div>
 );
 
-export const TermsPage: React.FC = () => (
-  <article className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 py-12 space-y-5 text-sm text-stone-700 leading-relaxed">
-    <h1 className="font-serif text-3xl sm:text-4xl font-bold text-stone-900">Termos de Uso</h1>
-    <p>
-      O SouNativo atua como marketplace intermediador conectando viajantes a agências de viagens e
-      guias turísticos independentes credenciados.
-    </p>
-    <p>
-      Cada operadora parceira é integralmente responsável pela execução do roteiro, embarques,
-      políticas de cancelamento e cumprimento das normas do Cadastur.
-    </p>
-  </article>
-);
-
-export const PrivacyPage: React.FC = () => (
-  <article className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 py-12 space-y-5 text-sm text-stone-700 leading-relaxed">
-    <h1 className="font-serif text-3xl sm:text-4xl font-bold text-stone-900">
-      Política de Privacidade (LGPD)
-    </h1>
-    <p>
-      Coletamos apenas os dados necessários para autenticação via Firebase Auth (Google ou e-mail) e
-      para formalização de reservas solicitadas por você junto às agências selecionadas.
-    </p>
-    <p>
-      Seus dados pessoais são protegidos por regras de isolamento no Cloud Firestore e nunca são
-      comercializados com terceiros. Contato: privacidade@sounativo.com.
-    </p>
-  </article>
-);
+export { TermsOfServicePage as TermsPage } from '@/pages/legal/TermsOfServicePage';
+export { PrivacyPolicyPage as PrivacyPage } from '@/pages/legal/PrivacyPolicyPage';
+export { CookiePolicyPage } from '@/pages/legal/CookiePolicyPage';

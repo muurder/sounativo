@@ -1,8 +1,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Logo } from '@/components/ui/Logo';
+import { useConsent } from '@/hooks/useConsent';
 
 export const Footer: React.FC = () => {
+  const { openConsentBanner } = useConsent();
   return (
     <footer className="bg-primary-800 text-stone-200 border-t border-primary-700 mt-auto">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
@@ -67,6 +69,20 @@ export const Footer: React.FC = () => {
                 <Link to="/privacy" className="hover:text-white transition-colors">
                   Política de Privacidade
                 </Link>
+              </li>
+              <li>
+                <Link to="/cookies" className="hover:text-white transition-colors">
+                  Política de Cookies
+                </Link>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  onClick={openConsentBanner}
+                  className="hover:text-white transition-colors text-left"
+                >
+                  Preferências de Cookies
+                </button>
               </li>
             </ul>
           </div>

@@ -24,16 +24,18 @@ src/
 │   ├── institutional/   # ContactForm
 │   ├── landing/         # HeroSection, HeroSearchBar, BiomesDiscoverySection, UpcomingTripsSection, InterestFilterBar, HowItWorksSection, WhySouNativoSection, ReviewsShowcaseSection, GroupQuoteSection, GuidesHighlightSection, FaqSection, CtaBannerSection
 │   ├── layout/          # AppLayout, Navbar, MobileDrawer, BottomNav, Footer
+│   ├── privacy/         # CookieBanner (granular LGPD/GDPR consent, WCAG AA)
 │   ├── trips/           # TripCard, TripGrid, TripGallery, TripHeader, TripItinerarySection, TripReviewsSection, BookingCard, StickyTripBar, GuestCounterRow, CompanionFields
 │   └── ui/              # Logo, Button, Badge, Tooltip, Modal, Skeleton, EmptyState, GoogleSignInButton, SafeImage
-├── context/             # AuthContext, ThemeContext, ToastContext
+├── context/             # AuthContext, ConsentContext, ThemeContext, ToastContext
 ├── data/                # Catálogo curado modular (seedAgencies, seedTripsNorthEast, seedTripsSouthCenter, seedReviews)
-├── hooks/               # useAuth, useUserProfile, useTrips, useTripDetails, useBookings, useAgencies, useAgencyMicrosite, usePlanPermissions, useDebounce
+├── hooks/               # useAuth, useConsent, useUserProfile, useTrips, useTripDetails, useBookings, useAgencies, useAgencyMicrosite, usePlanPermissions, useDebounce
 ├── pages/               # HomePage, TripsPage, TripDetailsPage, AgenciesPage, GuidesPage, AgencyMicrositePage, InstitutionalPage, NotFoundPage
-│   └── dashboard/       # DashboardPage, ClientDashboardView, ClientBookingsTab, BookingVoucherModal, ClientProfileForm, PartnerDashboardView, PartnerOnboardingForm, PartnerTripsSection, PartnerBookingsSection, PartnerThemeBuilder, PartnerProfileForm, PartnerGuideFields, PartnerPlansSection, TripCreateModal, TripFormFields, AdminDashboardView, AdminCatalogSection
-├── services/            # firebase.config.ts, firebase.ts, authService.ts, userService.ts, tripService.ts, agencyService.ts, bookingService.ts, reviewService.ts, adminService.ts, seedCatalog.ts
-├── types/               # Modelos TypeScript estritos (user, agency, trip, booking)
-└── utils/               # constants, formatters, slugUtils, dailyHeroImage, whatsapp, colorExtractor, tripFilters, planPermissions, cn
+│   ├── dashboard/       # DashboardPage, ClientDashboardView, ClientBookingsTab, BookingVoucherModal, ClientProfileForm, PrivacySettings, PartnerDashboardView, PartnerOnboardingForm, PartnerTripsSection, PartnerBookingsSection, PartnerThemeBuilder, PartnerProfileForm, PartnerGuideFields, PartnerPlansSection, TripCreateModal, TripFormFields, AdminDashboardView, AdminCatalogSection
+│   └── legal/           # PrivacyPolicyPage, TermsOfServicePage, CookiePolicyPage
+├── services/            # firebase.config.ts, firebase.ts, authService.ts, userService.ts, privacyService.ts, tripService.ts, agencyService.ts, bookingService.ts, reviewService.ts, adminService.ts, seedCatalog.ts
+├── types/               # Modelos TypeScript estritos (user, agency, trip, booking, consent)
+└── utils/               # constants, formatters, slugUtils, dailyHeroImage, whatsapp, colorExtractor, tripFilters, planPermissions, cookieSecurity, securitySanitizer, cn
 ```
 
 ---
@@ -49,6 +51,7 @@ Regras configuradas em [`firestore.rules`](./firestore.rules) e índices em [`fi
 | `trips/{tripId}` | `tripId` | Catálogo de pacotes ativos, itinerário, inclusos e faixa etária |
 | `bookings/{bookingId}` | `bookingId` | Solicitações e confirmações de reserva entre viajante e agência |
 | `reviews/{reviewId}` | `reviewId` | Avaliações autenticadas de pacotes e agências |
+| `user_consents/{consentId}` | `consentId` | Trilha de auditoria imutável (append-only) de consentimentos LGPD/GDPR |
 
 ---
 
