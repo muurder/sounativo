@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Check, Cookie, Settings2, ShieldCheck, X } from 'lucide-react';
 import { useConsent } from '@/hooks/useConsent';
-import { Button } from '@/components/ui/Button';
 
 export const CookieBanner: React.FC = () => {
   const { consent, isOpen, acceptAll, rejectNonEssential, saveCustomConsent, closeConsentBanner } =
@@ -27,18 +26,34 @@ export const CookieBanner: React.FC = () => {
       role="dialog"
       aria-live="polite"
       aria-label="Gestão de Privacidade e Cookies"
-      className="fixed z-50 bottom-20 md:bottom-6 inset-x-4 md:inset-x-auto md:right-6 md:max-w-xl rounded-2xl border border-stone-200/90 bg-white/98 p-5 sm:p-6 shadow-editorial backdrop-blur-md text-stone-900 transition-all duration-300"
+      className="fixed z-50 bottom-20 md:bottom-6 inset-x-3 sm:inset-x-6 md:inset-x-auto md:right-6 md:max-w-xl rounded-3xl border border-white/60 bg-gradient-to-br from-white/95 via-white/90 to-stone-50/85 p-5 sm:p-6 shadow-[0_20px_50px_-10px_rgba(15,76,58,0.18),0_1px_3px_rgba(0,0,0,0.05)] backdrop-blur-xl text-stone-900 transition-all duration-300 overflow-hidden"
     >
+      {/* Ambient glass gradient highlights */}
+      <div
+        className="pointer-events-none absolute -top-16 -left-16 -z-10 h-36 w-36 rounded-full bg-primary-400/15 blur-2xl"
+        aria-hidden="true"
+      />
+      <div
+        className="pointer-events-none absolute -bottom-16 -right-16 -z-10 h-36 w-36 rounded-full bg-secondary-400/15 blur-2xl"
+        aria-hidden="true"
+      />
+
+      {/* Header */}
       <div className="flex items-start justify-between gap-3 mb-3">
-        <div className="flex items-center gap-2.5">
-          <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-primary-100 text-primary-800">
-            <Cookie size={18} aria-hidden="true" />
+        <div className="flex items-center gap-3">
+          <span className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-500/15 to-primary-600/5 border border-primary-500/20 text-primary-700 shadow-sm">
+            <Cookie size={19} aria-hidden="true" />
           </span>
           <div>
-            <h2 className="font-serif text-base font-bold text-stone-900">
+            <h2 className="font-serif text-base sm:text-lg font-bold text-stone-900 tracking-tight leading-snug">
               Sua privacidade no SouNativo
             </h2>
-            <p className="text-xs text-stone-500">Conformidade LGPD (Lei 13.709/2018)</p>
+            <div className="mt-0.5 flex items-center gap-1.5">
+              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-600/20 text-[10px] sm:text-[11px] font-semibold text-emerald-800">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                Conformidade LGPD (Lei 13.709/2018)
+              </span>
+            </div>
           </div>
         </div>
 
@@ -46,39 +61,39 @@ export const CookieBanner: React.FC = () => {
           type="button"
           onClick={closeConsentBanner}
           aria-label="Fechar aviso de cookies"
-          className="text-stone-400 hover:text-stone-600 p-1 rounded-lg hover:bg-stone-100 transition-colors"
+          className="h-8 w-8 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 hover:bg-stone-200/50 transition-colors"
         >
-          <X size={18} />
+          <X size={17} />
         </button>
       </div>
 
       {!showPreferences ? (
         <div className="space-y-4">
-          <p className="text-xs sm:text-sm text-stone-600 leading-relaxed">
+          <p className="text-xs sm:text-[13px] text-stone-600 leading-relaxed font-normal">
             Utilizamos cookies essenciais para autenticação segura e funcionamento básico do site.
             Com sua permissão, também utilizamos cookies de análise e marketing para aprimorar sua
             experiência e medir a relevância dos roteiros.
           </p>
 
-          <div className="text-xs text-stone-500">
-            Consulte nossa{' '}
+          <div className="text-xs text-stone-500 flex items-center flex-wrap gap-1">
+            <span>Consulte nossa</span>
             <Link
               to="/privacy"
-              className="font-medium text-primary-700 underline underline-offset-2 hover:text-primary-800"
+              className="font-medium text-primary-700 underline underline-offset-4 decoration-primary-300 hover:text-primary-900 hover:decoration-primary-600 transition-colors"
             >
               Política de Privacidade
-            </Link>{' '}
-            e os{' '}
+            </Link>
+            <span>e os</span>
             <Link
               to="/terms"
-              className="font-medium text-primary-700 underline underline-offset-2 hover:text-primary-800"
+              className="font-medium text-primary-700 underline underline-offset-4 decoration-primary-300 hover:text-primary-900 hover:decoration-primary-600 transition-colors"
             >
               Termos de Uso
             </Link>
-            .
+            <span>.</span>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2 pt-1">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2 pt-2 border-t border-stone-200/60">
             <button
               type="button"
               onClick={() => {
@@ -86,16 +101,24 @@ export const CookieBanner: React.FC = () => {
                 setMarketingEnabled(consent.marketing);
                 setShowPreferences(true);
               }}
-              className="inline-flex items-center justify-center gap-1.5 min-h-[40px] px-3.5 rounded-lg border border-stone-300 bg-white text-xs font-semibold text-stone-700 hover:bg-stone-50 transition-colors"
+              className="inline-flex items-center justify-center gap-1.5 min-h-[40px] px-3.5 rounded-xl border border-stone-300/80 bg-white/70 hover:bg-white text-xs font-semibold text-stone-700 hover:text-stone-900 shadow-sm transition-all duration-200"
             >
-              <Settings2 size={14} /> Personalizar
+              <Settings2 size={14} className="text-stone-500" /> Personalizar
             </button>
-            <Button variant="outline" size="sm" onClick={rejectNonEssential}>
+            <button
+              type="button"
+              onClick={rejectNonEssential}
+              className="inline-flex items-center justify-center min-h-[40px] px-4 rounded-xl border border-stone-300/80 bg-white/70 hover:bg-white text-xs font-semibold text-stone-700 hover:text-stone-900 shadow-sm transition-all duration-200"
+            >
               Apenas Essenciais
-            </Button>
-            <Button variant="primary" size="sm" onClick={acceptAll}>
+            </button>
+            <button
+              type="button"
+              onClick={acceptAll}
+              className="inline-flex items-center justify-center min-h-[40px] px-5 rounded-xl bg-gradient-to-r from-primary-600 via-primary-700 to-primary-800 hover:from-primary-500 hover:to-primary-700 text-white text-xs font-bold shadow-md shadow-primary-900/20 hover:shadow-lg hover:shadow-primary-900/30 active:scale-[0.98] transition-all duration-200"
+            >
               Aceitar Todos
-            </Button>
+            </button>
           </div>
         </div>
       ) : (
@@ -105,15 +128,15 @@ export const CookieBanner: React.FC = () => {
             qualquer momento no rodapé do site.
           </p>
 
-          <div className="space-y-2.5 max-h-[48vh] overflow-y-auto pr-1">
+          <div className="space-y-2.5 max-h-[46vh] overflow-y-auto pr-1">
             {/* 1. Essenciais */}
-            <div className="rounded-xl border border-stone-200 bg-stone-50/70 p-3.5 space-y-1">
+            <div className="rounded-2xl border border-stone-200/80 bg-stone-50/70 p-3.5 space-y-1">
               <div className="flex items-center justify-between gap-2">
                 <span className="font-semibold text-xs sm:text-sm text-stone-900 flex items-center gap-1.5">
                   <ShieldCheck size={15} className="text-primary-600" />
                   Cookies Estritamente Necessários
                 </span>
-                <span className="rounded-md bg-stone-200/90 px-2 py-0.5 text-[10px] font-bold text-stone-700 uppercase">
+                <span className="rounded-md bg-stone-200/90 px-2 py-0.5 text-[10px] font-bold text-stone-700 uppercase tracking-wide">
                   Obrigatório
                 </span>
               </div>
@@ -124,7 +147,7 @@ export const CookieBanner: React.FC = () => {
             </div>
 
             {/* 2. Analytics */}
-            <div className="rounded-xl border border-stone-200 bg-white p-3.5 space-y-1">
+            <div className="rounded-2xl border border-stone-200/80 bg-white/70 backdrop-blur-sm p-3.5 space-y-1 hover:border-primary-200/80 transition-colors">
               <div className="flex items-center justify-between gap-2">
                 <span className="font-semibold text-xs sm:text-sm text-stone-900">
                   Desempenho e Estatísticas (Analytics)
@@ -153,7 +176,7 @@ export const CookieBanner: React.FC = () => {
             </div>
 
             {/* 3. Marketing */}
-            <div className="rounded-xl border border-stone-200 bg-white p-3.5 space-y-1">
+            <div className="rounded-2xl border border-stone-200/80 bg-white/70 backdrop-blur-sm p-3.5 space-y-1 hover:border-primary-200/80 transition-colors">
               <div className="flex items-center justify-between gap-2">
                 <span className="font-semibold text-xs sm:text-sm text-stone-900">
                   Marketing e Personalização
@@ -182,17 +205,21 @@ export const CookieBanner: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex items-center justify-between gap-2 pt-1 border-t border-stone-100">
+          <div className="flex items-center justify-between gap-2 pt-2 border-t border-stone-200/60">
             <button
               type="button"
               onClick={() => setShowPreferences(false)}
-              className="text-xs font-semibold text-stone-600 hover:text-stone-800 transition-colors"
+              className="text-xs font-semibold text-stone-600 hover:text-stone-900 transition-colors px-2 py-1"
             >
               Voltar
             </button>
-            <Button variant="primary" size="sm" onClick={handleSaveCustom}>
+            <button
+              type="button"
+              onClick={handleSaveCustom}
+              className="inline-flex items-center justify-center gap-1.5 min-h-[40px] px-5 rounded-xl bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 text-white text-xs font-bold shadow-md shadow-primary-900/20 active:scale-[0.98] transition-all duration-200"
+            >
               Salvar Preferências <Check size={14} />
-            </Button>
+            </button>
           </div>
         </div>
       )}

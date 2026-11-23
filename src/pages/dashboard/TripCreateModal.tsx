@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { createTripInFirestore, updateTripInFirestore } from '@/services/tripService';
-import { Agency, Trip } from '@/types';
+import { Agency, Trip, TripDeparture } from '@/types';
 import { CATEGORY_LABELS } from '@/utils/constants';
 import { slugify } from '@/utils/slugUtils';
 import { useToast } from '@/context/ToastContext';
@@ -33,10 +33,13 @@ function buildInitialState(editingTrip?: Trip | null): TripFormState {
     return {
       title: '',
       destination: '',
+      latitude: '',
+      longitude: '',
       price: '1290',
       durationDays: '3',
       maxGuests: '16',
       startDate: toDateInputValue(),
+      departures: [],
       boardingPoints: [{ id: 'bp-1', time: '07:00', location: '' }],
       allowChildren: true,
       category: 'NATUREZA',
@@ -52,14 +55,26 @@ function buildInitialState(editingTrip?: Trip | null): TripFormState {
   const safeImages = Array.isArray(editingTrip.images) ? editingTrip.images.filter(Boolean) : [];
   const safeBoarding = Array.isArray(editingTrip.boardingPoints) ? editingTrip.boardingPoints : [];
   const safeItinerary = Array.isArray(editingTrip.itinerary) ? editingTrip.itinerary : [];
+  const safeDepartures = Array.isArray(editingTrip.departures)
+    ? editingTrip.departures.map((dep, idx) => ({
+        id: dep.id || `dep-${idx + 1}`,
+        startDate: toDateInputValue(dep.startDate),
+        maxGuests: String(dep.maxGuests || editingTrip.maxGuests || 16),
+        availableSpots: dep.availableSpots,
+        priceOverride: dep.priceOverride !== undefined ? String(dep.priceOverride) : '',
+      }))
+    : [];
 
   return {
     title: editingTrip.title ?? '',
     destination: editingTrip.destination ?? '',
+    latitude: editingTrip.latitude !== undefined ? String(editingTrip.latitude) : '',
+    longitude: editingTrip.longitude !== undefined ? String(editingTrip.longitude) : '',
     price: String(editingTrip.price ?? 0),
     durationDays: String(editingTrip.durationDays ?? 1),
     maxGuests: String(editingTrip.maxGuests || 16),
     startDate: toDateInputValue(editingTrip.startDate),
+    departures: safeDepartures,
     boardingPoints:
       safeBoarding.length > 0 ? safeBoarding : [{ id: 'bp-1', time: '07:00', location: '' }],
     allowChildren: editingTrip.passengerConfig?.allowChildren ?? true,
@@ -127,6 +142,43 @@ export const TripCreateModal: React.FC<TripCreateModalProps> = ({
       : rawStart;
     const endObj = new Date(startObj.getTime() + durationDays * 86400000);
 
+    const parsedLat = values.latitude.trim() !== '' ? Number(values.latitude) : NaN;
+    const latitude =
+      Number.isFinite(parsedLat) && parsedLat >= -90 && parsedLat <= 90 ? parsedLat : undefined;
+
+    const parsedLng = values.longitude.trim() !== '' ? Number(values.longitude) : NaN;
+    const longitude =
+      Number.isFinite(parsedLng) && parsedLng >= -180 && parsedLng <= 180 ? parsedLng : undefined;
+
+    const departures: TripDeparture[] = (values.departures ?? [])
+      .map((dep, idx) => {
+        const depStartRaw = new Date(`${dep.startDate}T08:00:00Z`);
+        if (Number.isNaN(depStartRaw.getTime())) return null;
+        const depEndRaw = new Date(depStartRaw.getTime() + durationDays * 86400000);
+        const depMax = Math.max(1, Math.round(Number(dep.maxGuests) || maxGuests));
+        const depAvail =
+          dep.availableSpots !== undefined
+            ? Math.min(depMax, Math.max(0, dep.availableSpots))
+            : depMax;
+        const priceCandidate =
+          dep.priceOverride.trim() !== '' ? Number(dep.priceOverride) : undefined;
+        const priceOverride =
+          priceCandidate !== undefined && Number.isFinite(priceCandidate) && priceCandidate >= 0
+            ? priceCandidate
+            : undefined;
+
+        return {
+          id: dep.id || `dep-${idx + 1}`,
+          startDate: depStartRaw.toISOString(),
+          endDate: depEndRaw.toISOString(),
+          maxGuests: depMax,
+          availableSpots: depAvail,
+          ...(priceOverride !== undefined ? { priceOverride } : {}),
+        };
+      })
+      .filter((item): item is TripDeparture => item !== null)
+      .slice(0, 30);
+
     const boardingPoints = (values.boardingPoints ?? [])
       .map((bp, idx) => ({
         id: bp.id || `bp-${idx + 1}`,
@@ -153,14 +205,22 @@ export const TripCreateModal: React.FC<TripCreateModalProps> = ({
 
     try {
       if (editingTrip) {
+        const prevMax = editingTrip.maxGuests || maxGuests;
+        const prevAvail = editingTrip.availableSpots ?? prevMax;
+        const nextAvail = Math.max(0, prevAvail + (maxGuests - prevMax));
+
         const updates = {
           title: values.title.trim(),
           destination: values.destination.trim(),
+          ...(latitude !== undefined ? { latitude } : {}),
+          ...(longitude !== undefined ? { longitude } : {}),
           price: numericPrice,
           durationDays,
           startDate: startObj.toISOString(),
           endDate: endObj.toISOString(),
           maxGuests,
+          availableSpots: nextAvail,
+          departures,
           category: values.category,
           tags: [CATEGORY_LABELS[values.category] ?? 'Experiência'],
           images: allImages,
@@ -185,6 +245,8 @@ export const TripCreateModal: React.FC<TripCreateModalProps> = ({
           slug,
           description: values.description.trim(),
           destination: values.destination.trim(),
+          ...(latitude !== undefined ? { latitude } : {}),
+          ...(longitude !== undefined ? { longitude } : {}),
           price: numericPrice,
           startDate: startObj.toISOString(),
           endDate: endObj.toISOString(),
@@ -195,10 +257,12 @@ export const TripCreateModal: React.FC<TripCreateModalProps> = ({
           travelerTypes: ['CASAL', 'AMIGOS'],
           itinerary,
           boardingPoints,
+          ...(departures.length > 0 ? { departures } : {}),
           paymentMethods: ['Pix', 'Cartão de Crédito'],
           included: parsedIncluded.length > 0 ? parsedIncluded : ['Guia credenciado SouNativo'],
           notIncluded: parsedNotIncluded.length > 0 ? parsedNotIncluded : ['Despesas pessoais'],
           maxGuests,
+          availableSpots: maxGuests,
           passengerConfig,
           rating: 0,
           totalReviews: 0,

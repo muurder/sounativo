@@ -1,16 +1,19 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Link, useNavigate, useOutletContext, useParams } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useBookings } from '@/hooks/useBookings';
+import { usePageMeta } from '@/hooks/usePageMeta';
 import { useTripDetails } from '@/hooks/useTripDetails';
 import { useUserProfile } from '@/hooks/useUserProfile';
+import { computeRemainingSpots } from '@/services/tripService';
 import { useToast } from '@/context/ToastContext';
 import { BookingCard, ReservePayload } from '@/components/trips/BookingCard';
 import { StickyTripBar } from '@/components/trips/StickyTripBar';
 import { TripGallery } from '@/components/trips/TripGallery';
 import { TripHeader } from '@/components/trips/TripHeader';
 import { TripItinerarySection } from '@/components/trips/TripItinerarySection';
+import { TripMapSection } from '@/components/trips/TripMapSection';
 import { TripReviewsSection } from '@/components/trips/TripReviewsSection';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -37,6 +40,55 @@ export const TripDetailsPage: React.FC = () => {
     agencySlug
   );
   const [submitting, setSubmitting] = useState(false);
+
+  const canonicalPath = trip
+    ? agencySlug
+      ? `/${agencySlug}/viagem/${trip.slug || trip.id}`
+      : `/viagem/${trip.slug || trip.id}`
+    : undefined;
+
+  const tripJsonLd = useMemo(() => {
+    if (!trip) return null;
+    const spots = computeRemainingSpots(trip);
+    return {
+      '@context': 'https://schema.org',
+      '@type': 'TouristTrip',
+      name: trip.title,
+      description: trip.description,
+      image: trip.images?.[0] || undefined,
+      touristType: trip.category,
+      provider: {
+        '@type': 'TravelAgency',
+        name: trip.agencyName,
+      },
+      offers: {
+        '@type': 'Offer',
+        priceCurrency: 'BRL',
+        price: trip.price,
+        availability: spots > 0 ? 'https://schema.org/InStock' : 'https://schema.org/SoldOut',
+      },
+      ...(trip.totalReviews > 0 && trip.rating > 0
+        ? {
+            aggregateRating: {
+              '@type': 'AggregateRating',
+              ratingValue: trip.rating,
+              reviewCount: trip.totalReviews,
+            },
+          }
+        : {}),
+    };
+  }, [trip]);
+
+  usePageMeta({
+    title: trip
+      ? `${trip.title} (${trip.destination || 'Brasil'})`
+      : 'Roteiro de Viagem | SouNativo',
+    description: trip?.description,
+    image: trip?.images?.[0],
+    canonicalPath,
+    ogType: 'product',
+    jsonLd: tripJsonLd,
+  });
 
   if (loading) {
     return (
@@ -123,6 +175,7 @@ export const TripDetailsPage: React.FC = () => {
         adults: payload.adults,
         children: payload.children,
         totalPrice: payload.totalPrice,
+        ...(payload.departureDate ? { departureDate: payload.departureDate } : {}),
         status: 'PENDING',
         paymentMethod: payload.paymentMethod,
         voucherCode: voucher,
@@ -160,6 +213,7 @@ export const TripDetailsPage: React.FC = () => {
             onToggleFavorite={() => void handleFavoriteClick()}
           />
           <TripItinerarySection trip={trip} />
+          <TripMapSection trip={trip} />
           <TripReviewsSection
             tripId={trip.id}
             agencyId={trip.agencyId}

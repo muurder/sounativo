@@ -84,5 +84,12 @@ export const RESERVED_ROUTES = new Set([
   'admin',
   'settings',
   'login',
+  'entrar',
   'signup',
+  'cadastro',
+  'cadastrar',
+  'criar-conta',
+  'registro',
+  'register',
+  'auth',
 ]);

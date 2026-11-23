@@ -24,6 +24,15 @@ export interface BoardingPoint {
   location: string;
 }
 
+export interface TripDeparture {
+  id: string;
+  startDate: string;
+  endDate: string;
+  maxGuests: number;
+  availableSpots: number;
+  priceOverride?: number;
+}
+
 export interface PassengerConfig {
   allowChildren: boolean;
   childAgeLimit: number;
@@ -40,6 +49,8 @@ export interface Trip {
   description: string;
   destination: string;
   state?: string;
+  latitude?: number;
+  longitude?: number;
   price: number;
   startDate: string;
   endDate: string;
@@ -50,10 +61,12 @@ export interface Trip {
   travelerTypes: TravelerType[];
   itinerary: ItineraryDay[];
   boardingPoints: BoardingPoint[];
+  departures?: TripDeparture[];
   paymentMethods: string[];
   included: string[];
   notIncluded: string[];
   maxGuests: number;
+  availableSpots?: number;
   passengerConfig: PassengerConfig;
   rating: number;
   totalReviews: number;

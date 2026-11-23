@@ -31,6 +31,11 @@ export const TripCard: React.FC<TripCardProps> = ({
   const coverImage = trip.images?.[0] || FALLBACK_TRIP_COVER;
   const boardingCity = trip.boardingPoints?.[0]?.location;
   const maxGuests = trip.maxGuests ?? 16;
+  const remainingSpots =
+    typeof trip.availableSpots === 'number' && Number.isFinite(trip.availableSpots)
+      ? Math.max(0, trip.availableSpots)
+      : maxGuests;
+  const extraDeparturesCount = Array.isArray(trip.departures) ? trip.departures.length : 0;
   const smallGroup = maxGuests <= 12;
   const price = trip.price ?? 0;
   const numericRating =
@@ -68,6 +73,11 @@ export const TripCard: React.FC<TripCardProps> = ({
               className="bg-primary-700/90 text-white border-transparent backdrop-blur-sm"
             >
               Grupo reduzido
+            </Badge>
+          )}
+          {remainingSpots === 0 && extraDeparturesCount === 0 && (
+            <Badge tone="warning" className="backdrop-blur-sm">
+              Esgotado
             </Badge>
           )}
         </div>
@@ -123,6 +133,11 @@ export const TripCard: React.FC<TripCardProps> = ({
               <CalendarDays size={14} className="text-primary-600" />
               {formatDateRange(trip.startDate, trip.endDate)}
             </span>
+            {extraDeparturesCount > 0 && (
+              <span className="rounded-full bg-primary-50 px-2 py-0.5 text-[11px] font-semibold text-primary-700">
+                +{extraDeparturesCount} turma{extraDeparturesCount > 1 ? 's' : ''}
+              </span>
+            )}
             <span className="text-stone-400">·</span>
             <span>{trip.durationDays ?? 1} dias</span>
           </div>
@@ -132,7 +147,7 @@ export const TripCard: React.FC<TripCardProps> = ({
             </span>
             <span className="inline-flex items-center gap-1 shrink-0 font-medium text-stone-600">
               <Users size={13} className="text-stone-400" />
-              máx. {maxGuests}
+              {remainingSpots < maxGuests ? `${remainingSpots} livres` : `máx. ${maxGuests}`}
             </span>
           </div>
         </div>

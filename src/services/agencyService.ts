@@ -43,7 +43,13 @@ export const RESERVED_AGENCY_SLUGS = new Set([
   'admin',
   'settings',
   'login',
+  'entrar',
   'signup',
+  'cadastro',
+  'cadastrar',
+  'criar-conta',
+  'registro',
+  'register',
   'api',
   'auth',
 ]);

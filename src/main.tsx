@@ -2,9 +2,11 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { App } from './App';
 import { ErrorBoundary } from '@/components/feedback/ErrorBoundary';
+import { captureRuntimeError } from '@/services/telemetryService';
+import { isDynamicChunkError, recoverFromChunkLoadError } from '@/utils/lazyWithRetry';
 import './index.css';
 
-// Clear stale legacy Supabase auth keys and caches from v1 PWA builds
+// Clear stale legacy Supabase auth keys, handle Vite chunk preload mismatches, and refresh SW
 if (typeof window !== 'undefined') {
   try {
     Object.keys(localStorage)
@@ -22,6 +24,11 @@ if (typeof window !== 'undefined') {
       );
   }
 
+  window.addEventListener('vite:preloadError', (event) => {
+    event.preventDefault();
+    void recoverFromChunkLoadError();
+  });
+
   if ('serviceWorker' in navigator) {
     const hadController = Boolean(navigator.serviceWorker.controller);
     let refreshing = false;
@@ -33,6 +40,15 @@ if (typeof window !== 'undefined') {
     });
     void navigator.serviceWorker.getRegistration().then((reg) => reg?.update());
   }
+
+  window.addEventListener('unhandledrejection', (event) => {
+    if (isDynamicChunkError(event.reason)) {
+      event.preventDefault();
+      void recoverFromChunkLoadError();
+      return;
+    }
+    void captureRuntimeError(event.reason);
+  });
 }
 
 const rootEl = document.getElementById('root');

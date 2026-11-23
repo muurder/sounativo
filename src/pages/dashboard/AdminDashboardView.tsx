@@ -11,9 +11,11 @@ import {
   Users,
 } from 'lucide-react';
 import {
+  AdminErrorLogRecord,
   AdminManagedAgency,
   AdminManagedUser,
   deleteContactMessageAsAdmin,
+  deleteErrorLogAsAdmin,
   deleteReviewAsAdmin,
   deleteTripAsAdmin,
   fetchAllAgenciesForAdmin,
@@ -22,6 +24,7 @@ import {
   fetchAllReviewsForAdmin,
   fetchAllTripsForAdmin,
   fetchAllUsersForAdmin,
+  fetchErrorLogsForAdmin,
   updateAgencyAdminControls,
   updateContactMessageStatusAsAdmin,
   updateTripAdminControls,
@@ -29,6 +32,7 @@ import {
 } from '@/services/adminService';
 import { updateBookingStatusInFirestore } from '@/services/bookingService';
 import { ContactMessageRecord, ContactMessageStatus } from '@/services/contactService';
+import { createNotificationInFirestore } from '@/services/notificationService';
 import {
   Booking,
   BookingStatus,
@@ -63,6 +67,7 @@ export const AdminDashboardView: React.FC = () => {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [contactMessages, setContactMessages] = useState<ContactMessageRecord[]>([]);
   const [reviews, setReviews] = useState<TripReview[]>([]);
+  const [errorLogs, setErrorLogs] = useState<AdminErrorLogRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [busyUserUid, setBusyUserUid] = useState<string | null>(null);
@@ -80,9 +85,10 @@ export const AdminDashboardView: React.FC = () => {
         fetchAllBookingsForAdmin(),
         fetchAllContactMessagesForAdmin(),
         fetchAllReviewsForAdmin(),
+        fetchErrorLogsForAdmin(),
       ]);
 
-      const [uRes, aRes, tRes, bRes, cRes, rRes] = results;
+      const [uRes, aRes, tRes, bRes, cRes, rRes, eRes] = results;
       const errors: string[] = [];
 
       if (uRes.status === 'fulfilled') setUsers(uRes.value);
@@ -102,6 +108,8 @@ export const AdminDashboardView: React.FC = () => {
 
       if (rRes.status === 'fulfilled') setReviews(rRes.value);
       else errors.push(rRes.reason instanceof Error ? rRes.reason.message : 'Falha em avaliações');
+
+      if (eRes.status === 'fulfilled') setErrorLogs(eRes.value);
 
       if (errors.length > 0) {
         const summary = errors[0];
@@ -175,6 +183,20 @@ export const AdminDashboardView: React.FC = () => {
       await updateAgencyAdminControls(agencyId, updates);
       const nextSubStatus =
         updates.subscriptionStatus ?? (updates.subscriptionPlan ? 'ACTIVE' : undefined);
+      const targetAgency = agencies.find((a) => a.id === agencyId);
+      if (targetAgency?.ownerUid && (updates.subscriptionPlan || updates.verified)) {
+        void createNotificationInFirestore({
+          recipientUid: targetAgency.ownerUid,
+          type: 'PLAN_APPROVED',
+          title: updates.subscriptionPlan
+            ? `Plano ${updates.subscriptionPlan} ativado!`
+            : `Selo de verificação aprovado!`,
+          body: updates.subscriptionPlan
+            ? `Sua assinatura ${updates.subscriptionPlan} foi aprovada pela equipe SouNativo.`
+            : `Sua operadora "${targetAgency.name}" recebeu o selo oficial de verificação.`,
+          link: '/dashboard?mode=partner',
+        });
+      }
       setAgencies((prev) =>
         prev.map((a) =>
           a.id === agencyId
@@ -269,6 +291,16 @@ export const AdminDashboardView: React.FC = () => {
       showToast('Avaliação removida pela moderação.', 'info');
     } catch (err) {
       showToast(err instanceof Error ? err.message : 'Erro ao remover avaliação.', 'error');
+    }
+  };
+
+  const handleDeleteErrorLog = async (logId: string) => {
+    try {
+      await deleteErrorLogAsAdmin(logId);
+      setErrorLogs((prev) => prev.filter((e) => e.id !== logId));
+      showToast('Registro de telemetria limpo.', 'info');
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Erro ao limpar log.', 'error');
     }
   };
 
@@ -512,10 +544,12 @@ export const AdminDashboardView: React.FC = () => {
           bookings={bookings}
           contactMessages={contactMessages}
           reviews={reviews}
+          errorLogs={errorLogs}
           onBookingStatusChange={handleBookingStatusChange}
           onContactStatusChange={handleContactStatusChange}
           onDeleteContactMessage={handleDeleteContactMessage}
           onDeleteReview={handleDeleteReview}
+          onDeleteErrorLog={handleDeleteErrorLog}
         />
       )}
     </div>

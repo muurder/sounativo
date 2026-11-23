@@ -1,6 +1,7 @@
 import { arrayRemove, arrayUnion, doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { User as FirebaseUser } from 'firebase/auth';
 import {
+  auth,
   COLLECTIONS,
   db,
   mapFirestoreError,
@@ -11,7 +12,7 @@ import {
 import { syncStoredConsentOnAuth } from './privacyService';
 import { UserProfile, UserRole } from '@/types';
 
-interface PendingProfileMeta {
+export interface PendingProfileMeta {
   name?: string;
   role: Exclude<UserRole, 'ADMIN'>;
 }
@@ -23,6 +24,33 @@ const VALID_ROLES = new Set<UserRole>(['CLIENT', 'AGENCY', 'GUIDE', 'ADMIN']);
 
 export function setPendingProfileMeta(meta: PendingProfileMeta | null): void {
   pendingProfileMeta = meta;
+}
+
+export function getPendingProfileMeta(): PendingProfileMeta | null {
+  return pendingProfileMeta;
+}
+
+async function runWithTokenRefreshRetry<T>(
+  firebaseUser: FirebaseUser,
+  operation: () => Promise<T>
+): Promise<T> {
+  try {
+    return await operation();
+  } catch (err: unknown) {
+    const code = (err as { code?: string })?.code ?? '';
+    if (
+      (code === 'permission-denied' || code === 'unauthenticated') &&
+      typeof firebaseUser.getIdToken === 'function'
+    ) {
+      try {
+        await firebaseUser.getIdToken(true);
+      } catch {
+        throw err;
+      }
+      return await operation();
+    }
+    throw err;
+  }
 }
 
 export function normalizeUserProfileDoc(
@@ -95,10 +123,12 @@ export async function ensureUserProfile(
         ? firebaseUser.photoURL.slice(0, 2048)
         : '';
 
+    const resolvedEmail = (firebaseUser.email || '').trim().toLowerCase().slice(0, 254);
+
     const fallbackProfile: UserProfile = {
       uid: firebaseUser.uid,
       name: resolvedName,
-      email: (firebaseUser.email || '').trim().slice(0, 254),
+      email: resolvedEmail,
       ...(validPhotoUrl ? { photoURL: validPhotoUrl } : {}),
       role: resolvedRole,
       favorites: [],
@@ -110,32 +140,63 @@ export async function ensureUserProfile(
       return fallbackProfile;
     }
 
+    const firestore = db;
+
     try {
-      const ref = doc(db, COLLECTIONS.users, firebaseUser.uid);
-      const snap = await getDoc(ref);
+      const ref = doc(firestore, COLLECTIONS.users, firebaseUser.uid);
+      return await runWithTokenRefreshRetry(firebaseUser, async () => {
+        const snap = await getDoc(ref);
 
-      if (snap.exists()) {
+        if (snap.exists()) {
+          pendingProfileMeta = null;
+          const normalized = normalizeUserProfileDoc(
+            firebaseUser.uid,
+            snap.data() as Record<string, unknown>,
+            fallbackProfile.email
+          );
+
+          const backfill: Record<string, unknown> = {};
+          if (!normalized.photoURL && validPhotoUrl) {
+            backfill.photoURL = validPhotoUrl;
+          }
+          if (
+            normalized.name === 'Viajante SouNativo' &&
+            resolvedName &&
+            resolvedName !== 'Viajante SouNativo'
+          ) {
+            backfill.name = resolvedName;
+          }
+          if (!normalized.email && resolvedEmail) {
+            backfill.email = resolvedEmail;
+          }
+
+          if (Object.keys(backfill).length > 0) {
+            void updateDoc(ref, {
+              ...backfill,
+              updatedAt: serverTimestamp(),
+            }).catch(() => {});
+          }
+
+          void syncStoredConsentOnAuth(firebaseUser.uid);
+          return {
+            ...normalized,
+            ...(typeof backfill.photoURL === 'string' ? { photoURL: backfill.photoURL } : {}),
+            ...(typeof backfill.name === 'string' ? { name: backfill.name } : {}),
+            ...(typeof backfill.email === 'string' ? { email: backfill.email } : {}),
+          };
+        }
+
+        await setDoc(ref, {
+          ...stripUndefined(fallbackProfile as unknown as Record<string, unknown>),
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        });
+
         pendingProfileMeta = null;
-        const normalized = normalizeUserProfileDoc(
-          firebaseUser.uid,
-          snap.data() as Record<string, unknown>,
-          fallbackProfile.email
-        );
         void syncStoredConsentOnAuth(firebaseUser.uid);
-        return normalized;
-      }
-
-      await setDoc(ref, {
-        ...stripUndefined(fallbackProfile as unknown as Record<string, unknown>),
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
+        return fallbackProfile;
       });
-
-      pendingProfileMeta = null;
-      void syncStoredConsentOnAuth(firebaseUser.uid);
-      return fallbackProfile;
     } catch (err: unknown) {
-      pendingProfileMeta = null;
       throw mapFirestoreError(err, 'Não foi possível inicializar seu perfil no Firestore.');
     }
   })().finally(() => {
@@ -201,13 +262,41 @@ export async function saveUserProfile(
     sanitizedUpdates.role = updates.role;
   }
 
+  const ref = doc(db, COLLECTIONS.users, uid);
   try {
-    const ref = doc(db, COLLECTIONS.users, uid);
     await updateDoc(ref, {
       ...stripUndefined(sanitizedUpdates),
       updatedAt: serverTimestamp(),
     });
   } catch (err: unknown) {
+    const code = (err as { code?: string })?.code ?? '';
+    if (code === 'not-found') {
+      const currentAuthUser = auth?.currentUser?.uid === uid ? auth.currentUser : null;
+      const fallbackName =
+        (typeof sanitizedUpdates.name === 'string' && sanitizedUpdates.name) ||
+        currentAuthUser?.displayName?.trim().slice(0, 120) ||
+        'Viajante SouNativo';
+      const fallbackEmail = (currentAuthUser?.email || '').trim().toLowerCase().slice(0, 254);
+      const fallbackRole: UserRole =
+        updates.role && VALID_ROLES.has(updates.role) ? updates.role : 'CLIENT';
+
+      try {
+        await setDoc(ref, {
+          uid,
+          name: fallbackName,
+          email: fallbackEmail,
+          role: fallbackRole,
+          favorites: [],
+          notificationsEnabled: true,
+          ...stripUndefined(sanitizedUpdates),
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        });
+        return;
+      } catch (createErr: unknown) {
+        throw mapFirestoreError(createErr, 'Erro ao salvar alterações do perfil.');
+      }
+    }
     throw mapFirestoreError(err, 'Erro ao salvar alterações do perfil.');
   }
 }
@@ -220,13 +309,25 @@ export async function toggleFavoriteInFirestore(
   if (!db) throw new Error('Firestore não configurado.');
   if (!uid || !tripId) throw new Error('Identificador de usuário ou roteiro inválido.');
 
+  const ref = doc(db, COLLECTIONS.users, uid);
+  const payload = {
+    favorites: isCurrentlyFavorite ? arrayRemove(tripId) : arrayUnion(tripId),
+    updatedAt: serverTimestamp(),
+  };
+
   try {
-    const ref = doc(db, COLLECTIONS.users, uid);
-    await updateDoc(ref, {
-      favorites: isCurrentlyFavorite ? arrayRemove(tripId) : arrayUnion(tripId),
-      updatedAt: serverTimestamp(),
-    });
+    await updateDoc(ref, payload);
   } catch (err: unknown) {
+    const code = (err as { code?: string })?.code ?? '';
+    if (code === 'not-found' && auth?.currentUser?.uid === uid) {
+      await ensureUserProfile(auth.currentUser);
+      try {
+        await updateDoc(ref, payload);
+        return;
+      } catch (retryErr: unknown) {
+        throw mapFirestoreError(retryErr, 'Não foi possível atualizar seus favoritos.');
+      }
+    }
     throw mapFirestoreError(err, 'Não foi possível atualizar seus favoritos.');
   }
 }

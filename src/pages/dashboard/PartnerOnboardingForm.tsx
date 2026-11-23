@@ -4,6 +4,7 @@ import { Agency, UserProfile } from '@/types';
 import { isValidSlug, slugify } from '@/utils/slugUtils';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+import { ImageUploadField } from '@/components/ui/ImageUploadField';
 import { useToast } from '@/context/ToastContext';
 
 interface PartnerOnboardingFormProps {
@@ -21,11 +22,19 @@ export const PartnerOnboardingForm: React.FC<PartnerOnboardingFormProps> = ({
   onCreated,
 }) => {
   const { showToast } = useToast();
-  const [orgName, setOrgName] = useState('');
+  const initialLogo =
+    profile.photoURL && /^https?:\/\//i.test(profile.photoURL)
+      ? profile.photoURL
+      : DEFAULT_PARTNER_LOGO;
+
+  const [orgName, setOrgName] = useState(() =>
+    profile.role === 'GUIDE' || profile.role === 'AGENCY' ? (profile.name ?? '') : ''
+  );
   const [customSlug, setCustomSlug] = useState('');
+  const [logoUrl, setLogoUrl] = useState(initialLogo);
   const [city, setCity] = useState('');
   const [uf, setUf] = useState('SP');
-  const [whatsapp, setWhatsapp] = useState('');
+  const [whatsapp, setWhatsapp] = useState(profile.phone ?? '');
   const [isGuide, setIsGuide] = useState(profile.role === 'GUIDE');
   const [cadastur, setCadastur] = useState('');
   const [creatingOrg, setCreatingOrg] = useState(false);
@@ -40,11 +49,6 @@ export const PartnerOnboardingForm: React.FC<PartnerOnboardingFormProps> = ({
     `${baseSlug || 'parceiro'}-${cleanUidSuffix}`,
     cleanUidSuffix
   );
-
-  const validPhotoLogo =
-    profile.photoURL && /^https?:\/\//i.test(profile.photoURL)
-      ? profile.photoURL
-      : DEFAULT_PARTNER_LOGO;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,7 +66,7 @@ export const PartnerOnboardingForm: React.FC<PartnerOnboardingFormProps> = ({
         description: isGuide
           ? 'Guia local credenciado pelo SouNativo.'
           : 'Agência parceira curada pelo SouNativo.',
-        logo: validPhotoLogo,
+        logo: logoUrl.trim() || DEFAULT_PARTNER_LOGO,
         whatsapp: whatsapp.trim(),
         city: city.trim(),
         state: uf.trim().toUpperCase() || 'BR',
@@ -99,7 +103,7 @@ export const PartnerOnboardingForm: React.FC<PartnerOnboardingFormProps> = ({
         Ative sua Agência ou Perfil de Guia
       </h2>
       <p className="text-sm text-stone-600">
-        Publique roteiros, receba reservas e tenha seu microsite exclusivo em{' '}
+        Sua conta já é do tipo parceiro. Falta só confirmar os dados públicos do seu microsite em{' '}
         <code>
           {typeof window !== 'undefined' ? window.location.host : 'sounativo.vercel.app'}/
           {previewSlug}
@@ -127,6 +131,16 @@ export const PartnerOnboardingForm: React.FC<PartnerOnboardingFormProps> = ({
           Guia / Agente
         </button>
       </div>
+
+      <ImageUploadField
+        id="partner-logo-upload"
+        label={isGuide ? 'Foto profissional do guia' : 'Logo da agência'}
+        scope="branding"
+        previewShape="square"
+        value={logoUrl}
+        onChange={setLogoUrl}
+        helperText="Envie a marca da sua agência ou sua foto de guia credenciado."
+      />
 
       <div>
         <label

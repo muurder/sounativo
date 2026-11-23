@@ -15,6 +15,7 @@ import {
   mapFirestoreError,
   serverTimestamp,
   stripUndefined,
+  toIsoTimestamp,
 } from './firebase';
 import { normalizeAgencyDoc } from './agencyService';
 import { normalizeBookingDoc } from './bookingService';
@@ -280,5 +281,60 @@ export async function deleteReviewAsAdmin(reviewId: string): Promise<void> {
     await deleteDoc(doc(db, COLLECTIONS.reviews, reviewId));
   } catch (err: unknown) {
     throw mapFirestoreError(err, 'Erro ao excluir avaliação.');
+  }
+}
+
+export interface AdminErrorLogRecord {
+  id: string;
+  message: string;
+  route: string;
+  stackSnippet?: string;
+  userAgent?: string;
+  userUid?: string;
+  createdAt: string;
+}
+
+function normalizeErrorLogDoc(id: string, raw: Record<string, unknown>): AdminErrorLogRecord {
+  return {
+    id,
+    message: typeof raw.message === 'string' ? raw.message : 'Erro desconhecido',
+    route: typeof raw.route === 'string' ? raw.route : '/',
+    ...(typeof raw.stackSnippet === 'string' && raw.stackSnippet
+      ? { stackSnippet: raw.stackSnippet }
+      : {}),
+    ...(typeof raw.userAgent === 'string' && raw.userAgent ? { userAgent: raw.userAgent } : {}),
+    ...(typeof raw.userUid === 'string' && raw.userUid ? { userUid: raw.userUid } : {}),
+    createdAt: toIsoTimestamp(raw.createdAt, new Date(0).toISOString()),
+  };
+}
+
+export async function fetchErrorLogsForAdmin(): Promise<AdminErrorLogRecord[]> {
+  if (!db) return [];
+  try {
+    const snap = await getDocs(
+      query(collection(db, COLLECTIONS.errorLogs), orderBy('createdAt', 'desc'), limit(50))
+    );
+    return snap.docs.map((d) => normalizeErrorLogDoc(d.id, d.data() as Record<string, unknown>));
+  } catch (err: unknown) {
+    if (isMissingIndexError(err)) {
+      const fallbackSnap = await getDocs(query(collection(db, COLLECTIONS.errorLogs), limit(50)));
+      return sortByCreatedAtDesc(
+        fallbackSnap.docs.map((d) =>
+          normalizeErrorLogDoc(d.id, d.data() as Record<string, unknown>)
+        )
+      );
+    }
+    return [];
+  }
+}
+
+export async function deleteErrorLogAsAdmin(logId: string): Promise<void> {
+  if (!db) throw new Error('Firestore não configurado.');
+  if (!logId) throw new Error('Identificador do log inválido.');
+
+  try {
+    await deleteDoc(doc(db, COLLECTIONS.errorLogs, logId));
+  } catch (err: unknown) {
+    throw mapFirestoreError(err, 'Erro ao limpar registro de falha.');
   }
 }

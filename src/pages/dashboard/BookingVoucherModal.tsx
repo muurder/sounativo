@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Check, Copy, Users } from 'lucide-react';
+import { CalendarDays, Check, Copy, Printer, Share2, Users } from 'lucide-react';
 import { Booking } from '@/types';
 import { Modal } from '@/components/ui/Modal';
 import { Badge } from '@/components/ui/Badge';
@@ -18,6 +18,17 @@ export const BookingVoucherModal: React.FC<BookingVoucherModalProps> = ({ bookin
 
   const passengers = Array.isArray(booking.passengerDetails) ? booking.passengerDetails : [];
   const totalGuests = (booking.adults ?? 1) + (booking.children ?? 0);
+  const formattedDeparture = booking.departureDate
+    ? new Date(booking.departureDate).toLocaleDateString('pt-BR', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+      })
+    : null;
+
+  const whatsappShareHref = `https://wa.me/?text=${encodeURIComponent(
+    `Voucher SouNativo: ${booking.voucherCode || 'SN-PENDENTE'}\nRoteiro: ${booking.tripTitle}\nOperadora: ${booking.agencyName}${formattedDeparture ? `\nSaída: ${formattedDeparture}` : ''}\nViajantes: ${totalGuests} · Total: ${formatCurrencyBRL(booking.totalPrice)}`
+  )}`;
 
   const handleCopy = async () => {
     try {
@@ -69,10 +80,19 @@ export const BookingVoucherModal: React.FC<BookingVoucherModalProps> = ({ bookin
                     : 'secondary'
               }
             >
-              {booking.status}
+              {booking.status === 'CONFIRMED'
+                ? 'Confirmada'
+                : booking.status === 'CANCELLED'
+                  ? 'Cancelada'
+                  : 'Pendente'}
             </Badge>
           </div>
           <p className="text-xs text-stone-600">Operadora: {booking.agencyName}</p>
+          {formattedDeparture && (
+            <p className="inline-flex items-center gap-1 text-xs font-medium text-primary-700">
+              <CalendarDays size={13} /> Data da turma: {formattedDeparture}
+            </p>
+          )}
           <p className="text-xs text-stone-600">
             Pagamento: {booking.paymentMethod} · Total:{' '}
             <strong>{formatCurrencyBRL(booking.totalPrice)}</strong>
@@ -97,6 +117,25 @@ export const BookingVoucherModal: React.FC<BookingVoucherModalProps> = ({ bookin
               ))}
             </ul>
           )}
+        </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-stone-100 print:hidden">
+          <Button
+            size="sm"
+            variant="outline"
+            leftIcon={<Printer size={14} />}
+            onClick={() => window.print()}
+          >
+            Imprimir / Salvar PDF
+          </Button>
+          <a
+            href={whatsappShareHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="min-h-[36px] inline-flex items-center gap-1.5 rounded-xl bg-[#128C7E] px-3.5 text-xs font-semibold text-white hover:bg-[#0F766E] transition-colors"
+          >
+            <Share2 size={14} /> Compartilhar no WhatsApp
+          </a>
         </div>
       </div>
     </Modal>

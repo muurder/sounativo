@@ -2,9 +2,11 @@ import {
   addDoc,
   collection,
   doc,
+  getDoc,
   getDocs,
   orderBy,
   query,
+  runTransaction,
   updateDoc,
   where,
 } from 'firebase/firestore';
@@ -17,8 +19,10 @@ import {
   stripUndefined,
   toIsoTimestamp,
 } from './firebase';
+import { createNotificationInFirestore, dispatchTransactionalAlert } from './notificationService';
+import { normalizeDepartures } from './tripService';
 import { SEED_TRIPS } from './seedCatalog';
-import { Booking, BookingStatus, PassengerDetail, PaymentMethod } from '@/types';
+import { Booking, BookingStatus, PassengerDetail, PaymentMethod, TripDeparture } from '@/types';
 
 const SEED_TRIP_IDS = new Set(SEED_TRIPS.map((t) => t.id));
 const VALID_STATUSES = new Set<BookingStatus>(['PENDING', 'CONFIRMED', 'CANCELLED']);
@@ -26,6 +30,67 @@ const VALID_PAYMENT_METHODS = new Set<PaymentMethod>(['PIX', 'CREDIT_CARD', 'BOL
 
 export function isSeedShowcaseTrip(tripId: string): boolean {
   return SEED_TRIP_IDS.has(tripId) || tripId.startsWith('trip-');
+}
+
+export function applySpotDeltaToTrip(
+  rawTrip: Record<string, unknown>,
+  guestCount: number,
+  deltaSign: -1 | 1,
+  departureDate?: string
+): { availableSpots: number; departures?: TripDeparture[] } {
+  const safeGuests = Math.max(1, Math.round(guestCount));
+  const maxGuests = Number.isFinite(Number(rawTrip.maxGuests))
+    ? Math.max(1, Math.round(Number(rawTrip.maxGuests)))
+    : 16;
+  const durationDays = Number.isFinite(Number(rawTrip.durationDays))
+    ? Math.max(1, Math.round(Number(rawTrip.durationDays)))
+    : 1;
+  const currentAvailable =
+    rawTrip.availableSpots !== undefined &&
+    rawTrip.availableSpots !== null &&
+    Number.isFinite(Number(rawTrip.availableSpots))
+      ? Math.max(0, Math.round(Number(rawTrip.availableSpots)))
+      : maxGuests;
+
+  const departures = normalizeDepartures(rawTrip.departures, maxGuests, durationDays);
+
+  if (departureDate && departures.length > 0) {
+    const targetDay = departureDate.slice(0, 10);
+    const matchIdx = departures.findIndex((dep) => dep.startDate.slice(0, 10) === targetDay);
+    if (matchIdx >= 0) {
+      const targetDep = departures[matchIdx];
+      const nextDepSpots = targetDep.availableSpots + deltaSign * safeGuests;
+      if (deltaSign === -1 && nextDepSpots < 0) {
+        throw new Error(
+          `Não há vagas suficientes nesta turma (disponíveis: ${targetDep.availableSpots}, solicitadas: ${safeGuests}).`
+        );
+      }
+      const clampedDepSpots = Math.min(targetDep.maxGuests, Math.max(0, nextDepSpots));
+      const updatedDepartures = departures.map((dep, idx) =>
+        idx === matchIdx ? { ...dep, availableSpots: clampedDepSpots } : dep
+      );
+      const nextGlobal = Math.min(
+        maxGuests,
+        Math.max(0, currentAvailable + deltaSign * safeGuests)
+      );
+      return {
+        availableSpots: nextGlobal,
+        departures: updatedDepartures,
+      };
+    }
+  }
+
+  const nextAvailable = currentAvailable + deltaSign * safeGuests;
+  if (deltaSign === -1 && nextAvailable < 0) {
+    throw new Error(
+      `Não há vagas suficientes neste roteiro (disponíveis: ${currentAvailable}, solicitadas: ${safeGuests}).`
+    );
+  }
+
+  return {
+    availableSpots: Math.min(maxGuests, Math.max(0, nextAvailable)),
+    ...(departures.length > 0 ? { departures } : {}),
+  };
 }
 
 export function normalizeBookingDoc(id: string, raw: Record<string, unknown>): Booking {
@@ -45,6 +110,10 @@ export function normalizeBookingDoc(id: string, raw: Record<string, unknown>): B
 
   const createdAt = toIsoTimestamp(raw.createdAt);
   const updatedAt = toIsoTimestamp(raw.updatedAt);
+  const departureDate =
+    typeof raw.departureDate === 'string' && raw.departureDate.trim()
+      ? raw.departureDate.trim()
+      : toIsoTimestamp(raw.departureDate);
 
   return {
     id,
@@ -69,6 +138,7 @@ export function normalizeBookingDoc(id: string, raw: Record<string, unknown>): B
     adults: Math.max(1, Math.round(Number(raw.adults) || 1)),
     children: Math.max(0, Math.round(Number(raw.children) || 0)),
     totalPrice: Number.isFinite(Number(raw.totalPrice)) ? Math.max(0, Number(raw.totalPrice)) : 0,
+    ...(departureDate ? { departureDate } : {}),
     status: statusCandidate && VALID_STATUSES.has(statusCandidate) ? statusCandidate : 'PENDING',
     paymentMethod:
       paymentCandidate && VALID_PAYMENT_METHODS.has(paymentCandidate) ? paymentCandidate : 'PIX',
@@ -178,6 +248,9 @@ export async function createBookingInFirestore(
       ? payload.tripImage.slice(0, 2048)
       : '';
   const safeNotes = payload.notes ? payload.notes.trim().slice(0, 1000) : undefined;
+  const safeDepartureDate = payload.departureDate
+    ? payload.departureDate.trim().slice(0, 40)
+    : undefined;
 
   const sanitized: Omit<Booking, 'id' | 'createdAt' | 'updatedAt'> = {
     tripId: payload.tripId.trim().slice(0, 128),
@@ -192,6 +265,7 @@ export async function createBookingInFirestore(
     adults,
     children,
     totalPrice: Math.min(1_000_000, Math.max(0, Number(payload.totalPrice) || 0)),
+    ...(safeDepartureDate ? { departureDate: safeDepartureDate } : {}),
     status: 'PENDING',
     paymentMethod: VALID_PAYMENT_METHODS.has(payload.paymentMethod) ? payload.paymentMethod : 'PIX',
     voucherCode: payload.voucherCode.trim().slice(0, 40),
@@ -212,20 +286,58 @@ export async function createBookingInFirestore(
       updatedAt: serverTimestamp(),
     });
     const nowIso = new Date().toISOString();
-    return {
+    const createdBooking: Booking = {
       id: docRef.id,
       ...sanitized,
       createdAt: nowIso,
       updatedAt: nowIso,
     };
+
+    // Non-blocking in-app notification + optional transactional email/webhook alert
+    void notifyBookingCreated(createdBooking);
+
+    return createdBooking;
   } catch (err: unknown) {
     const code = (err as { code?: string }).code ?? '';
     if (code === 'permission-denied') {
       throw new Error(
-        'Não foi possível concluir a reserva: verifique se o pacote ainda está ativo, dentro do limite máximo de vagas e se sua conta está autenticada.'
+        'Não foi possível concluir a reserva: verifique se o pacote ainda possui vagas disponíveis e está ativo.'
       );
     }
     throw mapFirestoreError(err, 'Não foi possível concluir sua reserva.');
+  }
+}
+
+async function notifyBookingCreated(booking: Booking): Promise<void> {
+  if (!db) return;
+  try {
+    const agencySnap = await getDoc(doc(db, COLLECTIONS.agencies, booking.agencyId));
+    const agencyData = agencySnap.exists() ? (agencySnap.data() as Record<string, unknown>) : null;
+    const ownerUid = typeof agencyData?.ownerUid === 'string' ? agencyData.ownerUid : '';
+    const agencyEmail = typeof agencyData?.email === 'string' ? agencyData.email : '';
+    const totalGuests = booking.adults + booking.children;
+
+    if (ownerUid && ownerUid !== booking.clientUid) {
+      await createNotificationInFirestore({
+        recipientUid: ownerUid,
+        type: 'BOOKING_CREATED',
+        title: `Nova reserva: ${booking.tripTitle}`,
+        body: `${booking.clientName} solicitou ${totalGuests} vaga(s) · Código ${booking.voucherCode}`,
+        link: '/dashboard?mode=partner',
+      });
+    }
+
+    await dispatchTransactionalAlert({
+      event: 'BOOKING_CREATED',
+      recipientEmail: agencyEmail || booking.clientEmail,
+      recipientName: booking.agencyName,
+      subject: `Nova solicitação de reserva (${booking.voucherCode}) — ${booking.tripTitle}`,
+      summary: `${booking.clientName} solicitou ${totalGuests} vaga(s) no roteiro "${booking.tripTitle}". Confirme ou gerencie pelo Painel do Parceiro.`,
+      voucherCode: booking.voucherCode,
+      link: 'https://sounativo.vercel.app/dashboard?mode=partner',
+    });
+  } catch {
+    // Non-blocking notification failure ignored cleanly
   }
 }
 
@@ -237,15 +349,107 @@ export async function updateBookingStatusInFirestore(
   if (!db) throw new Error('Firestore não configurado.');
   if (!bookingId) throw new Error('Identificador da reserva inválido.');
 
+  const firestoreDb = db;
+  const cleanReason = cancellationReason ? cancellationReason.trim().slice(0, 500) : undefined;
+  let notifiedBooking: Booking | null = null;
+
   try {
-    await updateDoc(doc(db, COLLECTIONS.bookings, bookingId), {
-      status,
-      ...(cancellationReason
-        ? { cancellationReason: cancellationReason.trim().slice(0, 500) }
-        : {}),
-      updatedAt: serverTimestamp(),
-    });
+    try {
+      await runTransaction(firestoreDb, async (tx) => {
+        const bookingRef = doc(firestoreDb, COLLECTIONS.bookings, bookingId);
+        const bookingSnap = await tx.get(bookingRef);
+        if (!bookingSnap.exists()) {
+          throw new Error('O registro da reserva não foi encontrado.');
+        }
+
+        const rawBooking = bookingSnap.data() as Record<string, unknown>;
+        const normalized = normalizeBookingDoc(bookingSnap.id, rawBooking);
+        notifiedBooking = normalized;
+
+        const prevStatus = normalized.status;
+        const deltaSign: -1 | 0 | 1 =
+          prevStatus !== 'CONFIRMED' && status === 'CONFIRMED'
+            ? -1
+            : prevStatus === 'CONFIRMED' && status === 'CANCELLED'
+              ? 1
+              : 0;
+
+        if (deltaSign !== 0 && normalized.tripId) {
+          const tripRef = doc(firestoreDb, COLLECTIONS.trips, normalized.tripId);
+          const tripSnap = await tx.get(tripRef);
+          if (tripSnap.exists()) {
+            const spotUpdates = applySpotDeltaToTrip(
+              tripSnap.data() as Record<string, unknown>,
+              normalized.adults + normalized.children,
+              deltaSign,
+              normalized.departureDate
+            );
+            tx.update(tripRef, {
+              ...stripUndefined(spotUpdates as unknown as Record<string, unknown>),
+              updatedAt: serverTimestamp(),
+            });
+          }
+        }
+
+        tx.update(bookingRef, {
+          status,
+          ...(cleanReason ? { cancellationReason: cleanReason } : {}),
+          updatedAt: serverTimestamp(),
+        });
+      });
+    } catch (txErr: unknown) {
+      const code = (txErr as { code?: string })?.code ?? '';
+      // If a traveler cancels their own booking, they cannot mutate trips/{tripId}; fall back to direct booking update
+      if (status === 'CANCELLED' && code === 'permission-denied') {
+        await updateDoc(doc(firestoreDb, COLLECTIONS.bookings, bookingId), {
+          status,
+          ...(cleanReason ? { cancellationReason: cleanReason } : {}),
+          updatedAt: serverTimestamp(),
+        });
+      } else {
+        throw txErr;
+      }
+    }
+
+    if (notifiedBooking) {
+      void notifyBookingStatusUpdated(notifiedBooking, status, cleanReason);
+    }
   } catch (err: unknown) {
     throw mapFirestoreError(err, 'Erro ao atualizar o status da reserva.');
   }
+}
+
+async function notifyBookingStatusUpdated(
+  booking: Booking,
+  nextStatus: BookingStatus,
+  reason?: string
+): Promise<void> {
+  if (!booking.clientUid) return;
+  const isConfirmed = nextStatus === 'CONFIRMED';
+  const title = isConfirmed
+    ? `Reserva confirmada: ${booking.tripTitle}`
+    : `Reserva cancelada: ${booking.tripTitle}`;
+  const body = isConfirmed
+    ? `Sua operadora confirmou o embarque! Voucher: ${booking.voucherCode}.`
+    : reason
+      ? `Status atualizado para cancelada. Motivo: ${reason}`
+      : `A reserva ${booking.voucherCode} foi cancelada.`;
+
+  await createNotificationInFirestore({
+    recipientUid: booking.clientUid,
+    type: isConfirmed ? 'BOOKING_CONFIRMED' : 'BOOKING_CANCELLED',
+    title,
+    body,
+    link: '/dashboard',
+  });
+
+  await dispatchTransactionalAlert({
+    event: isConfirmed ? 'BOOKING_CONFIRMED' : 'BOOKING_CANCELLED',
+    recipientEmail: booking.clientEmail,
+    recipientName: booking.clientName,
+    subject: title,
+    summary: body,
+    voucherCode: booking.voucherCode,
+    link: 'https://sounativo.vercel.app/dashboard',
+  });
 }

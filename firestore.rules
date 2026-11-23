@@ -71,8 +71,8 @@ rules_version = '2';
 //   - subscriptionStatus: string (optional/nullable, 'ACTIVE' | 'INACTIVE' | 'PENDING';
 //       paid tiers BASIC/PREMIUM cannot be set to ACTIVE by non-admin clients)
 //   - subscriptionExpiresAt: timestamp | ISO string (optional/nullable)
-//   - rating: number (optional/nullable, 0..5, admin/server-controlled)
-//   - totalReviews: int (optional/nullable, 0..1000000, admin/server-controlled)
+//   - rating: number (optional/nullable, 0..5, admin or narrow review-aggregation update)
+//   - totalReviews: int (optional/nullable, 0..1000000, admin or narrow review-aggregation update)
 //   - createdAt: timestamp | ISO string (optional, immutable)
 //   - updatedAt: timestamp | ISO string (optional)
 //
@@ -101,6 +101,7 @@ rules_version = '2';
 //   - travelerTypes: list<string> (optional/nullable, <= 10 items)
 //   - itinerary: list<map> (optional/nullable, <= 60 items)
 //   - boardingPoints: list<map> (optional/nullable, <= 30 items)
+//   - departures: list<map> (optional/nullable, <= 30 items)
 //   - paymentMethods: list<string> (optional/nullable, <= 10 items)
 //   - included: list<string> (optional/nullable, <= 50 items)
 //   - notIncluded: list<string> (optional/nullable, <= 50 items)
@@ -118,8 +119,8 @@ rules_version = '2';
 //   - featured: bool (optional/nullable, admin-controlled)
 //   - featuredInHero: bool (optional/nullable, admin-controlled)
 //   - popularNearSP: bool (optional/nullable, admin-controlled)
-//   - rating: number (optional/nullable, 0..5, admin/server-controlled)
-//   - totalReviews: int (optional/nullable, 0..1000000, admin/server-controlled)
+//   - rating: number (optional/nullable, 0..5, admin or narrow review-aggregation update)
+//   - totalReviews: int (optional/nullable, 0..1000000, admin or narrow review-aggregation update)
 //   - views: int (optional/nullable, 0..100000000, admin/server-controlled)
 //   - sales: int (optional/nullable, 0..10000000, admin/server-controlled)
 //   - createdAt: timestamp | ISO string (optional, immutable)
@@ -134,7 +135,7 @@ rules_version = '2';
 //   - agencyId: string (required, <= 128 chars, must match trip's agencyId, immutable)
 //   - status: string (required, 'PENDING' on create; client -> 'CANCELLED';
 //       agency -> 'CONFIRMED' | 'CANCELLED')
-//   - adults: int (required, 1..100; adults + children <= trip.maxGuests when maxGuests > 0)
+//   - adults: int (required, 1..100; adults + children <= trip.maxGuests & trip.availableSpots)
 //   - children: int (optional/nullable, 0..100)
 //   - passengers: int | list (optional/nullable, 1..200 or <= 100 items)
 //   - passengerDetails: list<map> (optional/nullable, <= 100 items)
@@ -164,6 +165,9 @@ rules_version = '2';
 //   - userUid: string (required, matches request.auth.uid on create, immutable)
 //   - tripId: string (optional, <= 128 chars, references existing trip, immutable)
 //   - agencyId: string (optional, <= 128 chars, references existing agency, immutable)
+//   - bookingId: string (optional/nullable, 1..128 chars; required for non-admin create,
+//       must reference CONFIRMED booking owned by caller for tripId, immutable for non-admins)
+//   - verifiedBooking: bool (optional/nullable, immutable for non-admins)
 //   - rating: int (required, 1..5)
 //   - comment: string (required, trimmed 3..2000 chars)
 //   - userName: string (optional/nullable, <= 120 chars)
@@ -198,6 +202,32 @@ rules_version = '2';
 //   - status: string (required, 'NEW' on public create; admin-managed thereafter)
 //   - createdAt: timestamp | ISO string (optional, immutable)
 //   - updatedAt: timestamp | ISO string (optional)
+//
+// Collection: notifications
+// Document ID: {notificationId}
+// Fields:
+//   - id: string (optional, <= 128 chars, immutable)
+//   - recipientUid: string (required, 1..128 chars, immutable for recipient)
+//   - actorUid: string (optional/nullable, 1..128 chars, matches request.auth.uid on create)
+//   - type: string (required, 'BOOKING_CREATED' | 'BOOKING_CONFIRMED' | 'BOOKING_CANCELLED' |
+//       'NEW_REVIEW' | 'PLAN_APPROVED' | 'SYSTEM')
+//   - title: string (required, 1..160 chars)
+//   - body: string (optional/nullable, <= 600 chars)
+//   - link: string (optional/nullable, <= 200 chars)
+//   - read: bool (required, false on create; recipient can update only ['read', 'updatedAt'])
+//   - createdAt: timestamp | ISO string (optional, immutable)
+//   - updatedAt: timestamp | ISO string (optional)
+//
+// Collection: error_logs
+// Document ID: {logId}
+// Fields:
+//   - id: string (optional, <= 128 chars, immutable)
+//   - message: string (required, 1..500 chars)
+//   - route: string (required, 1..200 chars)
+//   - stackSnippet: string (optional/nullable, <= 1500 chars)
+//   - userAgent: string (optional/nullable, <= 300 chars)
+//   - userUid: string (optional/nullable, 1..128 chars, matches request.auth.uid when set)
+//   - createdAt: timestamp | ISO string (optional, immutable; append-only, admin read/delete)
 //
 // ============================================================================
 
@@ -299,6 +329,29 @@ service cloud.firestore {
              (!('sales' in d) || d.sales == null || d.sales == 0);
     }
 
+    function isValidRatingAggregationUpdate() {
+      let d = request.resource.data;
+      return d.diff(resource.data).affectedKeys().hasOnly(['rating', 'totalReviews', 'updatedAt']) &&
+             d.rating is number && d.rating >= 0 && d.rating <= 5 &&
+             d.totalReviews is int && d.totalReviews >= 1 && d.totalReviews <= 1000000;
+    }
+
+    function isConfirmedOwnBookingData(b, d) {
+      return b.clientUid == request.auth.uid &&
+             'tripId' in d &&
+             b.tripId == d.tripId &&
+             b.status == 'CONFIRMED';
+    }
+
+    function hasVerifiedBookingForReview(d) {
+      return 'bookingId' in d &&
+             d.bookingId is string &&
+             d.bookingId.size() > 0 &&
+             d.bookingId.size() <= 128 &&
+             exists(/databases/$(database)/documents/bookings/$(d.bookingId)) &&
+             isConfirmedOwnBookingData(get(/databases/$(database)/documents/bookings/$(d.bookingId)).data, d);
+    }
+
     function isValidBookingTarget(d) {
       let trip = get(/databases/$(database)/documents/trips/$(d.tripId));
       let guests = d.adults + (('children' in d && d.children is int) ? d.children : 0);
@@ -308,6 +361,8 @@ service cloud.firestore {
              trip.data.agencyId == d.agencyId &&
              (!('maxGuests' in trip.data) || !(trip.data.maxGuests is int) || trip.data.maxGuests <= 0 ||
               guests <= trip.data.maxGuests) &&
+             (!('availableSpots' in trip.data) || !(trip.data.availableSpots is int) ||
+              guests <= trip.data.availableSpots) &&
              (!(trip.data.price is number) || trip.data.price <= 0 ||
               d.totalPrice >= trip.data.price * d.adults * 0.5);
     }
@@ -415,7 +470,7 @@ service cloud.firestore {
                'state', 'origin', 'departureCity', 'price', 'startDate', 'endDate',
                'durationDays', 'images', 'coverImage', 'imageUrl', 'category',
                'categories', 'tags', 'travelerTypes', 'itinerary', 'boardingPoints',
-               'paymentMethods', 'included', 'notIncluded', 'isActive',
+               'departures', 'paymentMethods', 'included', 'notIncluded', 'isActive',
                'maxGuests', 'maxSpots', 'availableSpots', 'latitude', 'longitude',
                'passengerConfig', 'operationalData', 'agencyName', 'agencySlug',
                'agencyLogo', 'featured', 'featuredInHero', 'popularNearSP',
@@ -444,6 +499,7 @@ service cloud.firestore {
              (!('travelerTypes' in d) || d.travelerTypes == null || (d.travelerTypes is list && d.travelerTypes.size() <= 10)) &&
              (!('itinerary' in d) || d.itinerary == null || (d.itinerary is list && d.itinerary.size() <= 60)) &&
              (!('boardingPoints' in d) || d.boardingPoints == null || (d.boardingPoints is list && d.boardingPoints.size() <= 30)) &&
+             (!('departures' in d) || d.departures == null || (d.departures is list && d.departures.size() <= 30)) &&
              (!('paymentMethods' in d) || d.paymentMethods == null || (d.paymentMethods is list && d.paymentMethods.size() <= 10)) &&
              (!('included' in d) || d.included == null || (d.included is list && d.included.size() <= 50)) &&
              (!('notIncluded' in d) || d.notIncluded == null || (d.notIncluded is list && d.notIncluded.size() <= 50)) &&
@@ -507,8 +563,8 @@ service cloud.firestore {
 
     function isValidReview(d) {
       return d.keys().hasOnly([
-               'id', 'userUid', 'tripId', 'agencyId', 'rating', 'comment',
-               'userName', 'userPhotoURL', 'createdAt', 'updatedAt'
+               'id', 'userUid', 'tripId', 'agencyId', 'bookingId', 'verifiedBooking',
+               'rating', 'comment', 'userName', 'userPhotoURL', 'createdAt', 'updatedAt'
              ]) &&
              d.keys().hasAll(['userUid', 'rating', 'comment']) &&
              (('tripId' in d && d.tripId != null) || ('agencyId' in d && d.agencyId != null)) &&
@@ -516,6 +572,8 @@ service cloud.firestore {
              d.userUid is string && d.userUid.size() > 0 && d.userUid.size() <= 128 &&
              (!('tripId' in d) || d.tripId == null || (d.tripId is string && d.tripId.size() > 0 && d.tripId.size() <= 128)) &&
              (!('agencyId' in d) || d.agencyId == null || (d.agencyId is string && d.agencyId.size() > 0 && d.agencyId.size() <= 128)) &&
+             (!('bookingId' in d) || d.bookingId == null || (d.bookingId is string && d.bookingId.size() > 0 && d.bookingId.size() <= 128)) &&
+             (!('verifiedBooking' in d) || d.verifiedBooking == null || d.verifiedBooking is bool) &&
              d.rating is int && d.rating >= 1 && d.rating <= 5 &&
              d.comment is string && d.comment.trim().size() >= 3 && d.comment.size() <= 2000 &&
              (!('userName' in d) || d.userName == null || (d.userName is string && d.userName.size() <= 120)) &&
@@ -553,6 +611,39 @@ service cloud.firestore {
              (!('source' in d) || d.source == null || (d.source is string && d.source in ['CONTACT_FORM', 'GROUP_QUOTE'])) &&
              (!('userUid' in d) || d.userUid == null || (d.userUid is string && d.userUid.size() > 0 && d.userUid.size() <= 128)) &&
              d.status is string && d.status.size() >= 2 && d.status.size() <= 40;
+    }
+
+    function isValidNotification(d) {
+      return d.keys().hasOnly([
+               'id', 'recipientUid', 'actorUid', 'type', 'title',
+               'body', 'link', 'read', 'createdAt', 'updatedAt'
+             ]) &&
+             d.keys().hasAll(['recipientUid', 'type', 'title', 'read']) &&
+             (!('id' in d) || (d.id is string && d.id.size() > 0 && d.id.size() <= 128)) &&
+             d.recipientUid is string && d.recipientUid.size() >= 1 && d.recipientUid.size() <= 128 &&
+             (!('actorUid' in d) || d.actorUid == null || (d.actorUid is string && d.actorUid.size() >= 1 && d.actorUid.size() <= 128)) &&
+             d.type is string && d.type in [
+               'BOOKING_CREATED', 'BOOKING_CONFIRMED', 'BOOKING_CANCELLED',
+               'NEW_REVIEW', 'PLAN_APPROVED', 'SYSTEM'
+             ] &&
+             d.title is string && d.title.size() >= 1 && d.title.size() <= 160 &&
+             (!('body' in d) || d.body == null || (d.body is string && d.body.size() <= 600)) &&
+             (!('link' in d) || d.link == null || (d.link is string && d.link.size() <= 200)) &&
+             d.read is bool;
+    }
+
+    function isValidErrorLog(d) {
+      return d.keys().hasOnly([
+               'id', 'message', 'route', 'stackSnippet',
+               'userAgent', 'userUid', 'createdAt'
+             ]) &&
+             d.keys().hasAll(['message', 'route']) &&
+             (!('id' in d) || (d.id is string && d.id.size() > 0 && d.id.size() <= 128)) &&
+             d.message is string && d.message.size() >= 1 && d.message.size() <= 500 &&
+             d.route is string && d.route.size() >= 1 && d.route.size() <= 200 &&
+             (!('stackSnippet' in d) || d.stackSnippet == null || (d.stackSnippet is string && d.stackSnippet.size() <= 1500)) &&
+             (!('userAgent' in d) || d.userAgent == null || (d.userAgent is string && d.userAgent.size() <= 300)) &&
+             (!('userUid' in d) || d.userUid == null || (d.userUid is string && d.userUid.size() >= 1 && d.userUid.size() <= 128));
     }
 
     // ========================================================================
@@ -612,6 +703,7 @@ service cloud.firestore {
                           areImmutableFieldsUnchanged(['verified', 'isVerified', 'rating', 'totalReviews']) &&
                           (areImmutableFieldsUnchanged(['subscriptionPlan', 'subscriptionStatus', 'subscriptionExpiresAt']) ||
                            isNonAdminSubscriptionSafe(request.resource.data))) ||
+                         isValidRatingAggregationUpdate() ||
                          isAdmin()
                        );
 
@@ -649,6 +741,7 @@ service cloud.firestore {
                        (
                          (isAgencyOwner(resource.data.agencyId) &&
                           areImmutableFieldsUnchanged(['featured', 'featuredInHero', 'popularNearSP', 'rating', 'totalReviews', 'views', 'sales'])) ||
+                         isValidRatingAggregationUpdate() ||
                          isAdmin()
                        );
 
@@ -691,7 +784,7 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // 5. reviews/{reviewId} — Public read, author-owned write
+    // 5. reviews/{reviewId} — Public read, verified-booking author write
     match /reviews/{reviewId} {
       allow read: if true;
 
@@ -700,13 +793,18 @@ service cloud.firestore {
                        (!('id' in request.resource.data) || request.resource.data.id == reviewId) &&
                        request.resource.data.userUid == request.auth.uid &&
                        isValidCreatedAndUpdatedOnCreate() &&
-                       isValidReviewTarget(request.resource.data);
+                       isValidReviewTarget(request.resource.data) &&
+                       (hasVerifiedBookingForReview(request.resource.data) || isAdmin());
 
       allow update: if isAuthenticated() &&
                        isValidReview(request.resource.data) &&
                        areImmutableFieldsUnchanged(['id', 'userUid', 'tripId', 'agencyId', 'createdAt']) &&
                        isValidUpdatedOnUpdate() &&
-                       (resource.data.userUid == request.auth.uid || isAdmin());
+                       (
+                         (resource.data.userUid == request.auth.uid &&
+                          areImmutableFieldsUnchanged(['bookingId', 'verifiedBooking'])) ||
+                         isAdmin()
+                       );
 
       allow delete: if isAuthenticated() &&
                        (resource.data.userUid == request.auth.uid || isAdmin());
@@ -747,7 +845,49 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
-    // 8. Default deny-all fallback
+    // 8. notifications/{notificationId} — Recipient-scoped in-app transactional notifications
+    match /notifications/{notificationId} {
+      allow read: if isAuthenticated() &&
+                     (resource.data.recipientUid == request.auth.uid || isAdmin());
+
+      allow create: if isAuthenticated() &&
+                       isValidNotification(request.resource.data) &&
+                       (!('id' in request.resource.data) || request.resource.data.id == notificationId) &&
+                       request.resource.data.read == false &&
+                       (!('actorUid' in request.resource.data) ||
+                        request.resource.data.actorUid == null ||
+                        request.resource.data.actorUid == request.auth.uid) &&
+                       isValidCreatedAndUpdatedOnCreate();
+
+      allow update: if isAuthenticated() &&
+                       isValidNotification(request.resource.data) &&
+                       areImmutableFieldsUnchanged(['id', 'createdAt']) &&
+                       isValidUpdatedOnUpdate() &&
+                       (
+                         (resource.data.recipientUid == request.auth.uid &&
+                          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read', 'updatedAt'])) ||
+                         isAdmin()
+                       );
+
+      allow delete: if isAuthenticated() &&
+                       (resource.data.recipientUid == request.auth.uid || isAdmin());
+    }
+
+    // 9. error_logs/{logId} — Append-only client crash telemetry, admin-only read/delete
+    match /error_logs/{logId} {
+      allow read, delete: if isAdmin();
+
+      allow create: if isValidErrorLog(request.resource.data) &&
+                       (!('id' in request.resource.data) || request.resource.data.id == logId) &&
+                       (!('userUid' in request.resource.data) ||
+                        request.resource.data.userUid == null ||
+                        (isAuthenticated() && request.resource.data.userUid == request.auth.uid)) &&
+                       isValidCreatedAndUpdatedOnCreate();
+
+      allow update: if false;
+    }
+
+    // 10. Default deny-all fallback
     match /{document=**} {
       allow read, write: if false;
     }

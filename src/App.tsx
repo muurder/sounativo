@@ -1,33 +1,34 @@
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { ToastProvider } from '@/context/ToastContext';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { AuthProvider } from '@/context/AuthContext';
 import { ConsentProvider } from '@/context/ConsentContext';
 import { AppLayout } from '@/components/layout/AppLayout';
+import { lazyWithRetry } from '@/utils/lazyWithRetry';
 
-const HomePage = lazy(() => import('@/pages/HomePage'));
-const TripsPage = lazy(() => import('@/pages/TripsPage'));
-const TripDetailsPage = lazy(() => import('@/pages/TripDetailsPage'));
-const AgenciesPage = lazy(() => import('@/pages/AgenciesPage'));
-const GuidesPage = lazy(() => import('@/pages/GuidesPage'));
-const AgencyMicrositePage = lazy(() => import('@/pages/AgencyMicrositePage'));
-const DashboardPage = lazy(() => import('@/pages/dashboard/DashboardPage'));
-const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'));
+const HomePage = lazyWithRetry(() => import('@/pages/HomePage'));
+const TripsPage = lazyWithRetry(() => import('@/pages/TripsPage'));
+const TripDetailsPage = lazyWithRetry(() => import('@/pages/TripDetailsPage'));
+const AgenciesPage = lazyWithRetry(() => import('@/pages/AgenciesPage'));
+const GuidesPage = lazyWithRetry(() => import('@/pages/GuidesPage'));
+const AgencyMicrositePage = lazyWithRetry(() => import('@/pages/AgencyMicrositePage'));
+const DashboardPage = lazyWithRetry(() => import('@/pages/dashboard/DashboardPage'));
+const NotFoundPage = lazyWithRetry(() => import('@/pages/NotFoundPage'));
 
-const AboutPage = lazy(() =>
+const AboutPage = lazyWithRetry(() =>
   import('@/pages/InstitutionalPage').then((m) => ({ default: m.AboutPage }))
 );
-const ContactPage = lazy(() =>
+const ContactPage = lazyWithRetry(() =>
   import('@/pages/InstitutionalPage').then((m) => ({ default: m.ContactPage }))
 );
-const TermsPage = lazy(() =>
+const TermsPage = lazyWithRetry(() =>
   import('@/pages/InstitutionalPage').then((m) => ({ default: m.TermsPage }))
 );
-const PrivacyPage = lazy(() =>
+const PrivacyPage = lazyWithRetry(() =>
   import('@/pages/InstitutionalPage').then((m) => ({ default: m.PrivacyPage }))
 );
-const CookiePolicyPage = lazy(() =>
+const CookiePolicyPage = lazyWithRetry(() =>
   import('@/pages/InstitutionalPage').then((m) => ({ default: m.CookiePolicyPage }))
 );
 
@@ -74,6 +75,47 @@ export const App: React.FC = () => {
                     <Route
                       path="privacy-settings"
                       element={<Navigate to="/dashboard?mode=privacy" replace />}
+                    />
+
+                    {/* Authentication and Registration Routes */}
+                    <Route path="signup" element={<Navigate to="/?auth=signup" replace />} />
+                    <Route path="cadastro" element={<Navigate to="/?auth=signup" replace />} />
+                    <Route path="cadastrar" element={<Navigate to="/?auth=signup" replace />} />
+                    <Route path="criar-conta" element={<Navigate to="/?auth=signup" replace />} />
+                    <Route path="registro" element={<Navigate to="/?auth=signup" replace />} />
+                    <Route path="register" element={<Navigate to="/?auth=signup" replace />} />
+                    <Route path="cadastro/*" element={<Navigate to="/?auth=signup" replace />} />
+                    <Route path="criar-conta/*" element={<Navigate to="/?auth=signup" replace />} />
+
+                    <Route path="login" element={<Navigate to="/?auth=login" replace />} />
+                    <Route path="entrar" element={<Navigate to="/?auth=login" replace />} />
+                    <Route path="auth" element={<Navigate to="/?auth=login" replace />} />
+                    <Route path="auth/signup" element={<Navigate to="/?auth=signup" replace />} />
+                    <Route path="auth/register" element={<Navigate to="/?auth=signup" replace />} />
+                    <Route path="auth/cadastro" element={<Navigate to="/?auth=signup" replace />} />
+                    <Route path="auth/login" element={<Navigate to="/?auth=login" replace />} />
+                    <Route path="auth/entrar" element={<Navigate to="/?auth=login" replace />} />
+                    <Route path="auth/*" element={<Navigate to="/?auth=login" replace />} />
+
+                    <Route
+                      path="dashboard/signup"
+                      element={<Navigate to="/dashboard?auth=signup" replace />}
+                    />
+                    <Route
+                      path="dashboard/cadastro"
+                      element={<Navigate to="/dashboard?auth=signup" replace />}
+                    />
+                    <Route
+                      path="dashboard/register"
+                      element={<Navigate to="/dashboard?auth=signup" replace />}
+                    />
+                    <Route
+                      path="dashboard/login"
+                      element={<Navigate to="/dashboard?auth=login" replace />}
+                    />
+                    <Route
+                      path="dashboard/entrar"
+                      element={<Navigate to="/dashboard?auth=login" replace />}
                     />
 
                     {/* Legacy route redirects */}

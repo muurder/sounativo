@@ -1,15 +1,28 @@
-import React from 'react';
-import { Plus, Trash2 } from 'lucide-react';
+import React, { useMemo } from 'react';
+import { CalendarPlus, MapPin, Plus, Trash2 } from 'lucide-react';
 import { BoardingPoint, ItineraryDay, TripCategory } from '@/types';
 import { CATEGORY_LABELS } from '@/utils/constants';
+import { ImageUploadField } from '@/components/ui/ImageUploadField';
+import { MultiImageUploadField } from '@/components/ui/MultiImageUploadField';
+
+export interface DepartureFormRow {
+  id: string;
+  startDate: string;
+  maxGuests: string;
+  availableSpots?: number;
+  priceOverride: string;
+}
 
 export interface TripFormState {
   title: string;
   destination: string;
+  latitude: string;
+  longitude: string;
   price: string;
   durationDays: string;
   maxGuests: string;
   startDate: string;
+  departures: DepartureFormRow[];
   boardingPoints: BoardingPoint[];
   allowChildren: boolean;
   category: TripCategory;
@@ -27,6 +40,45 @@ interface TripFormFieldsProps {
 }
 
 export const TripFormFields: React.FC<TripFormFieldsProps> = ({ values, onChange }) => {
+  const extraImageUrls = useMemo(
+    () =>
+      values.extraImagesText
+        .split(',')
+        .map((s) => s.trim())
+        .filter((s) => /^https?:\/\//i.test(s)),
+    [values.extraImagesText]
+  );
+
+  const handleAddDeparture = () => {
+    const nextIndex = values.departures.length + 1;
+    const fallbackDate = new Date(Date.now() + (14 + nextIndex * 7) * 86_400_000)
+      .toISOString()
+      .slice(0, 10);
+    onChange('departures', [
+      ...values.departures,
+      {
+        id: `dep-${Date.now().toString(36)}-${nextIndex}`,
+        startDate: fallbackDate,
+        maxGuests: values.maxGuests || '16',
+        priceOverride: '',
+      },
+    ]);
+  };
+
+  const handleUpdateDeparture = (index: number, patch: Partial<DepartureFormRow>) => {
+    onChange(
+      'departures',
+      values.departures.map((dep, idx) => (idx === index ? { ...dep, ...patch } : dep))
+    );
+  };
+
+  const handleRemoveDeparture = (index: number) => {
+    onChange(
+      'departures',
+      values.departures.filter((_, idx) => idx !== index)
+    );
+  };
+
   const handleAddBoarding = () => {
     const nextIndex = values.boardingPoints.length + 1;
     onChange('boardingPoints', [
@@ -125,6 +177,48 @@ export const TripFormFields: React.FC<TripFormFieldsProps> = ({ values, onChange
         </div>
       </div>
 
+      {/* Optional Coordinates for Interactive Map */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 rounded-xl border border-stone-200/80 bg-stone-50/60 p-3">
+        <div>
+          <label
+            htmlFor="trip-lat"
+            className="inline-flex items-center gap-1 text-xs font-semibold text-stone-700 mb-1"
+          >
+            <MapPin size={12} className="text-primary-600" /> Latitude (opcional)
+          </label>
+          <input
+            id="trip-lat"
+            type="number"
+            step="any"
+            min="-90"
+            max="90"
+            value={values.latitude}
+            onChange={(e) => onChange('latitude', e.target.value)}
+            placeholder="Ex: -12.5631"
+            className="w-full min-h-[40px] rounded-xl border border-stone-300 bg-white px-3 text-xs"
+          />
+        </div>
+        <div>
+          <label
+            htmlFor="trip-lng"
+            className="inline-flex items-center gap-1 text-xs font-semibold text-stone-700 mb-1"
+          >
+            <MapPin size={12} className="text-primary-600" /> Longitude (opcional)
+          </label>
+          <input
+            id="trip-lng"
+            type="number"
+            step="any"
+            min="-180"
+            max="180"
+            value={values.longitude}
+            onChange={(e) => onChange('longitude', e.target.value)}
+            placeholder="Ex: -41.3889"
+            className="w-full min-h-[40px] rounded-xl border border-stone-300 bg-white px-3 text-xs"
+          />
+        </div>
+      </div>
+
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div>
           <label htmlFor="trip-price" className="block text-xs font-semibold text-stone-700 mb-1">
@@ -176,7 +270,7 @@ export const TripFormFields: React.FC<TripFormFieldsProps> = ({ values, onChange
 
         <div>
           <label htmlFor="trip-start" className="block text-xs font-semibold text-stone-700 mb-1">
-            Data de saída
+            Data principal
           </label>
           <input
             id="trip-start"
@@ -187,6 +281,71 @@ export const TripFormFields: React.FC<TripFormFieldsProps> = ({ values, onChange
             className="w-full min-h-[44px] rounded-xl border border-stone-300 px-2.5 text-sm"
           />
         </div>
+      </div>
+
+      {/* Multiple Departures / Turmas */}
+      <div className="rounded-xl border border-stone-200 p-3.5 space-y-2.5">
+        <div className="flex items-center justify-between gap-2">
+          <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-stone-700">
+            <CalendarPlus size={14} className="text-primary-600" />
+            Turmas / Datas Extras de Saída ({values.departures.length})
+          </span>
+          <button
+            type="button"
+            onClick={handleAddDeparture}
+            className="inline-flex items-center gap-1 text-xs font-semibold text-primary-600 hover:underline"
+          >
+            <Plus size={13} /> Nova turma
+          </button>
+        </div>
+
+        {values.departures.length === 0 ? (
+          <p className="text-xs text-stone-400">
+            Opcional: cadastre datas adicionais para controlar estoque de vagas por turma.
+          </p>
+        ) : (
+          <div className="space-y-2">
+            {values.departures.map((dep, idx) => (
+              <div key={dep.id} className="grid grid-cols-12 gap-2 items-center">
+                <input
+                  type="date"
+                  aria-label={`Data da turma ${idx + 1}`}
+                  value={dep.startDate}
+                  onChange={(e) => handleUpdateDeparture(idx, { startDate: e.target.value })}
+                  className="col-span-5 sm:col-span-5 min-h-[40px] rounded-xl border border-stone-300 px-2.5 text-xs"
+                />
+                <input
+                  type="number"
+                  min="1"
+                  max="100"
+                  aria-label={`Vagas da turma ${idx + 1}`}
+                  value={dep.maxGuests}
+                  onChange={(e) => handleUpdateDeparture(idx, { maxGuests: e.target.value })}
+                  placeholder="Vagas"
+                  className="col-span-3 sm:col-span-3 min-h-[40px] rounded-xl border border-stone-300 px-2.5 text-xs"
+                />
+                <input
+                  type="number"
+                  min="0"
+                  max="1000000"
+                  aria-label={`Valor especial turma ${idx + 1}`}
+                  value={dep.priceOverride}
+                  onChange={(e) => handleUpdateDeparture(idx, { priceOverride: e.target.value })}
+                  placeholder="R$ (opcional)"
+                  className="col-span-3 sm:col-span-3 min-h-[40px] rounded-xl border border-stone-300 px-2.5 text-xs"
+                />
+                <button
+                  type="button"
+                  aria-label={`Remover turma ${idx + 1}`}
+                  onClick={() => handleRemoveDeparture(idx)}
+                  className="col-span-1 flex justify-center text-stone-400 hover:text-red-600"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Boarding Points */}
@@ -233,35 +392,24 @@ export const TripFormFields: React.FC<TripFormFieldsProps> = ({ values, onChange
         ))}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div>
-          <label htmlFor="trip-img" className="block text-xs font-semibold text-stone-700 mb-1">
-            URL da imagem de capa
-          </label>
-          <input
-            id="trip-img"
-            type="url"
-            value={values.imageUrl}
-            onChange={(e) => onChange('imageUrl', e.target.value)}
-            className="w-full min-h-[44px] rounded-xl border border-stone-300 px-3 text-sm"
-          />
-        </div>
-        <div>
-          <label
-            htmlFor="trip-extra-imgs"
-            className="block text-xs font-semibold text-stone-700 mb-1"
-          >
-            Galeria extra (URLs por vírgula)
-          </label>
-          <input
-            id="trip-extra-imgs"
-            value={values.extraImagesText}
-            onChange={(e) => onChange('extraImagesText', e.target.value)}
-            placeholder="https://..., https://..."
-            className="w-full min-h-[44px] rounded-xl border border-stone-300 px-3 text-sm"
-          />
-        </div>
-      </div>
+      {/* Direct Firebase Storage Cover + Gallery Uploads */}
+      <ImageUploadField
+        id="trip-cover-upload"
+        label="Foto principal (capa do pacote)"
+        scope="trips"
+        previewShape="wide"
+        value={values.imageUrl}
+        onChange={(url) => onChange('imageUrl', url)}
+      />
+
+      <MultiImageUploadField
+        id="trip-gallery-upload"
+        label="Galeria extra do roteiro"
+        scope="trips"
+        urls={extraImageUrls}
+        maxImages={12}
+        onChange={(nextUrls) => onChange('extraImagesText', nextUrls.join(', '))}
+      />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>

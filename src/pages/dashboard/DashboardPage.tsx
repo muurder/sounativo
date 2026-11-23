@@ -2,8 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { useOutletContext, useSearchParams } from 'react-router-dom';
 import { AlertCircle, Briefcase, Compass, Lock, ShieldCheck, User } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { usePageMeta } from '@/hooks/usePageMeta';
 import { useToast } from '@/context/ToastContext';
 import { MASTER_ADMIN_EMAIL } from '@/services/firebase.config';
+import {
+  DashboardViewMode,
+  isPartnerRole,
+  resolveDashboardViewMode,
+} from '@/utils/dashboardRouting';
 import { GoogleSignInButton } from '@/components/ui/GoogleSignInButton';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
@@ -22,41 +28,58 @@ export const DashboardPage: React.FC = () => {
   const { user, loading, authError, clearAuthError, signInWithGoogle } = useAuth();
   const { showToast } = useToast();
   const [googleBusy, setGoogleBusy] = useState(false);
+  const [googleError, setGoogleError] = useState<string | null>(null);
+
+  usePageMeta({
+    title: 'Meu Painel',
+    canonicalPath: '/dashboard',
+    noIndex: true,
+  });
 
   const normalizedEmail = (user?.email ?? '').toLowerCase();
   const isMasterAdmin = Boolean(
     user &&
     (user.role === 'ADMIN' || (MASTER_ADMIN_EMAIL && normalizedEmail === MASTER_ADMIN_EMAIL))
   );
+  const isPartnerAccount = isPartnerRole(user?.role);
 
-  const [viewMode, setViewMode] = useState<'traveler' | 'partner' | 'admin' | 'privacy'>(() => {
-    const mode = searchParams.get('mode');
-    if (mode === 'privacy') return 'privacy';
-    return mode === 'partner' ? 'partner' : 'traveler';
+  // The account type chosen at signup decides the default panel (AGENCY/GUIDE ->
+  // partner). A manual switch on this page overrides it until session/mode changes.
+  const resolvedViewMode = resolveDashboardViewMode({
+    requestedMode: searchParams.get('mode'),
+    role: user?.role,
+    isMasterAdmin,
   });
+  const [manualViewMode, setManualViewMode] = useState<DashboardViewMode | null>(null);
+  const viewMode = manualViewMode ?? resolvedViewMode;
 
   useEffect(() => {
-    const mode = searchParams.get('mode');
-    if (mode === 'privacy') {
-      setViewMode('privacy');
-    } else if (mode === 'admin' && isMasterAdmin) {
-      setViewMode('admin');
-    } else if (mode === 'partner' || user?.role === 'AGENCY' || user?.role === 'GUIDE') {
-      setViewMode('partner');
-    } else {
-      setViewMode('traveler');
-    }
-  }, [isMasterAdmin, searchParams, user?.role, user?.uid]);
+    setManualViewMode(null);
+  }, [searchParams, user?.role, user?.uid]);
+
+  const setViewMode = (mode: DashboardViewMode) => setManualViewMode(mode);
 
   const handleDashboardGoogle = async () => {
+    setGoogleError(null);
+    clearAuthError();
     setGoogleBusy(true);
+    let redirecting = false;
     try {
       const signed = await signInWithGoogle();
+      if (!signed) {
+        redirecting = true;
+        showToast('Redirecionando para autenticação Google...', 'info');
+        return;
+      }
       showToast(`Bem-vindo(a), ${signed.name}!`, 'success');
     } catch (err) {
-      showToast(err instanceof Error ? err.message : 'Erro ao entrar com Google.', 'error');
+      const message = err instanceof Error ? err.message : 'Erro ao entrar com Google.';
+      setGoogleError(message);
+      showToast(message, 'error');
     } finally {
-      setGoogleBusy(false);
+      if (!redirecting) {
+        setGoogleBusy(false);
+      }
     }
   };
 
@@ -67,6 +90,8 @@ export const DashboardPage: React.FC = () => {
       </div>
     );
   }
+
+  const visibleAuthError = googleError || authError;
 
   if (!user) {
     return (
@@ -83,13 +108,13 @@ export const DashboardPage: React.FC = () => {
             agência.
           </p>
 
-          {authError && (
+          {visibleAuthError && (
             <div
               role="alert"
               className="rounded-xl border border-red-200 bg-red-50 p-3 text-left text-xs text-red-800 flex items-start gap-2"
             >
               <AlertCircle size={15} className="shrink-0 mt-0.5 text-red-600" />
-              <span>{authError}</span>
+              <span>{visibleAuthError}</span>
             </div>
           )}
 
@@ -98,12 +123,28 @@ export const DashboardPage: React.FC = () => {
             variant="ghost"
             fullWidth
             onClick={() => {
+              setGoogleError(null);
               clearAuthError();
               openAuth('login');
             }}
           >
             Entrar com e-mail e senha
           </Button>
+
+          <div className="pt-2 border-t border-stone-200">
+            <button
+              type="button"
+              onClick={() => {
+                setGoogleError(null);
+                clearAuthError();
+                openAuth('signup');
+              }}
+              className="text-xs text-stone-600 hover:text-primary-700 transition-colors"
+            >
+              Não tem uma conta?{' '}
+              <span className="font-bold text-primary-600 underline">Criar conta gratuita</span>
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -184,7 +225,22 @@ export const DashboardPage: React.FC = () => {
         </div>
       </div>
 
-      {viewMode === 'traveler' && <ClientDashboardView />}
+      {viewMode === 'traveler' && (
+        <>
+          {isPartnerAccount && (
+            <div className="rounded-xl border border-primary-200 bg-primary-50/60 px-4 py-3 text-xs text-primary-900 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <span>
+                Você está no <strong>Modo Viajante</strong>. Sua conta parceira tem um painel
+                próprio para publicar roteiros e receber reservas.
+              </span>
+              <Button size="sm" onClick={() => setViewMode('partner')}>
+                Ir para o painel do parceiro
+              </Button>
+            </div>
+          )}
+          <ClientDashboardView />
+        </>
+      )}
       {viewMode === 'partner' && <PartnerDashboardView />}
       {viewMode === 'privacy' && <PrivacySettings />}
       {viewMode === 'admin' && isMasterAdmin && <AdminDashboardView />}

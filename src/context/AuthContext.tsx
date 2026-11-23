@@ -1,7 +1,9 @@
-import React, { createContext, useCallback, useEffect, useState } from 'react';
+import React, { createContext, useCallback, useEffect, useRef, useState } from 'react';
 import { User as FirebaseUser, onAuthStateChanged } from 'firebase/auth';
 import { auth, isFirebaseConfigured } from '@/services/firebase';
 import {
+  GoogleAuthMode,
+  SelectableRole,
   consumeGoogleRedirectResult,
   loginWithEmail,
   loginWithGoogle,
@@ -9,9 +11,13 @@ import {
   registerWithEmail,
   requestPasswordReset,
 } from '@/services/authService';
-import { ensureUserProfile, getUserProfile } from '@/services/userService';
+import {
+  ensureUserProfile,
+  getPendingProfileMeta,
+  getUserProfile,
+} from '@/services/userService';
 import { useToast } from './ToastContext';
-import { UserProfile, UserRole } from '@/types';
+import { UserProfile } from '@/types';
 
 export interface AuthContextValue {
   user: UserProfile | null;
@@ -19,14 +25,19 @@ export interface AuthContextValue {
   loading: boolean;
   authError: string | null;
   isFirebaseReady: boolean;
+  pendingPostAuthRedirect: string | null;
   clearAuthError: () => void;
-  signInWithGoogle: (preferredRole?: Exclude<UserRole, 'ADMIN'>) => Promise<UserProfile>;
+  clearPendingPostAuthRedirect: () => void;
+  signInWithGoogle: (
+    preferredRole?: SelectableRole,
+    options?: { mode?: GoogleAuthMode }
+  ) => Promise<UserProfile | null>;
   signInWithEmail: (email: string, password: string) => Promise<UserProfile>;
   signUpWithEmail: (
     name: string,
     email: string,
     password: string,
-    role?: Exclude<UserRole, 'ADMIN'>
+    role?: SelectableRole
   ) => Promise<UserProfile>;
   sendPasswordReset: (email: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -41,8 +52,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState<boolean>(isFirebaseConfigured);
   const [authError, setAuthError] = useState<string | null>(null);
+  const [pendingPostAuthRedirect, setPendingPostAuthRedirect] = useState<string | null>(null);
+  const activeAuthOpsRef = useRef(0);
 
   const clearAuthError = useCallback(() => setAuthError(null), []);
+  const clearPendingPostAuthRedirect = useCallback(() => setPendingPostAuthRedirect(null), []);
 
   useEffect(() => {
     const firebaseAuth = auth;
@@ -56,10 +70,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const bootstrapAuth = async () => {
       try {
-        const redirectProfile = await consumeGoogleRedirectResult();
-        if (!cancelled && redirectProfile) {
-          setUser(redirectProfile);
+        const redirectOutcome = await consumeGoogleRedirectResult();
+        if (!cancelled && redirectOutcome) {
+          setFirebaseUser(firebaseAuth.currentUser);
+          setUser(redirectOutcome.profile);
           setAuthError(null);
+
+          if (redirectOutcome.mode === 'signup' && redirectOutcome.requestedRole !== 'CLIENT') {
+            if (redirectOutcome.profile.role === 'CLIENT') {
+              showToast(
+                'Esta conta Google já existia como Viajante. Complete abaixo para ativar seu perfil de parceiro.',
+                'info'
+              );
+            } else {
+              showToast(
+                `Bem-vindo(a), ${redirectOutcome.profile.name}! Sua conta parceira está pronta.`,
+                'success'
+              );
+            }
+            setPendingPostAuthRedirect('/dashboard?mode=partner');
+          } else {
+            showToast(`Bem-vindo(a), ${redirectOutcome.profile.name}!`, 'success');
+          }
         }
       } catch (err) {
         if (!cancelled) {
@@ -82,23 +114,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             return;
           }
 
+          if (activeAuthOpsRef.current > 0) {
+            return;
+          }
+
           try {
             const profile = await ensureUserProfile(fbUser);
-            if (!cancelled) {
+            if (!cancelled && activeAuthOpsRef.current === 0) {
               setUser(profile);
               setAuthError(null);
             }
           } catch (err) {
-            if (!cancelled) {
+            if (!cancelled && activeAuthOpsRef.current === 0) {
               const message =
                 err instanceof Error ? err.message : 'Perfil carregado em modo de contingência.';
               setAuthError(message);
+              const pending = getPendingProfileMeta();
               setUser({
                 uid: fbUser.uid,
-                name: fbUser.displayName || 'Viajante SouNativo',
-                email: fbUser.email || '',
+                name: pending?.name || fbUser.displayName || 'Viajante SouNativo',
+                email: (fbUser.email || '').trim().toLowerCase(),
                 photoURL: fbUser.photoURL || undefined,
-                role: 'CLIENT',
+                role: pending?.role ?? 'CLIENT',
                 favorites: [],
                 notificationsEnabled: true,
               });
@@ -139,33 +176,51 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [firebaseUser]);
 
   const handleGoogleSignIn = useCallback(
-    async (preferredRole: Exclude<UserRole, 'ADMIN'> = 'CLIENT') => {
+    async (preferredRole: SelectableRole = 'CLIENT', options?: { mode?: GoogleAuthMode }) => {
       setAuthError(null);
-      const profile = await loginWithGoogle(preferredRole);
-      setUser(profile);
-      return profile;
+      activeAuthOpsRef.current += 1;
+      try {
+        const profile = await loginWithGoogle(preferredRole, options);
+        if (profile) {
+          setFirebaseUser(auth?.currentUser ?? null);
+          setUser(profile);
+          setLoading(false);
+        }
+        return profile;
+      } finally {
+        activeAuthOpsRef.current = Math.max(0, activeAuthOpsRef.current - 1);
+      }
     },
     []
   );
 
   const handleEmailSignIn = useCallback(async (email: string, password: string) => {
     setAuthError(null);
-    const profile = await loginWithEmail(email, password);
-    setUser(profile);
-    return profile;
+    activeAuthOpsRef.current += 1;
+    try {
+      const profile = await loginWithEmail(email, password);
+      setFirebaseUser(auth?.currentUser ?? null);
+      setUser(profile);
+      setLoading(false);
+      return profile;
+    } finally {
+      activeAuthOpsRef.current = Math.max(0, activeAuthOpsRef.current - 1);
+    }
   }, []);
 
   const handleEmailSignUp = useCallback(
-    async (
-      name: string,
-      email: string,
-      password: string,
-      role: Exclude<UserRole, 'ADMIN'> = 'CLIENT'
-    ) => {
+    async (name: string, email: string, password: string, role: SelectableRole = 'CLIENT') => {
       setAuthError(null);
-      const profile = await registerWithEmail(name, email, password, role);
-      setUser(profile);
-      return profile;
+      activeAuthOpsRef.current += 1;
+      try {
+        const profile = await registerWithEmail(name, email, password, role);
+        setFirebaseUser(auth?.currentUser ?? null);
+        setUser(profile);
+        setLoading(false);
+        return profile;
+      } finally {
+        activeAuthOpsRef.current = Math.max(0, activeAuthOpsRef.current - 1);
+      }
     },
     []
   );
@@ -181,6 +236,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(null);
       setFirebaseUser(null);
       setAuthError(null);
+      setPendingPostAuthRedirect(null);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erro ao encerrar sessão.';
       setAuthError(message);
@@ -196,7 +252,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         loading,
         authError,
         isFirebaseReady: isFirebaseConfigured,
+        pendingPostAuthRedirect,
         clearAuthError,
+        clearPendingPostAuthRedirect,
         signInWithGoogle: handleGoogleSignIn,
         signInWithEmail: handleEmailSignIn,
         signUpWithEmail: handleEmailSignUp,

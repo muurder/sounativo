@@ -16,14 +16,31 @@ export function filterAndSortTrips(
     if (category && trip.category !== category) return false;
 
     const price = typeof trip.price === 'number' && Number.isFinite(trip.price) ? trip.price : 0;
-    const maxGuests =
-      typeof trip.maxGuests === 'number' && Number.isFinite(trip.maxGuests) ? trip.maxGuests : 0;
+    const baseSpots =
+      typeof trip.availableSpots === 'number' && Number.isFinite(trip.availableSpots)
+        ? trip.availableSpots
+        : typeof trip.maxGuests === 'number' && Number.isFinite(trip.maxGuests)
+          ? trip.maxGuests
+          : 0;
+    const maxDepartureSpots = Array.isArray(trip.departures)
+      ? trip.departures.reduce((acc, d) => Math.max(acc, d?.availableSpots ?? 0), 0)
+      : 0;
+    const effectiveSpots = Math.max(baseSpots, maxDepartureSpots);
+
     const startDateStr = typeof trip.startDate === 'string' ? trip.startDate : '';
+    const matchesMonth =
+      !monthPrefix ||
+      startDateStr.startsWith(monthPrefix) ||
+      (Array.isArray(trip.departures) &&
+        trip.departures.some(
+          (dep) => typeof dep?.startDate === 'string' && dep.startDate.startsWith(monthPrefix)
+        ));
+
     const safeTags = Array.isArray(trip.tags) ? trip.tags.join(' ') : '';
 
     if (filters?.maxPrice !== undefined && price > filters.maxPrice) return false;
-    if (filters?.travelers !== undefined && maxGuests < filters.travelers) return false;
-    if (monthPrefix && !startDateStr.startsWith(monthPrefix)) return false;
+    if (filters?.travelers !== undefined && effectiveSpots < filters.travelers) return false;
+    if (!matchesMonth) return false;
 
     if (queryText) {
       const haystack = normalizeSearchText(

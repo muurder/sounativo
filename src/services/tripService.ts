@@ -29,6 +29,7 @@ import {
   TravelerType,
   Trip,
   TripCategory,
+  TripDeparture,
 } from '@/types';
 
 const VALID_CATEGORIES = new Set<TripCategory>([
@@ -56,6 +57,65 @@ function sanitizeStringArray(value: unknown, maxItems = 50): string[] {
     .filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
     .map((item) => item.trim())
     .slice(0, maxItems);
+}
+
+export function normalizeDepartures(
+  value: unknown,
+  fallbackMaxGuests: number,
+  durationDays: number
+): TripDeparture[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter((item): item is Record<string, unknown> => Boolean(item && typeof item === 'object'))
+    .map((item, idx) => {
+      const startIso = toIsoTimestamp(item.startDate);
+      const computedEnd = startIso
+        ? new Date(new Date(startIso).getTime() + durationDays * 86_400_000).toISOString()
+        : '';
+      const endIso = toIsoTimestamp(item.endDate, computedEnd);
+      const maxG = Number.isFinite(Number(item.maxGuests))
+        ? Math.max(1, Math.min(10_000, Math.round(Number(item.maxGuests))))
+        : fallbackMaxGuests;
+      const avail = Number.isFinite(Number(item.availableSpots))
+        ? Math.max(0, Math.min(maxG, Math.round(Number(item.availableSpots))))
+        : maxG;
+      const priceOverride =
+        item.priceOverride !== undefined &&
+        item.priceOverride !== null &&
+        Number.isFinite(Number(item.priceOverride)) &&
+        Number(item.priceOverride) >= 0
+          ? Number(item.priceOverride)
+          : undefined;
+
+      return {
+        id: typeof item.id === 'string' && item.id.trim() ? item.id.trim() : `dep-${idx + 1}`,
+        startDate: startIso,
+        endDate: endIso,
+        maxGuests: maxG,
+        availableSpots: avail,
+        ...(priceOverride !== undefined ? { priceOverride } : {}),
+      };
+    })
+    .filter((dep) => dep.startDate.length > 0)
+    .slice(0, 30);
+}
+
+export function computeRemainingSpots(
+  trip: Pick<Trip, 'maxGuests' | 'availableSpots' | 'departures'>,
+  departureDate?: string
+): number {
+  const fallbackMax = Math.max(0, trip.maxGuests ?? 16);
+  if (departureDate && Array.isArray(trip.departures) && trip.departures.length > 0) {
+    const targetDay = departureDate.slice(0, 10);
+    const matched = trip.departures.find((d) => d.startDate.slice(0, 10) === targetDay);
+    if (matched) {
+      return Math.max(0, matched.availableSpots);
+    }
+  }
+  if (typeof trip.availableSpots === 'number' && Number.isFinite(trip.availableSpots)) {
+    return Math.max(0, trip.availableSpots);
+  }
+  return fallbackMax;
 }
 
 export function normalizeTripDoc(id: string, raw: Record<string, unknown>): Trip {
@@ -127,6 +187,24 @@ export function normalizeTripDoc(id: string, raw: Record<string, unknown>): Trip
   const maxGuests =
     Number.isFinite(rawMaxGuests) && rawMaxGuests >= 0 ? Math.round(rawMaxGuests) : 16;
 
+  const rawAvailable =
+    raw.availableSpots !== undefined && raw.availableSpots !== null
+      ? Number(raw.availableSpots)
+      : maxGuests;
+  const availableSpots =
+    Number.isFinite(rawAvailable) && rawAvailable >= 0
+      ? Math.min(10_000, Math.round(rawAvailable))
+      : maxGuests;
+
+  const departures = normalizeDepartures(raw.departures, maxGuests, durationDays);
+
+  const rawLat = raw.latitude !== undefined && raw.latitude !== null ? Number(raw.latitude) : NaN;
+  const latitude = Number.isFinite(rawLat) && rawLat >= -90 && rawLat <= 90 ? rawLat : undefined;
+
+  const rawLng =
+    raw.longitude !== undefined && raw.longitude !== null ? Number(raw.longitude) : NaN;
+  const longitude = Number.isFinite(rawLng) && rawLng >= -180 && rawLng <= 180 ? rawLng : undefined;
+
   return {
     id,
     agencyId: typeof raw.agencyId === 'string' ? raw.agencyId : '',
@@ -141,6 +219,8 @@ export function normalizeTripDoc(id: string, raw: Record<string, unknown>): Trip
     description: typeof raw.description === 'string' ? raw.description : '',
     destination: typeof raw.destination === 'string' ? raw.destination : 'Brasil',
     ...(typeof raw.state === 'string' ? { state: raw.state } : {}),
+    ...(latitude !== undefined ? { latitude } : {}),
+    ...(longitude !== undefined ? { longitude } : {}),
     price: Number.isFinite(Number(raw.price)) ? Math.max(0, Number(raw.price)) : 0,
     startDate,
     endDate,
@@ -151,10 +231,12 @@ export function normalizeTripDoc(id: string, raw: Record<string, unknown>): Trip
     travelerTypes: sanitizeStringArray(raw.travelerTypes, 10) as TravelerType[],
     itinerary,
     boardingPoints,
+    ...(departures.length > 0 ? { departures } : {}),
     paymentMethods: sanitizeStringArray(raw.paymentMethods, 10),
     included: sanitizeStringArray(raw.included, 50),
     notIncluded: sanitizeStringArray(raw.notIncluded, 50),
     maxGuests,
+    availableSpots,
     passengerConfig,
     rating: Number.isFinite(Number(raw.rating)) ? Math.min(5, Math.max(0, Number(raw.rating))) : 0,
     totalReviews: Number.isFinite(Number(raw.totalReviews))
@@ -304,6 +386,26 @@ export async function createTripInFirestore(
   const safeMaxGuests = Number.isFinite(payload.maxGuests)
     ? Math.min(10_000, Math.max(1, Math.round(payload.maxGuests)))
     : 16;
+  const safeAvailableSpots =
+    payload.availableSpots !== undefined && Number.isFinite(payload.availableSpots)
+      ? Math.min(10_000, Math.max(0, Math.round(payload.availableSpots)))
+      : safeMaxGuests;
+  const safeDepartures = normalizeDepartures(payload.departures, safeMaxGuests, safeDuration);
+
+  const safeLatitude =
+    payload.latitude !== undefined &&
+    Number.isFinite(payload.latitude) &&
+    payload.latitude >= -90 &&
+    payload.latitude <= 90
+      ? payload.latitude
+      : undefined;
+  const safeLongitude =
+    payload.longitude !== undefined &&
+    Number.isFinite(payload.longitude) &&
+    payload.longitude >= -180 &&
+    payload.longitude <= 180
+      ? payload.longitude
+      : undefined;
 
   const sanitized = {
     agencyId: payload.agencyId,
@@ -313,6 +415,8 @@ export async function createTripInFirestore(
     slug: safeSlug,
     description: payload.description.trim().slice(0, 10_000),
     destination: payload.destination.trim().slice(0, 160),
+    ...(safeLatitude !== undefined ? { latitude: safeLatitude } : {}),
+    ...(safeLongitude !== undefined ? { longitude: safeLongitude } : {}),
     price: safePrice,
     startDate: payload.startDate,
     endDate: payload.endDate,
@@ -323,10 +427,12 @@ export async function createTripInFirestore(
     travelerTypes: (payload.travelerTypes ?? []).slice(0, 10),
     itinerary: (payload.itinerary ?? []).slice(0, 60),
     boardingPoints: (payload.boardingPoints ?? []).slice(0, 30),
+    ...(safeDepartures.length > 0 ? { departures: safeDepartures } : {}),
     paymentMethods: (payload.paymentMethods ?? []).slice(0, 10),
     included: (payload.included ?? []).slice(0, 50),
     notIncluded: (payload.notIncluded ?? []).slice(0, 50),
     maxGuests: safeMaxGuests,
+    availableSpots: safeAvailableSpots,
     passengerConfig: payload.passengerConfig,
     rating: 0,
     totalReviews: 0,
@@ -358,6 +464,8 @@ export type EditableTripFields = Partial<
     | 'title'
     | 'description'
     | 'destination'
+    | 'latitude'
+    | 'longitude'
     | 'price'
     | 'durationDays'
     | 'startDate'
@@ -367,9 +475,11 @@ export type EditableTripFields = Partial<
     | 'images'
     | 'itinerary'
     | 'boardingPoints'
+    | 'departures'
     | 'included'
     | 'notIncluded'
     | 'maxGuests'
+    | 'availableSpots'
     | 'passengerConfig'
     | 'isActive'
   >
@@ -395,6 +505,9 @@ export async function updateTripInFirestore(
   }
   if (typeof cleaned.maxGuests === 'number') {
     cleaned.maxGuests = Math.min(10_000, Math.max(1, Math.round(cleaned.maxGuests)));
+  }
+  if (typeof cleaned.availableSpots === 'number') {
+    cleaned.availableSpots = Math.min(10_000, Math.max(0, Math.round(cleaned.availableSpots)));
   }
 
   try {

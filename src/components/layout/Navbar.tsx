@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { LayoutDashboard, LogOut, Menu } from 'lucide-react';
 import { Logo } from '@/components/ui/Logo';
@@ -8,6 +8,7 @@ import { Tooltip } from '@/components/ui/Tooltip';
 import { useAuth } from '@/hooks/useAuth';
 import { getInitials } from '@/utils/formatters';
 import { cn } from '@/utils/cn';
+import { NotificationBell } from './NotificationBell';
 
 interface NavbarProps {
   onOpenMenu: () => void;
@@ -26,6 +27,10 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenMenu, onOpenAuth, agencyBr
   const { user, logout } = useAuth();
   const { pathname } = useLocation();
   const [avatarFailed, setAvatarFailed] = useState(false);
+
+  useEffect(() => {
+    setAvatarFailed(false);
+  }, [user?.photoURL]);
 
   return (
     <header className="sticky top-0 z-40 border-b border-stone-200/80 bg-white/95 backdrop-blur-md pt-[env(safe-area-inset-top)]">
@@ -92,9 +97,11 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenMenu, onOpenAuth, agencyBr
           })}
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2">
           {user ? (
             <>
+              <NotificationBell userUid={user.uid} />
+
               <Link
                 to="/dashboard"
                 className="inline-flex items-center gap-2 min-h-[40px] rounded-xl bg-primary-50 px-3.5 py-2 text-xs sm:text-sm font-semibold text-primary-700 hover:bg-primary-100 transition-colors"

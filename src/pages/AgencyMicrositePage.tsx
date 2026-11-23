@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, useOutletContext, useParams } from 'react-router-dom';
 import { Award, Globe2, MapPin, MessageCircle, ShieldCheck, Sparkles } from 'lucide-react';
 import { useAgencyMicrosite } from '@/hooks/useAgencyMicrosite';
+import { usePageMeta } from '@/hooks/usePageMeta';
 import { useTheme } from '@/context/ThemeContext';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useToast } from '@/context/ToastContext';
@@ -36,6 +37,14 @@ export const AgencyMicrositePage: React.FC = () => {
   const { agencyTheme } = useTheme();
   const { profile, toggleFavorite } = useUserProfile();
   const { showToast } = useToast();
+
+  usePageMeta({
+    title: agency ? `${agency.name} — Parceiro Verificado` : 'Microsite SouNativo',
+    description: agency?.description,
+    image: agency?.heroBannerUrl || agency?.logo,
+    canonicalPath: agency ? `/${agency.slug}` : undefined,
+    ogType: 'profile',
+  });
 
   if (loading) {
     return (

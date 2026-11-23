@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import {
+  Bug,
   CheckCircle2,
   Mail,
   MessageSquareWarning,
@@ -9,6 +10,7 @@ import {
   Trash2,
   XCircle,
 } from 'lucide-react';
+import { AdminErrorLogRecord } from '@/services/adminService';
 import { ContactMessageRecord, ContactMessageStatus } from '@/services/contactService';
 import { Booking, BookingStatus, TripReview } from '@/types';
 import { formatCurrencyBRL } from '@/utils/formatters';
@@ -20,6 +22,7 @@ interface AdminOperationsSectionProps {
   bookings: Booking[];
   contactMessages: ContactMessageRecord[];
   reviews: TripReview[];
+  errorLogs?: AdminErrorLogRecord[];
   onBookingStatusChange: (
     bookingId: string,
     status: BookingStatus,
@@ -28,6 +31,7 @@ interface AdminOperationsSectionProps {
   onContactStatusChange: (messageId: string, status: ContactMessageStatus) => Promise<void>;
   onDeleteContactMessage: (messageId: string) => Promise<void>;
   onDeleteReview: (reviewId: string) => Promise<void>;
+  onDeleteErrorLog?: (logId: string) => Promise<void>;
 }
 
 const BOOKING_STATUS_OPTIONS: Array<{ value: 'ALL' | BookingStatus; label: string }> = [
@@ -48,10 +52,12 @@ export const AdminOperationsSection: React.FC<AdminOperationsSectionProps> = ({
   bookings,
   contactMessages,
   reviews,
+  errorLogs = [],
   onBookingStatusChange,
   onContactStatusChange,
   onDeleteContactMessage,
   onDeleteReview,
+  onDeleteErrorLog,
 }) => {
   const [bookingFilter, setBookingFilter] = useState<'ALL' | BookingStatus>('ALL');
   const [bookingSearch, setBookingSearch] = useState('');
@@ -63,6 +69,7 @@ export const AdminOperationsSection: React.FC<AdminOperationsSectionProps> = ({
   const [leadFilter, setLeadFilter] = useState<'ALL' | ContactMessageStatus>('ALL');
   const [busyLeadId, setBusyLeadId] = useState<string | null>(null);
   const [busyReviewId, setBusyReviewId] = useState<string | null>(null);
+  const [busyErrorId, setBusyErrorId] = useState<string | null>(null);
 
   const safeBookings = useMemo(() => (Array.isArray(bookings) ? bookings : []), [bookings]);
   const safeLeads = useMemo(
@@ -70,6 +77,7 @@ export const AdminOperationsSection: React.FC<AdminOperationsSectionProps> = ({
     [contactMessages]
   );
   const safeReviews = useMemo(() => (Array.isArray(reviews) ? reviews : []), [reviews]);
+  const safeErrors = useMemo(() => (Array.isArray(errorLogs) ? errorLogs : []), [errorLogs]);
 
   const filteredBookings = useMemo(() => {
     const q = bookingSearch.trim().toLowerCase();
@@ -394,6 +402,62 @@ export const AdminOperationsSection: React.FC<AdminOperationsSectionProps> = ({
                 >
                   <Trash2 size={14} className="text-red-600 mr-1" /> Remover
                 </Button>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* Crash Telemetry & Runtime Error Logs */}
+      <section className="rounded-2xl border border-stone-200 bg-white p-6 shadow-card space-y-4">
+        <div className="flex items-center gap-2">
+          <Bug size={20} className="text-red-600" />
+          <div>
+            <h2 className="font-serif text-xl font-bold text-stone-900">
+              Telemetria de Falhas ({safeErrors.length})
+            </h2>
+            <p className="text-xs text-stone-500">
+              Exceções capturadas automaticamente pelo ErrorBoundary e promessas não tratadas.
+            </p>
+          </div>
+        </div>
+
+        {safeErrors.length === 0 ? (
+          <p className="text-sm text-stone-500">
+            Nenhuma exceção de runtime registrada em produção.
+          </p>
+        ) : (
+          <div className="space-y-2.5">
+            {safeErrors.map((errItem) => (
+              <div
+                key={errItem.id}
+                className="rounded-xl border border-red-100 bg-red-50/40 p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+              >
+                <div className="space-y-1 min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge tone="warning">{errItem.route}</Badge>
+                    <span className="text-xs text-stone-500">
+                      {errItem.createdAt ? new Date(errItem.createdAt).toLocaleString('pt-BR') : ''}
+                    </span>
+                  </div>
+                  <p className="text-xs font-mono font-semibold text-red-950 break-words">
+                    {errItem.message}
+                  </p>
+                </div>
+
+                {onDeleteErrorLog && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    loading={busyErrorId === errItem.id}
+                    onClick={() => {
+                      setBusyErrorId(errItem.id);
+                      void onDeleteErrorLog(errItem.id).finally(() => setBusyErrorId(null));
+                    }}
+                  >
+                    <Trash2 size={14} className="text-red-600 mr-1" /> Limpar
+                  </Button>
+                )}
               </div>
             ))}
           </div>

@@ -13,6 +13,7 @@ import { TripGrid } from '@/components/trips/TripGrid';
 import { Button } from '@/components/ui/Button';
 import { useTrips } from '@/hooks/useTrips';
 import { useDebounce } from '@/hooks/useDebounce';
+import { usePageMeta } from '@/hooks/usePageMeta';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useToast } from '@/context/ToastContext';
 import { TripCategory, TripSearchFilters } from '@/types';
@@ -59,6 +60,13 @@ export const TripsPage: React.FC = () => {
   });
   const { profile, toggleFavorite } = useUserProfile();
   const { showToast } = useToast();
+
+  usePageMeta({
+    title: 'Explorar Roteiros e Pacotes Verificados',
+    description:
+      'Compare experiências autênticas de viagem pelo Brasil por destino, mês de saída, categoria e orçamento.',
+    canonicalPath: '/trips',
+  });
 
   const monthOptions = React.useMemo(() => {
     const months = new Set<string>(['2026-12', '2027-01']);

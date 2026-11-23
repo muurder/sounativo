@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { AlertCircle, Award, Globe, MapPin, RefreshCw } from 'lucide-react';
 import { useAgencies } from '@/hooks/useAgencies';
+import { usePageMeta } from '@/hooks/usePageMeta';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -10,6 +11,13 @@ import { Skeleton } from '@/components/ui/Skeleton';
 
 export const GuidesPage: React.FC = () => {
   const { agencies: guides, loading, error, reload } = useAgencies(true);
+
+  usePageMeta({
+    title: 'Guias de Turismo Credenciados Cadastur',
+    description:
+      'Conecte-se a guias locais certificados para trilhas, cultura e expedições pelo Brasil.',
+    canonicalPath: '/guides',
+  });
 
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10 sm:py-12">

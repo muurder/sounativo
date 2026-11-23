@@ -10,22 +10,27 @@ export interface FirebaseWebConfig {
 
 const SAME_ORIGIN_AUTH_HOSTS = new Set(['sounativo.vercel.app', 'viajastore.vercel.app']);
 
-function resolveAuthDomain(): string {
-  const configured = import.meta.env.VITE_FIREBASE_AUTH_DOMAIN ?? '';
-  if (typeof window !== 'undefined' && SAME_ORIGIN_AUTH_HOSTS.has(window.location.hostname)) {
-    return window.location.host;
+export function resolveAuthDomain(
+  hostname: string | undefined = typeof window !== 'undefined'
+    ? window.location.hostname
+    : undefined,
+  host: string | undefined = typeof window !== 'undefined' ? window.location.host : undefined,
+  configuredDomain: string = (import.meta.env.VITE_FIREBASE_AUTH_DOMAIN ?? '').trim()
+): string {
+  if (hostname && SAME_ORIGIN_AUTH_HOSTS.has(hostname)) {
+    return host || hostname;
   }
-  return configured;
+  return configuredDomain.trim();
 }
 
 export const firebaseConfig: FirebaseWebConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY ?? '',
+  apiKey: (import.meta.env.VITE_FIREBASE_API_KEY ?? '').trim(),
   authDomain: resolveAuthDomain(),
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID ?? '',
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET ?? '',
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID ?? '',
-  appId: import.meta.env.VITE_FIREBASE_APP_ID ?? '',
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || undefined,
+  projectId: (import.meta.env.VITE_FIREBASE_PROJECT_ID ?? '').trim(),
+  storageBucket: (import.meta.env.VITE_FIREBASE_STORAGE_BUCKET ?? '').trim(),
+  messagingSenderId: (import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID ?? '').trim(),
+  appId: (import.meta.env.VITE_FIREBASE_APP_ID ?? '').trim(),
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID?.trim() || undefined,
 };
 
 export const FIRESTORE_DATABASE_ID = import.meta.env.VITE_FIREBASE_DATABASE_ID?.trim() || undefined;

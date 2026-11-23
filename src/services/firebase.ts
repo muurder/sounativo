@@ -44,6 +44,8 @@ export const COLLECTIONS = {
   reviews: 'reviews',
   userConsents: 'user_consents',
   contactMessages: 'contact_messages',
+  notifications: 'notifications',
+  errorLogs: 'error_logs',
 } as const;
 
 export function toIsoTimestamp(value: unknown, fallback = ''): string {

@@ -8,6 +8,7 @@ import {
   stripUndefined,
   toIsoTimestamp,
 } from './firebase';
+import { dispatchTransactionalAlert } from './notificationService';
 import { sanitizePlainText } from '@/utils/securitySanitizer';
 
 export type ContactMessageSource = 'CONTACT_FORM' | 'GROUP_QUOTE';
@@ -104,6 +105,14 @@ export async function submitContactMessageInFirestore(
       ...payload,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
+    });
+
+    void dispatchTransactionalAlert({
+      event: 'CONTACT_MESSAGE',
+      recipientName: 'Equipe SouNativo',
+      subject: `[${source === 'GROUP_QUOTE' ? 'Cotação de Grupo' : 'Contato'}] ${cleanName}`,
+      summary: `${cleanName} (${cleanEmail}): ${cleanMessage}`,
+      link: 'https://sounativo.vercel.app/dashboard?mode=admin',
     });
 
     return {

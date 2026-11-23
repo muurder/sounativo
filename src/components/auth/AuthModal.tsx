@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/context/ToastContext';
 import { Modal } from '@/components/ui/Modal';
@@ -6,12 +7,14 @@ import { GoogleSignInButton } from '@/components/ui/GoogleSignInButton';
 import { AuthRoleSelector } from './AuthRoleSelector';
 import { AuthEmailForm } from './AuthEmailForm';
 import { PasswordResetForm } from './PasswordResetForm';
+import { validateSignupInput } from '@/services/authService';
 import { UserRole } from '@/types';
 
 interface AuthModalProps {
   isOpen: boolean;
   initialMode?: 'login' | 'signup';
-  onClose: () => void;
+  initialRole?: Exclude<UserRole, 'ADMIN'>;
+  onClose: (options?: { skipUrlCleanup?: boolean }) => void;
   onSuccess?: () => void;
 }
 
@@ -35,64 +38,129 @@ const MODAL_COPY: Record<AuthModalMode, { title: string; description: string }> 
 export const AuthModal: React.FC<AuthModalProps> = ({
   isOpen,
   initialMode = 'login',
+  initialRole = 'CLIENT',
   onClose,
   onSuccess,
 }) => {
   const { signInWithGoogle, signInWithEmail, signUpWithEmail, sendPasswordReset, isFirebaseReady } =
     useAuth();
   const { showToast } = useToast();
+  const navigate = useNavigate();
 
   const [mode, setMode] = useState<AuthModalMode>(initialMode);
-  const [role, setRole] = useState<Exclude<UserRole, 'ADMIN'>>('CLIENT');
+  const [role, setRole] = useState<Exclude<UserRole, 'ADMIN'>>(initialRole);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [statusMsg, setStatusMsg] = useState('');
 
   useEffect(() => {
     if (isOpen) {
       setMode(initialMode);
-      setRole('CLIENT');
+      setRole(initialRole);
       setName('');
       setEmail('');
       setPassword('');
+      setConfirmPassword('');
+      setSubmitting(false);
       setErrorMsg('');
+      setStatusMsg('');
     }
-  }, [initialMode, isOpen]);
+  }, [initialMode, initialRole, isOpen]);
+
+  const clearFeedback = () => {
+    if (errorMsg) setErrorMsg('');
+    if (statusMsg) setStatusMsg('');
+  };
 
   const handleGoogle = async () => {
     setErrorMsg('');
+    setStatusMsg('');
     setSubmitting(true);
+    let redirecting = false;
     try {
-      const profile = await signInWithGoogle(mode === 'signup' ? role : 'CLIENT');
-      showToast(`Bem-vindo(a), ${profile.name}!`, 'success');
-      onClose();
-      onSuccess?.();
+      const selectedRole = mode === 'signup' ? role : 'CLIENT';
+      const profile = await signInWithGoogle(selectedRole, {
+        mode: mode === 'signup' ? 'signup' : 'login',
+      });
+      if (!profile) {
+        redirecting = true;
+        setStatusMsg('Redirecionando para autenticação Google...');
+        return;
+      }
+
+      if (mode === 'signup' && selectedRole !== 'CLIENT') {
+        if (profile.role === 'CLIENT') {
+          showToast(
+            'Esta conta Google já existia como Viajante. Complete abaixo para ativar seu perfil de parceiro.',
+            'info'
+          );
+        } else {
+          showToast(`Bem-vindo(a), ${profile.name}! Sua conta parceira está pronta.`, 'success');
+        }
+        onClose({ skipUrlCleanup: true });
+        onSuccess?.();
+        navigate('/dashboard?mode=partner');
+      } else {
+        showToast(`Bem-vindo(a), ${profile.name}!`, 'success');
+        onClose();
+        onSuccess?.();
+      }
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : 'Erro ao entrar com Google.');
     } finally {
-      setSubmitting(false);
+      if (!redirecting) {
+        setSubmitting(false);
+      }
     }
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setErrorMsg('');
-    setSubmitting(true);
+    setStatusMsg('');
 
+    if (mode === 'signup') {
+      try {
+        validateSignupInput(name, email, password);
+      } catch (validationErr) {
+        setErrorMsg(
+          validationErr instanceof Error
+            ? validationErr.message
+            : 'Verifique os dados informados.'
+        );
+        return;
+      }
+
+      if (password !== confirmPassword) {
+        setErrorMsg('As senhas não coincidem.');
+        return;
+      }
+    }
+
+    setSubmitting(true);
     try {
       const profile =
         mode === 'login'
           ? await signInWithEmail(email, password)
           : await signUpWithEmail(name, email, password, role);
 
-      showToast(
-        mode === 'login' ? `Olá novamente, ${profile.name}!` : 'Conta criada no SouNativo!',
-        'success'
-      );
-      onClose();
-      onSuccess?.();
+      if (mode === 'signup' && role !== 'CLIENT') {
+        showToast('Conta parceira criada no SouNativo!', 'success');
+        onClose({ skipUrlCleanup: true });
+        onSuccess?.();
+        navigate('/dashboard?mode=partner');
+      } else {
+        showToast(
+          mode === 'login' ? `Olá novamente, ${profile.name}!` : 'Conta criada no SouNativo!',
+          'success'
+        );
+        onClose();
+        onSuccess?.();
+      }
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : 'Falha na autenticação.');
     } finally {
@@ -110,7 +178,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   return (
     <Modal
       isOpen={isOpen}
-      onClose={onClose}
+      onClose={() => onClose()}
       title={headerCopy.title}
       description={headerCopy.description}
       maxWidthClass="max-w-md"
@@ -129,17 +197,46 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           onBackToLogin={() => {
             setMode('login');
             setErrorMsg('');
+            setStatusMsg('');
           }}
         />
       ) : (
         <>
-          {mode === 'signup' && <AuthRoleSelector selectedRole={role} onSelect={setRole} />}
+          {mode === 'signup' && (
+            <AuthRoleSelector
+              selectedRole={role}
+              disabled={submitting}
+              onSelect={(nextRole) => {
+                setRole(nextRole);
+                clearFeedback();
+              }}
+            />
+          )}
 
           <GoogleSignInButton
             label={mode === 'login' ? 'Entrar com Google' : 'Cadastrar com Google'}
-            onClick={handleGoogle}
+            onClick={() => void handleGoogle()}
             loading={submitting}
+            disabled={submitting}
           />
+
+          {statusMsg && (
+            <p
+              role="status"
+              className="mt-3 rounded-lg bg-primary-50 border border-primary-200 px-3 py-2 text-xs font-medium text-primary-800"
+            >
+              {statusMsg}
+            </p>
+          )}
+
+          {errorMsg && (
+            <p
+              role="alert"
+              className="mt-3 rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-xs font-medium text-red-700"
+            >
+              {errorMsg}
+            </p>
+          )}
 
           <div className="relative my-5 flex items-center">
             <div className="flex-grow border-t border-stone-200" />
@@ -151,30 +248,49 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
           <AuthEmailForm
             mode={mode}
+            role={role}
             name={name}
             email={email}
             password={password}
+            confirmPassword={confirmPassword}
             submitting={submitting}
             errorMsg={errorMsg}
-            onNameChange={setName}
-            onEmailChange={setEmail}
-            onPasswordChange={setPassword}
+            hideErrorBanner
+            onNameChange={(val) => {
+              setName(val);
+              clearFeedback();
+            }}
+            onEmailChange={(val) => {
+              setEmail(val);
+              clearFeedback();
+            }}
+            onPasswordChange={(val) => {
+              setPassword(val);
+              clearFeedback();
+            }}
+            onConfirmPasswordChange={(val) => {
+              setConfirmPassword(val);
+              clearFeedback();
+            }}
             onForgotPassword={() => {
               setMode('reset');
               setErrorMsg('');
+              setStatusMsg('');
             }}
-            onSubmit={handleSubmit}
+            onSubmit={(e) => void handleSubmit(e)}
           />
 
           <p className="mt-5 text-center text-xs text-stone-600">
             {mode === 'login' ? 'Ainda não tem conta?' : 'Já possui conta?'}{' '}
             <button
               type="button"
+              disabled={submitting}
               onClick={() => {
                 setMode(mode === 'login' ? 'signup' : 'login');
                 setErrorMsg('');
+                setStatusMsg('');
               }}
-              className="font-bold text-primary-600 hover:text-primary-700 underline underline-offset-2"
+              className="font-bold text-primary-600 hover:text-primary-700 underline underline-offset-2 disabled:opacity-60"
             >
               {mode === 'login' ? 'Cadastre-se grátis' : 'Fazer login'}
             </button>

@@ -6,6 +6,7 @@ import { cn } from '@/utils/cn';
 interface AuthRoleSelectorProps {
   selectedRole: Exclude<UserRole, 'ADMIN'>;
   onSelect: (role: Exclude<UserRole, 'ADMIN'>) => void;
+  disabled?: boolean;
 }
 
 const ROLE_OPTIONS: Array<{
@@ -19,7 +20,11 @@ const ROLE_OPTIONS: Array<{
   { id: 'GUIDE', label: 'Guia / Agente', hint: 'Consultor / Cadastur', icon: Compass },
 ];
 
-export const AuthRoleSelector: React.FC<AuthRoleSelectorProps> = ({ selectedRole, onSelect }) => (
+export const AuthRoleSelector: React.FC<AuthRoleSelectorProps> = ({
+  selectedRole,
+  onSelect,
+  disabled = false,
+}) => (
   <div className="mb-5">
     <p className="text-xs font-semibold uppercase tracking-wider text-stone-500 mb-2">
       Como você quer usar o SouNativo?
@@ -32,9 +37,11 @@ export const AuthRoleSelector: React.FC<AuthRoleSelectorProps> = ({ selectedRole
           <button
             key={opt.id}
             type="button"
+            disabled={disabled}
             onClick={() => onSelect(opt.id)}
             className={cn(
               'flex flex-col items-center justify-center rounded-xl border p-2.5 text-center transition-all min-h-[68px]',
+              'disabled:opacity-60 disabled:cursor-not-allowed',
               selected
                 ? 'border-primary-500 bg-primary-50 text-primary-700 shadow-sm'
                 : 'border-stone-200 bg-white text-stone-600 hover:border-stone-300'

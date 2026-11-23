@@ -1,5 +1,10 @@
 import React from 'react';
 import { AlertTriangle, Home, RefreshCw } from 'lucide-react';
+import { captureRuntimeError } from '@/services/telemetryService';
+import {
+  forceHardReloadWithCachePurge,
+  isDynamicChunkError,
+} from '@/utils/lazyWithRetry';
 import { Button } from '@/components/ui/Button';
 
 interface ErrorBoundaryProps {
@@ -17,15 +22,20 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
 
   public static getDerivedStateFromError(error: Error): ErrorBoundaryState {
     const rawMsg = error?.message || '';
-    const isChunkLoadFailure =
-      /Failed to fetch dynamically imported module|Importing a module script failed/i.test(rawMsg);
+    const isChunkFailure = isDynamicChunkError(error);
 
     return {
       hasError: true,
-      message: isChunkLoadFailure
-        ? 'Uma nova versão da página foi publicada. Recarregue para continuar.'
+      message: isChunkFailure
+        ? 'Uma nova versão da plataforma foi publicada. Clique em Recarregar para atualizar os módulos.'
         : rawMsg || 'Erro inesperado ao carregar esta página.',
     };
+  }
+
+  public componentDidCatch(error: Error): void {
+    if (!isDynamicChunkError(error)) {
+      void captureRuntimeError(error, this.props.resetKey);
+    }
   }
 
   public componentDidUpdate(prevProps: ErrorBoundaryProps): void {
@@ -52,7 +62,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
               <Button
                 variant="primary"
                 leftIcon={<RefreshCw size={16} />}
-                onClick={() => window.location.reload()}
+                onClick={forceHardReloadWithCachePurge}
               >
                 Recarregar página
               </Button>

@@ -5,8 +5,49 @@
   "outputDirectory": "dist",
   "rewrites": [
     {
+      "source": "/api/(.*)",
+      "destination": "/api/$1"
+    },
+    {
       "source": "/__/auth/(.*)",
       "destination": "https://sounativo-app-br.firebaseapp.com/__/auth/$1"
+    },
+    {
+      "source": "/__/firebase/(.*)",
+      "destination": "https://sounativo-app-br.firebaseapp.com/__/firebase/$1"
+    },
+    {
+      "source": "/viagem/:slug",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(WhatsApp|facebookexternalhit|Facebot|Twitterbot|TelegramBot|LinkedInBot|Discordbot|Slackbot).*"
+        }
+      ],
+      "destination": "/api/share?type=trip&slug=:slug"
+    },
+    {
+      "source": "/:agencySlug/viagem/:slug",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(WhatsApp|facebookexternalhit|Facebot|Twitterbot|TelegramBot|LinkedInBot|Discordbot|Slackbot).*"
+        }
+      ],
+      "destination": "/api/share?type=trip&slug=:slug&agency=:agencySlug"
+    },
+    {
+      "source": "/:agencySlug((?!trips|agencies|guides|about|contact|terms|privacy|cookies|dashboard|signup|cadastro|criar-conta|cadastrar|registro|register|login|entrar|auth|assets|favicon|apple-touch|manifest|robots|sitemap|sw|workbox)[a-z0-9-]+)",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(WhatsApp|facebookexternalhit|Facebot|Twitterbot|TelegramBot|LinkedInBot|Discordbot|Slackbot).*"
+        }
+      ],
+      "destination": "/api/share?type=agency&slug=:agencySlug"
     },
     {
       "source": "/(.*)",
@@ -43,7 +84,20 @@
         },
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://apis.google.com https://accounts.google.com https://www.gstatic.com https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' https: data: blob:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.firebaseapp.com https://www.gstatic.com wss://*.firebaseio.com https://www.google-analytics.com; frame-src 'self' https://accounts.google.com https://*.firebaseapp.com; worker-src 'self' blob:; manifest-src 'self'; frame-ancestors 'self'; base-uri 'self'; form-action 'self' https://accounts.google.com; object-src 'none'; upgrade-insecure-requests"
+          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://apis.google.com https://accounts.google.com https://www.gstatic.com https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' https: data: blob:; connect-src 'self' https://accounts.google.com https://*.googleapis.com https://*.firebasestorage.app https://*.firebaseio.com https://*.firebaseapp.com https://www.gstatic.com wss://*.firebaseio.com https://www.google-analytics.com; frame-src 'self' https://accounts.google.com https://apis.google.com https://*.firebaseapp.com https://www.google.com https://maps.google.com; worker-src 'self' blob:; manifest-src 'self'; frame-ancestors 'self'; base-uri 'self'; form-action 'self' https://accounts.google.com; object-src 'none'; upgrade-insecure-requests"
+        }
+      ]
+    },
+    {
+      "source": "/__/auth/(.*)",
+      "headers": [
+        {
+          "key": "Cross-Origin-Opener-Policy",
+          "value": "unsafe-none"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
         }
       ]
     },

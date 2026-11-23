@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { AlertCircle, ArrowRight, MapPin, RefreshCw, ShieldCheck, Star } from 'lucide-react';
 import { useAgencies } from '@/hooks/useAgencies';
+import { usePageMeta } from '@/hooks/usePageMeta';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -10,6 +11,12 @@ import { Skeleton } from '@/components/ui/Skeleton';
 
 export const AgenciesPage: React.FC = () => {
   const { agencies, loading, error, reload } = useAgencies(false);
+
+  usePageMeta({
+    title: 'Agências de Turismo Verificadas',
+    description: 'Conheça operadoras regionais selecionadas pela curadoria SouNativo.',
+    canonicalPath: '/agencies',
+  });
 
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10 sm:py-12">

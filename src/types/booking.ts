@@ -23,6 +23,7 @@ export interface Booking {
   adults: number;
   children: number;
   totalPrice: number;
+  departureDate?: string;
   status: BookingStatus;
   paymentMethod: PaymentMethod;
   voucherCode: string;
@@ -37,6 +38,8 @@ export interface TripReview {
   id: string;
   tripId: string;
   agencyId: string;
+  bookingId?: string;
+  verifiedBooking?: boolean;
   userUid: string;
   userName: string;
   userPhotoURL?: string;

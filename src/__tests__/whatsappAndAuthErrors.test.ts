@@ -20,6 +20,14 @@ describe('whatsapp and auth error helpers', () => {
     expect(mapFirebaseAuthError('auth/invalid-email')).toBe(
       'Informe um endereço de e-mail válido.'
     );
+    expect(mapFirebaseAuthError('auth/internal-error')).toContain('Erro interno');
+    expect(mapFirebaseAuthError('auth/operation-not-supported-in-this-environment')).toContain(
+      'não suporta popup'
+    );
+    expect(mapFirebaseAuthError('auth/web-storage-unsupported')).toContain('cookies');
+    expect(mapFirebaseAuthError('auth/password-does-not-meet-requirements')).toContain(
+      'requisitos mínimos'
+    );
     expect(mapFirebaseAuthError('auth/unknown-code')).toContain('Verifique sua conexão');
   });
 });

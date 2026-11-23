@@ -8,9 +8,11 @@ import {
   DollarSign,
   Plus,
   RefreshCw,
+  Rocket,
   ShieldCheck,
   Star,
   Users,
+  X,
 } from 'lucide-react';
 import { fetchAgencyByOwner } from '@/services/agencyService';
 import { fetchTripsByAgency } from '@/services/tripService';
@@ -45,6 +47,14 @@ export const PartnerDashboardView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<PartnerTab>('operations');
   const [createOpen, setCreateOpen] = useState(false);
   const [editingTrip, setEditingTrip] = useState<Trip | null>(null);
+  const [welcomeDismissed, setWelcomeDismissed] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    try {
+      return window.localStorage.getItem('sounativo_partner_welcome_dismissed') === '1';
+    } catch {
+      return false;
+    }
+  });
 
   const activeTripsCount = trips.filter((t) => t?.isActive).length;
   const permissions = usePlanPermissions(agency?.subscriptionPlan, activeTripsCount);
@@ -174,8 +184,65 @@ export const PartnerDashboardView: React.FC = () => {
 
   if (!agency) return null;
 
+  const showWelcome = !welcomeDismissed && trips.length === 0;
+
+  const dismissWelcome = () => {
+    setWelcomeDismissed(true);
+    try {
+      window.localStorage.setItem('sounativo_partner_welcome_dismissed', '1');
+    } catch {
+      // Storage unavailable (private mode) — dismissal stays in memory for this session.
+    }
+  };
+
   return (
     <div className="space-y-6">
+      {showWelcome && (
+        <div className="rounded-2xl border border-primary-200 bg-gradient-to-r from-primary-50 via-white to-secondary-50 p-5 shadow-card flex items-start gap-4">
+          <div className="hidden sm:flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary-500 text-white">
+            <Rocket size={20} />
+          </div>
+          <div className="flex-1 space-y-1">
+            <h2 className="font-serif text-lg font-bold text-stone-900">
+              Sua conta de parceiro está ativa!
+            </h2>
+            <p className="text-sm text-stone-600 leading-relaxed">
+              Seu microsite <code>/{agency.slug}</code> já está no ar. O próximo passo é publicar
+              seu primeiro roteiro para aparecer nas buscas do SouNativo.
+            </p>
+            <div className="flex flex-wrap gap-2 pt-2">
+              <Button
+                size="sm"
+                leftIcon={<Plus size={14} />}
+                disabled={!permissions.canPublishMoreTrips}
+                onClick={() => {
+                  setEditingTrip(null);
+                  setCreateOpen(true);
+                }}
+              >
+                Publicar meu primeiro roteiro
+              </Button>
+              <Link to={`/${agency.slug}`}>
+                <Button size="sm" variant="outline">
+                  Ver meu microsite
+                </Button>
+              </Link>
+              <Button size="sm" variant="ghost" onClick={() => setActiveTab('microsite')}>
+                Personalizar identidade
+              </Button>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={dismissWelcome}
+            aria-label="Fechar boas-vindas"
+            className="min-w-[36px] min-h-[36px] -mr-1 -mt-1 inline-flex items-center justify-center rounded-full text-stone-500 hover:bg-white hover:text-stone-900 transition-colors"
+          >
+            <X size={18} />
+          </button>
+        </div>
+      )}
+
       <div className="rounded-2xl border border-stone-200 bg-white p-6 shadow-card flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="space-y-1">
           <div className="flex flex-wrap items-center gap-2">

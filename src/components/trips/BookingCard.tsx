@@ -1,10 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Calendar, Info, MessageCircle, ShieldCheck, Users } from 'lucide-react';
 import { isSeedShowcaseTrip } from '@/services/bookingService';
+import { computeRemainingSpots } from '@/services/tripService';
 import { PassengerDetail, PaymentMethod, Trip } from '@/types';
 import { formatCurrencyBRL, formatDateRange } from '@/utils/formatters';
 import { buildWhatsAppLink } from '@/utils/whatsapp';
 import { Button } from '@/components/ui/Button';
+import { Badge } from '@/components/ui/Badge';
 import { GuestCounterRow } from './GuestCounterRow';
 import { CompanionFields } from './CompanionFields';
 
@@ -12,6 +14,7 @@ export interface ReservePayload {
   adults: number;
   children: number;
   totalPrice: number;
+  departureDate?: string;
   paymentMethod: PaymentMethod;
   companions: PassengerDetail[];
   notes: string;
@@ -22,6 +25,15 @@ interface BookingCardProps {
   agencyWhatsapp?: string;
   onReserve: (payload: ReservePayload) => Promise<void>;
   submitting: boolean;
+}
+
+interface SelectableDeparture {
+  key: string;
+  startDate: string;
+  endDate: string;
+  availableSpots: number;
+  maxGuests: number;
+  price: number;
 }
 
 export const BookingCard: React.FC<BookingCardProps> = ({
@@ -36,13 +48,79 @@ export const BookingCard: React.FC<BookingCardProps> = ({
   const [companions, setCompanions] = useState<PassengerDetail[]>([]);
   const [notes, setNotes] = useState('');
 
+  const departureOptions = useMemo<SelectableDeparture[]>(() => {
+    const baseMax = Math.max(0, trip?.maxGuests ?? 16);
+    const baseAvail =
+      typeof trip?.availableSpots === 'number' && Number.isFinite(trip.availableSpots)
+        ? Math.max(0, trip.availableSpots)
+        : baseMax;
+    const basePrice = trip?.price ?? 0;
+
+    const primaryOption: SelectableDeparture = {
+      key: trip?.startDate || 'primary',
+      startDate: trip?.startDate || '',
+      endDate: trip?.endDate || '',
+      availableSpots: baseAvail,
+      maxGuests: baseMax,
+      price: basePrice,
+    };
+
+    const extras = Array.isArray(trip?.departures)
+      ? trip.departures.map((dep) => ({
+          key: dep.startDate,
+          startDate: dep.startDate,
+          endDate: dep.endDate,
+          availableSpots: Math.max(0, dep.availableSpots ?? dep.maxGuests),
+          maxGuests: Math.max(1, dep.maxGuests),
+          price: dep.priceOverride !== undefined ? dep.priceOverride : basePrice,
+        }))
+      : [];
+
+    const seenDays = new Set<string>();
+    const combined: SelectableDeparture[] = [];
+    for (const item of [primaryOption, ...extras]) {
+      const dayKey = item.startDate ? item.startDate.slice(0, 10) : item.key;
+      if (seenDays.has(dayKey)) continue;
+      seenDays.add(dayKey);
+      combined.push(item);
+    }
+    return combined;
+  }, [trip]);
+
+  const [selectedDeparture, setSelectedDeparture] = useState<string>(
+    () => departureOptions[0]?.startDate ?? ''
+  );
+
+  useEffect(() => {
+    setSelectedDeparture(departureOptions[0]?.startDate ?? '');
+  }, [departureOptions]);
+
+  const activeOption = useMemo(
+    () =>
+      departureOptions.find(
+        (opt) => opt.startDate.slice(0, 10) === selectedDeparture.slice(0, 10)
+      ) ?? departureOptions[0],
+    [departureOptions, selectedDeparture]
+  );
+
   const passengerCfg = trip?.passengerConfig ?? {
     allowChildren: false,
     childAgeLimit: 12,
     childPriceMultiplier: 1,
   };
-  const maxGuests = Math.max(0, trip?.maxGuests ?? 16);
-  const unitPrice = trip?.price ?? 0;
+  const remainingSpots = activeOption
+    ? activeOption.availableSpots
+    : computeRemainingSpots(trip, selectedDeparture);
+  const unitPrice = activeOption ? activeOption.price : (trip?.price ?? 0);
+
+  useEffect(() => {
+    if (remainingSpots > 0 && adults + childrenCount > remainingSpots) {
+      const clampedAdults = Math.max(1, Math.min(adults, remainingSpots));
+      const clampedChildren = Math.max(0, Math.min(childrenCount, remainingSpots - clampedAdults));
+      setAdults(clampedAdults);
+      setChildrenCount(clampedChildren);
+    }
+  }, [adults, childrenCount, remainingSpots]);
 
   useEffect(() => {
     const targetAdults = Math.max(0, adults - 1);
@@ -75,9 +153,9 @@ export const BookingCard: React.FC<BookingCardProps> = ({
   ]);
 
   const whatsappUrl = buildWhatsAppLink(agencyWhatsapp, trip);
-  const maxAdultsAllowed = Math.max(1, maxGuests - childrenCount);
-  const maxChildrenAllowed = Math.max(0, maxGuests - adults);
-  const hasCapacity = Boolean(trip?.isActive) && maxGuests >= 1;
+  const maxAdultsAllowed = Math.max(1, remainingSpots - childrenCount);
+  const maxChildrenAllowed = Math.max(0, remainingSpots - adults);
+  const hasCapacity = Boolean(trip?.isActive) && remainingSpots >= 1;
   const isShowcaseDemo = isSeedShowcaseTrip(trip?.id ?? '');
 
   return (
@@ -89,21 +167,55 @@ export const BookingCard: React.FC<BookingCardProps> = ({
           </span>
           <p className="text-3xl font-extrabold text-primary-600">{formatCurrencyBRL(unitPrice)}</p>
         </div>
-        <span className="text-xs font-semibold text-stone-600 bg-stone-100 px-2.5 py-1 rounded-full">
-          {trip?.durationDays ?? 1} dias · máx. {maxGuests} vagas
-        </span>
+        <div className="flex flex-col items-end gap-1">
+          <span className="text-xs font-semibold text-stone-600 bg-stone-100 px-2.5 py-1 rounded-full">
+            {trip?.durationDays ?? 1} dias
+          </span>
+          <Badge
+            tone={remainingSpots === 0 ? 'warning' : remainingSpots <= 4 ? 'secondary' : 'success'}
+          >
+            {remainingSpots === 0 ? 'Esgotado' : `${remainingSpots} vaga(s) livre(s)`}
+          </Badge>
+        </div>
       </div>
 
       <div className="mt-4 space-y-4">
-        <div className="flex items-center gap-3 rounded-xl bg-accent-50 border border-stone-200/80 p-3.5">
-          <Calendar size={18} className="text-primary-600 shrink-0" />
+        {departureOptions.length > 1 ? (
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-wider text-stone-500">Período</p>
-            <p className="text-sm font-semibold text-stone-900">
-              {formatDateRange(trip?.startDate, trip?.endDate)}
-            </p>
+            <label
+              htmlFor="departure-select"
+              className="block text-xs font-semibold text-stone-600 mb-1.5"
+            >
+              Escolha a turma / data de saída
+            </label>
+            <select
+              id="departure-select"
+              value={selectedDeparture}
+              onChange={(e) => setSelectedDeparture(e.target.value)}
+              className="w-full min-h-[44px] rounded-xl border border-stone-300 bg-white px-3 text-sm font-medium text-stone-900"
+            >
+              {departureOptions.map((opt) => (
+                <option key={opt.key} value={opt.startDate} disabled={opt.availableSpots === 0}>
+                  {formatDateRange(opt.startDate, opt.endDate)} ·{' '}
+                  {opt.availableSpots === 0 ? 'Esgotado' : `${opt.availableSpots} vagas`} ·{' '}
+                  {formatCurrencyBRL(opt.price)}
+                </option>
+              ))}
+            </select>
           </div>
-        </div>
+        ) : (
+          <div className="flex items-center gap-3 rounded-xl bg-accent-50 border border-stone-200/80 p-3.5">
+            <Calendar size={18} className="text-primary-600 shrink-0" />
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-wider text-stone-500">
+                Período
+              </p>
+              <p className="text-sm font-semibold text-stone-900">
+                {formatDateRange(activeOption?.startDate, activeOption?.endDate)}
+              </p>
+            </div>
+          </div>
+        )}
 
         <div className="rounded-xl border border-stone-200 p-3.5 space-y-3">
           <GuestCounterRow
@@ -157,7 +269,7 @@ export const BookingCard: React.FC<BookingCardProps> = ({
             onChange={(e) => setPaymentMethod(e.target.value as PaymentMethod)}
             className="w-full min-h-[44px] rounded-xl border border-stone-300 bg-white px-3 text-sm font-medium text-stone-900"
           >
-            <option value="PIX">Pix (confirmação imediata)</option>
+            <option value="PIX">Pix (confirmação direta com a operadora)</option>
             <option value="CREDIT_CARD">Cartão de Crédito</option>
             <option value="BOLETO">Boleto Bancário</option>
           </select>
@@ -188,13 +300,14 @@ export const BookingCard: React.FC<BookingCardProps> = ({
               adults,
               children: childrenCount,
               totalPrice,
+              departureDate: activeOption?.startDate || trip.startDate,
               paymentMethod,
               companions,
               notes: notes.trim(),
             })
           }
         >
-          {hasCapacity ? 'Solicitar Reserva' : 'Roteiro temporariamente indisponível'}
+          {hasCapacity ? 'Solicitar Reserva' : 'Vagas esgotadas nesta saída'}
         </Button>
 
         {whatsappUrl && (

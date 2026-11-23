@@ -1,4 +1,15 @@
-import { addDoc, collection, getDocs, limit, orderBy, query, where } from 'firebase/firestore';
+import {
+  addDoc,
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  limit,
+  orderBy,
+  query,
+  updateDoc,
+  where,
+} from 'firebase/firestore';
 import {
   COLLECTIONS,
   db,
@@ -9,17 +20,23 @@ import {
   toIsoTimestamp,
 } from './firebase';
 import { isSeedShowcaseTrip } from './bookingService';
+import { createNotificationInFirestore } from './notificationService';
 import { SEED_REVIEWS } from './seedCatalog';
 import { TripReview } from '@/types';
 
 export function normalizeReviewDoc(id: string, raw: Record<string, unknown>): TripReview {
   const createdAt = toIsoTimestamp(raw.createdAt);
   const numericRating = Math.round(Number(raw.rating) || 5);
+  const bookingId =
+    typeof raw.bookingId === 'string' && raw.bookingId.trim() ? raw.bookingId.trim() : undefined;
+  const verifiedBooking = Boolean(raw.verifiedBooking || bookingId);
 
   return {
     id,
     tripId: typeof raw.tripId === 'string' ? raw.tripId : '',
     agencyId: typeof raw.agencyId === 'string' ? raw.agencyId : '',
+    ...(bookingId ? { bookingId } : {}),
+    verifiedBooking,
     userUid: typeof raw.userUid === 'string' ? raw.userUid : '',
     userName:
       typeof raw.userName === 'string' && raw.userName.trim()
@@ -181,7 +198,22 @@ export async function createReviewInFirestore(input: CreateReviewInput): Promise
     throw new Error('Escreva um comentário com pelo menos 3 caracteres.');
   }
 
-  // Anti-spam check: prevent duplicate reviews on the same trip by the same user
+  // 1. Verified Booking Gate: traveler must hold a CONFIRMED booking on this trip
+  const userBookingsSnap = await getDocs(
+    query(collection(db, COLLECTIONS.bookings), where('clientUid', '==', input.userUid), limit(50))
+  );
+  const confirmedBookingDoc = userBookingsSnap.docs.find((docSnap) => {
+    const raw = docSnap.data();
+    return raw.tripId === input.tripId && raw.status === 'CONFIRMED';
+  });
+
+  if (!confirmedBookingDoc) {
+    throw new Error(
+      'Apenas viajantes com reserva confirmada neste roteiro podem publicar avaliação ("Viagem Verificada").'
+    );
+  }
+
+  // 2. Anti-spam check: prevent duplicate reviews on the same trip by the same user
   const existingUserReviews = await getDocs(
     query(collection(db, COLLECTIONS.reviews), where('userUid', '==', input.userUid), limit(50))
   );
@@ -200,6 +232,8 @@ export async function createReviewInFirestore(input: CreateReviewInput): Promise
   const sanitized = {
     tripId: input.tripId.trim().slice(0, 128),
     agencyId: input.agencyId.trim().slice(0, 128),
+    bookingId: confirmedBookingDoc.id,
+    verifiedBooking: true,
     userUid: input.userUid.trim().slice(0, 128),
     userName: (input.userName.trim() || 'Viajante SouNativo').slice(0, 120),
     ...(validPhoto ? { userPhotoURL: validPhoto } : {}),
@@ -213,18 +247,86 @@ export async function createReviewInFirestore(input: CreateReviewInput): Promise
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     });
-    return {
+
+    const created: TripReview = {
       id: ref.id,
       ...sanitized,
       createdAt: new Date().toISOString(),
     };
+
+    // Persist aggregated rating + totalReviews onto trips/{tripId} and agencies/{agencyId}
+    void syncPersistedReviewAggregates(sanitized.tripId, sanitized.agencyId, created);
+
+    return created;
   } catch (err: unknown) {
     const code = (err as { code?: string }).code ?? '';
     if (code === 'permission-denied') {
       throw new Error(
-        'Não foi possível publicar sua avaliação: verifique se o roteiro está ativo e se sua sessão está autenticada.'
+        'Não foi possível publicar sua avaliação: é necessário possuir uma reserva confirmada neste pacote.'
       );
     }
     throw mapFirestoreError(err, 'Erro ao publicar sua avaliação.');
+  }
+}
+
+async function syncPersistedReviewAggregates(
+  tripId: string,
+  agencyId: string,
+  latestReview: TripReview
+): Promise<void> {
+  if (!db) return;
+
+  try {
+    if (tripId) {
+      const tripRevSnap = await getDocs(
+        query(collection(db, COLLECTIONS.reviews), where('tripId', '==', tripId), limit(100))
+      );
+      const tripReviews = tripRevSnap.docs.map((d) =>
+        normalizeReviewDoc(d.id, d.data() as Record<string, unknown>)
+      );
+      const tripStats = computeReviewStats(tripReviews);
+      if (tripStats.totalReviews >= 1) {
+        await updateDoc(doc(db, COLLECTIONS.trips, tripId), {
+          rating: tripStats.rating,
+          totalReviews: tripStats.totalReviews,
+          updatedAt: serverTimestamp(),
+        });
+      }
+    }
+  } catch (err) {
+    console.warn('[reviewService] Falha não-bloqueante ao agregar nota do pacote:', err);
+  }
+
+  try {
+    if (agencyId) {
+      const agencyRevSnap = await getDocs(
+        query(collection(db, COLLECTIONS.reviews), where('agencyId', '==', agencyId), limit(100))
+      );
+      const agencyReviews = agencyRevSnap.docs.map((d) =>
+        normalizeReviewDoc(d.id, d.data() as Record<string, unknown>)
+      );
+      const agencyStats = computeReviewStats(agencyReviews);
+      if (agencyStats.totalReviews >= 1) {
+        await updateDoc(doc(db, COLLECTIONS.agencies, agencyId), {
+          rating: agencyStats.rating,
+          totalReviews: agencyStats.totalReviews,
+          updatedAt: serverTimestamp(),
+        });
+      }
+
+      const agencyDoc = await getDoc(doc(db, COLLECTIONS.agencies, agencyId));
+      const ownerUid = agencyDoc.exists() ? (agencyDoc.data()?.ownerUid as string | undefined) : '';
+      if (ownerUid && ownerUid !== latestReview.userUid) {
+        await createNotificationInFirestore({
+          recipientUid: ownerUid,
+          type: 'NEW_REVIEW',
+          title: `Nova avaliação ${latestReview.rating}.0 ★ recebida`,
+          body: `${latestReview.userName}: "${latestReview.comment.slice(0, 120)}"`,
+          link: '/dashboard?mode=partner',
+        });
+      }
+    }
+  } catch (err) {
+    console.warn('[reviewService] Falha não-bloqueante ao agregar nota da agência:', err);
   }
 }

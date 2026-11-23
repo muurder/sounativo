@@ -1,0 +1,66 @@
+rules_version = '2';
+
+// ============================================================================
+// SouNativo Marketplace — Firebase Storage Security Rules
+// ============================================================================
+// Enforces:
+// 1. Strict MIME whitelist (jpeg, png, webp, gif, avif — blocks SVG/HTML XSS)
+// 2. Hard 5 MB payload ceiling per object (anti-DoS / storage exhaustion)
+// 3. Identity-bound write paths (/users/{uid}/avatar/* and /partners/{uid}/*)
+// 4. Safe filename character set (prevents path-confusion tricks)
+// ============================================================================
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isTokenAdmin() {
+      return isAuthenticated() &&
+             (('admin' in request.auth.token && request.auth.token.admin == true) ||
+              ('email' in request.auth.token &&
+               'email_verified' in request.auth.token &&
+               request.auth.token.email == 'juannicolas1@gmail.com' &&
+               request.auth.token.email_verified == true));
+    }
+
+    function isOwnerOrAdmin(uid) {
+      return (isAuthenticated() && request.auth.uid == uid) || isTokenAdmin();
+    }
+
+    function isValidImageUpload(fileName, maxBytes) {
+      return fileName.size() >= 3 &&
+             fileName.size() <= 140 &&
+             fileName.matches('^[a-zA-Z0-9._-]+$') &&
+             request.resource != null &&
+             request.resource.size > 0 &&
+             request.resource.size <= maxBytes &&
+             request.resource.contentType.matches('^image/(jpeg|png|webp|gif|avif)$');
+    }
+
+    // 1. Traveler profile avatars
+    match /users/{uid}/avatar/{fileName} {
+      allow read: if true;
+      allow create, update: if isOwnerOrAdmin(uid) &&
+                               isValidImageUpload(fileName, 5 * 1024 * 1024);
+      allow delete: if isOwnerOrAdmin(uid);
+    }
+
+    // 2. Partner media (agency/guide logos, microsite hero banners, trip galleries)
+    match /partners/{ownerUid}/{folder}/{fileName} {
+      allow read: if folder in ['branding', 'banners', 'trips'];
+      allow create, update: if isOwnerOrAdmin(ownerUid) &&
+                               folder in ['branding', 'banners', 'trips'] &&
+                               isValidImageUpload(fileName, 5 * 1024 * 1024);
+      allow delete: if isOwnerOrAdmin(ownerUid) &&
+                       folder in ['branding', 'banners', 'trips'];
+    }
+
+    // 3. Default deny-all fallback
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

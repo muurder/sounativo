@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Save } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { ImageUploadField } from '@/components/ui/ImageUploadField';
 import { useToast } from '@/context/ToastContext';
 import { UserProfile } from '@/types';
 
@@ -9,7 +10,10 @@ interface ClientProfileFormProps {
   saving: boolean;
   onSave: (
     updates: Partial<
-      Pick<UserProfile, 'name' | 'phone' | 'cpf' | 'birthDate' | 'notificationsEnabled'>
+      Pick<
+        UserProfile,
+        'name' | 'phone' | 'cpf' | 'birthDate' | 'notificationsEnabled' | 'photoURL'
+      >
     >
   ) => Promise<void>;
 }
@@ -21,6 +25,7 @@ export const ClientProfileForm: React.FC<ClientProfileFormProps> = ({
 }) => {
   const { showToast } = useToast();
   const [name, setName] = useState(profile?.name ?? '');
+  const [photoURL, setPhotoURL] = useState(profile?.photoURL ?? '');
   const [phone, setPhone] = useState(profile?.phone ?? '');
   const [cpf, setCpf] = useState(profile?.cpf ?? '');
   const [birthDate, setBirthDate] = useState(profile?.birthDate ?? '');
@@ -31,6 +36,7 @@ export const ClientProfileForm: React.FC<ClientProfileFormProps> = ({
   useEffect(() => {
     if (profile) {
       setName(profile.name ?? '');
+      setPhotoURL(profile.photoURL ?? '');
       setPhone(profile.phone ?? '');
       setCpf(profile.cpf ?? '');
       setBirthDate(profile.birthDate ?? '');
@@ -41,7 +47,7 @@ export const ClientProfileForm: React.FC<ClientProfileFormProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await onSave({ name, phone, cpf, birthDate, notificationsEnabled });
+      await onSave({ name, photoURL, phone, cpf, birthDate, notificationsEnabled });
       showToast('Perfil sincronizado no Firestore!', 'success');
     } catch (err) {
       showToast(err instanceof Error ? err.message : 'Erro ao salvar perfil.', 'error');
@@ -50,13 +56,23 @@ export const ClientProfileForm: React.FC<ClientProfileFormProps> = ({
 
   return (
     <form
-      onSubmit={handleSubmit}
+      onSubmit={(e) => void handleSubmit(e)}
       className="max-w-xl rounded-2xl border border-stone-200 bg-white p-6 shadow-card space-y-4"
     >
       <h2 className="font-serif text-xl font-bold text-stone-900">Dados do Viajante</h2>
       <p className="text-xs text-stone-500">
         Sincronizado em tempo real com <code>users/{profile?.uid}</code> no Cloud Firestore.
       </p>
+
+      <ImageUploadField
+        id="prof-avatar"
+        label="Foto de perfil"
+        scope="avatar"
+        previewShape="square"
+        value={photoURL}
+        onChange={setPhotoURL}
+        helperText="Envie sua foto (JPG, PNG ou WebP). Ela será exibida no cabeçalho e nas suas avaliações."
+      />
 
       <div>
         <label htmlFor="prof-name" className="block text-xs font-semibold text-stone-700 mb-1">
@@ -65,6 +81,7 @@ export const ClientProfileForm: React.FC<ClientProfileFormProps> = ({
         <input
           id="prof-name"
           required
+          maxLength={120}
           value={name}
           onChange={(e) => setName(e.target.value)}
           className="w-full min-h-[44px] rounded-xl border border-stone-300 px-3 text-sm"
@@ -78,6 +95,7 @@ export const ClientProfileForm: React.FC<ClientProfileFormProps> = ({
           </label>
           <input
             id="prof-phone"
+            maxLength={30}
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             placeholder="(11) 99999-9999"
@@ -91,6 +109,7 @@ export const ClientProfileForm: React.FC<ClientProfileFormProps> = ({
           </label>
           <input
             id="prof-cpf"
+            maxLength={20}
             value={cpf}
             onChange={(e) => setCpf(e.target.value)}
             placeholder="000.000.000-00"

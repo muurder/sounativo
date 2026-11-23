@@ -11,11 +11,13 @@ import { GuidesHighlightSection } from '@/components/landing/GuidesHighlightSect
 import { FaqSection } from '@/components/landing/FaqSection';
 import { CtaBannerSection } from '@/components/landing/CtaBannerSection';
 import { useTrips } from '@/hooks/useTrips';
+import { usePageMeta } from '@/hooks/usePageMeta';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useToast } from '@/context/ToastContext';
+import { UserRole } from '@/types';
 
 interface OutletContextValue {
-  openAuth: (mode: 'login' | 'signup') => void;
+  openAuth: (mode: 'login' | 'signup', initialRole?: Exclude<UserRole, 'ADMIN'>) => void;
 }
 
 export const HomePage: React.FC = () => {
@@ -23,6 +25,11 @@ export const HomePage: React.FC = () => {
   const { allTrips, loading } = useTrips();
   const { profile, toggleFavorite } = useUserProfile();
   const { showToast } = useToast();
+
+  usePageMeta({
+    title: 'SouNativo | Experiências Autênticas de Viagem pelo Brasil',
+    canonicalPath: '/',
+  });
 
   const featuredHero = useMemo(
     () => allTrips.find((trip) => trip.featured) ?? allTrips[0],
@@ -55,7 +62,7 @@ export const HomePage: React.FC = () => {
       <GroupQuoteSection />
       <GuidesHighlightSection />
       <FaqSection />
-      <CtaBannerSection onPartnerSignup={() => openAuth('signup')} />
+      <CtaBannerSection onPartnerSignup={() => openAuth('signup', 'AGENCY')} />
     </div>
   );
 };
