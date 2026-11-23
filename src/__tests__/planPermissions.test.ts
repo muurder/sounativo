@@ -24,4 +24,20 @@ describe('getPlanPermissions', () => {
     expect(premium.canPublishMoreTrips).toBe(true);
     expect(premium.canAccessOperationalTools).toBe(true);
   });
+
+  it('downgrades non-STARTER permissions to STARTER when subscriptionStatus is PENDING or INACTIVE', () => {
+    const pendingPremium = getPlanPermissions('PREMIUM', 2, 'PENDING');
+    const inactiveBasic = getPlanPermissions('BASIC', 1, 'INACTIVE');
+    const activeStarter = getPlanPermissions('STARTER', 1, 'ACTIVE');
+
+    expect(pendingPremium.canPublishMoreTrips).toBe(false);
+    expect(pendingPremium.canCustomizeTheme).toBe(false);
+    expect(pendingPremium.canAccessOperationalTools).toBe(false);
+
+    expect(inactiveBasic.canPublishMoreTrips).toBe(true);
+    expect(inactiveBasic.maxTrips).toBe(2);
+    expect(inactiveBasic.canCustomizeTheme).toBe(false);
+
+    expect(activeStarter.canPublishMoreTrips).toBe(true);
+  });
 });

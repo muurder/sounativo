@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useOutletContext, useParams } from 'react-router-dom';
-import { Award, Globe2, MapPin, MessageCircle, ShieldCheck, Sparkles } from 'lucide-react';
+import { Award, Globe2, MapPin, MessageCircle, ShieldCheck, Sparkles, Star } from 'lucide-react';
 import { useAgencyMicrosite } from '@/hooks/useAgencyMicrosite';
 import { usePageMeta } from '@/hooks/usePageMeta';
 import { useTheme } from '@/context/ThemeContext';
@@ -13,6 +13,7 @@ import { Skeleton } from '@/components/ui/Skeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { cn } from '@/utils/cn';
 import { sanitizeExternalUrl } from '@/utils/securitySanitizer';
+import { buildAgencyWhatsAppLink } from '@/utils/whatsapp';
 
 interface OutletContextValue {
   openAuth: (mode: 'login' | 'signup') => void;
@@ -39,11 +40,14 @@ export const AgencyMicrositePage: React.FC = () => {
   const { showToast } = useToast();
 
   usePageMeta({
-    title: agency ? `${agency.name} — Parceiro Verificado` : 'Microsite SouNativo',
+    title: agency
+      ? `${agency.name} — ${agency.verified ? 'Parceiro Verificado' : 'Parceiro SouNativo'}`
+      : 'Parceiro não encontrado',
     description: agency?.description,
     image: agency?.heroBannerUrl || agency?.logo,
     canonicalPath: agency ? `/${agency.slug}` : undefined,
     ogType: 'profile',
+    noIndex: !loading && !agency,
   });
 
   if (loading) {
@@ -70,16 +74,35 @@ export const AgencyMicrositePage: React.FC = () => {
 
   if (!agency) {
     return (
-      <div className="mx-auto max-w-3xl px-4 py-16">
-        <EmptyState
-          title="Parceiro não encontrado"
-          description="Não localizamos uma agência ou guia ativo com este endereço no SouNativo."
-        />
+      <div className="mx-auto max-w-2xl px-4 py-20 text-center space-y-5">
+        <h1 className="font-serif text-3xl sm:text-4xl font-bold text-stone-900">
+          Parceiro não encontrado
+        </h1>
+        <p className="text-sm sm:text-base text-stone-600">
+          Não localizamos uma agência ou guia ativo com este endereço no SouNativo.
+        </p>
+        <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+          <Link
+            to="/trips"
+            className="min-h-[44px] inline-flex items-center justify-center rounded-xl bg-primary-500 px-5 text-sm font-semibold text-white hover:bg-primary-600 transition-colors"
+          >
+            Explorar roteiros
+          </Link>
+          <Link
+            to="/agencies"
+            className="min-h-[44px] inline-flex items-center justify-center rounded-xl border border-stone-300 bg-white px-5 text-sm font-semibold text-stone-800 hover:bg-stone-50 transition-colors"
+          >
+            Ver agências
+          </Link>
+        </div>
       </div>
     );
   }
 
-  const whatsappDigits = agency.whatsapp?.replace(/\D/g, '');
+  const whatsappHref = buildAgencyWhatsAppLink(
+    agency.whatsapp,
+    `Olá! Vi o catálogo de ${agency.name} no SouNativo e gostaria de mais informações.`
+  );
   const headingFont = FONT_CLASS_MAP[agencyTheme?.fontPair ?? 'classic'] ?? 'font-serif';
   const ctaRadius = RADIUS_CLASS_MAP[agencyTheme?.borderRadius ?? 'soft'] ?? 'rounded-2xl';
   const safeBannerUrl =
@@ -130,13 +153,29 @@ export const AgencyMicrositePage: React.FC = () => {
                 <Badge tone="secondary" className="bg-white/15 text-white border-white/25">
                   {agency.isGuide ? <Award size={12} /> : <ShieldCheck size={12} />}
                   {agency.isGuide
-                    ? `Guia Cadastur ${agency.cadastur || 'Ativo'}`
-                    : 'Agência Verificada'}
+                    ? agency.cadastur?.trim()
+                      ? `Guia Cadastur ${agency.cadastur.trim()}`
+                      : 'Guia Local'
+                    : agency.verified
+                      ? 'Agência Verificada'
+                      : 'Parceira SouNativo'}
                 </Badge>
                 {agency.city && (
                   <span className="inline-flex items-center gap-1 text-xs text-primary-100">
                     <MapPin size={13} /> {agency.city}
                     {agency.state ? `, ${agency.state}` : ''}
+                  </span>
+                )}
+                {typeof agency.rating === 'number' && agency.rating > 0 && (
+                  <span className="inline-flex items-center gap-1 text-xs font-semibold text-white">
+                    <Star size={13} className="fill-amber-400 text-amber-400" />
+                    {agency.rating.toFixed(1)}
+                  </span>
+                )}
+                {typeof agency.experienceYears === 'number' && agency.experienceYears > 0 && (
+                  <span className="text-xs text-primary-100">
+                    · {agency.experienceYears} {agency.experienceYears === 1 ? 'ano' : 'anos'} de
+                    experiência
                   </span>
                 )}
               </div>
@@ -165,9 +204,9 @@ export const AgencyMicrositePage: React.FC = () => {
             </div>
           </div>
 
-          {whatsappDigits && (
+          {whatsappHref && (
             <a
-              href={`https://wa.me/${whatsappDigits}`}
+              href={whatsappHref}
               target="_blank"
               rel="noopener noreferrer"
               className={cn(

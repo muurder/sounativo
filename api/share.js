@@ -1,4 +1,7 @@
-const BASE_URL = 'https://sounativo.vercel.app';
+const BASE_URL = (process.env.PUBLIC_SITE_URL || 'https://sounativo.vercel.app').replace(
+  /\/+$/,
+  ''
+);
 const DEFAULT_OG_IMAGE =
   'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=1200&q=80';
 
@@ -26,9 +29,35 @@ function readFirestoreField(fields, key) {
   return undefined;
 }
 
-async function queryFirestoreBySlug(projectId, collectionId, slug) {
+async function queryFirestoreBySlug(projectId, collectionId, slug, requireActive = false) {
   if (!projectId || !slug) return null;
   const endpoint = `https://firestore.googleapis.com/v1/projects/${encodeURIComponent(projectId)}/databases/(default)/documents:runQuery`;
+
+  const slugFilter = {
+    fieldFilter: {
+      field: { fieldPath: 'slug' },
+      op: 'EQUAL',
+      value: { stringValue: slug },
+    },
+  };
+
+  const whereClause = requireActive
+    ? {
+        compositeFilter: {
+          op: 'AND',
+          filters: [
+            slugFilter,
+            {
+              fieldFilter: {
+                field: { fieldPath: 'isActive' },
+                op: 'EQUAL',
+                value: { booleanValue: true },
+              },
+            },
+          ],
+        },
+      }
+    : slugFilter;
 
   try {
     const response = await fetch(endpoint, {
@@ -37,13 +66,7 @@ async function queryFirestoreBySlug(projectId, collectionId, slug) {
       body: JSON.stringify({
         structuredQuery: {
           from: [{ collectionId }],
-          where: {
-            fieldFilter: {
-              field: { fieldPath: 'slug' },
-              op: 'EQUAL',
-              value: { stringValue: slug },
-            },
-          },
+          where: whereClause,
           limit: 1,
         },
       }),
@@ -75,15 +98,20 @@ export default async function handler(req, res) {
 
   if (type === 'agency' && slug) {
     canonicalPath = `/${encodeURIComponent(slug)}`;
-    const fields = await queryFirestoreBySlug(projectId, 'agencies', slug);
-    if (fields) {
+    const fields = await queryFirestoreBySlug(projectId, 'agencies', slug, false);
+    if (fields && readFirestoreField(fields, 'isActive') !== false) {
       const name = readFirestoreField(fields, 'name') || slug;
       const desc = readFirestoreField(fields, 'description');
+      const isVerified = Boolean(
+        readFirestoreField(fields, 'verified') || readFirestoreField(fields, 'isVerified')
+      );
       const logo =
         readFirestoreField(fields, 'heroBannerUrl') ||
         readFirestoreField(fields, 'logo') ||
         DEFAULT_OG_IMAGE;
-      title = `${name} | Parceiro Verificado SouNativo`;
+      title = isVerified
+        ? `${name} | Parceiro Verificado SouNativo`
+        : `${name} | Parceiro SouNativo`;
       if (desc) description = String(desc).slice(0, 220);
       if (typeof logo === 'string' && /^https?:\/\//i.test(logo)) image = logo;
     }
@@ -91,7 +119,7 @@ export default async function handler(req, res) {
     canonicalPath = agencyParam
       ? `/${encodeURIComponent(agencyParam)}/viagem/${encodeURIComponent(slug)}`
       : `/viagem/${encodeURIComponent(slug)}`;
-    const fields = await queryFirestoreBySlug(projectId, 'trips', slug);
+    const fields = await queryFirestoreBySlug(projectId, 'trips', slug, true);
     if (fields && readFirestoreField(fields, 'isActive') !== false) {
       const tripTitle = readFirestoreField(fields, 'title') || slug;
       const dest = readFirestoreField(fields, 'destination') || 'Brasil';

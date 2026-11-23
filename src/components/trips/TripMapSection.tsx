@@ -17,10 +17,8 @@ export const TripMapSection: React.FC<TripMapSectionProps> = ({ trip }) => {
     ? `${trip.latitude},${trip.longitude}`
     : `${trip.destination || 'Brasil'}, Brasil`;
 
-  const apiKey = (import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string | undefined)?.trim();
-  const embedSrc = apiKey
-    ? `https://www.google.com/maps/embed/v1/place?key=${encodeURIComponent(apiKey)}&q=${encodeURIComponent(destinationQuery)}`
-    : `https://maps.google.com/maps?q=${encodeURIComponent(destinationQuery)}&t=&z=11&ie=UTF8&iwloc=&output=embed`;
+  // Standard keyless Google Maps embed avoids Places API PERMISSION_DENIED errors
+  const embedSrc = `https://maps.google.com/maps?q=${encodeURIComponent(destinationQuery)}&t=&z=11&ie=UTF8&iwloc=&output=embed`;
 
   const externalMapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(destinationQuery)}`;
   const boardingPoints = Array.isArray(trip.boardingPoints) ? trip.boardingPoints : [];
@@ -64,11 +62,11 @@ export const TripMapSection: React.FC<TripMapSectionProps> = ({ trip }) => {
             Locais de saída confirmados ({boardingPoints.length})
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-            {boardingPoints.map((bp) => {
+            {boardingPoints.map((bp, idx) => {
               const bpUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(bp.location)}`;
               return (
                 <a
-                  key={bp.id}
+                  key={`${bp.id || 'bp'}-${idx}`}
                   href={bpUrl}
                   target="_blank"
                   rel="noopener noreferrer"

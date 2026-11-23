@@ -68,9 +68,10 @@ rules_version = '2';
 //   - customSettings: map (optional/nullable, <= 20 keys)
 //   - socialLinks: map (optional/nullable, <= 10 keys)
 //   - subscriptionPlan: string (optional/nullable, 'STARTER' | 'BASIC' | 'PREMIUM')
+//   - requestedPlan: string (optional/nullable, 'STARTER' | 'BASIC' | 'PREMIUM')
 //   - subscriptionStatus: string (optional/nullable, 'ACTIVE' | 'INACTIVE' | 'PENDING';
 //       paid tiers BASIC/PREMIUM cannot be set to ACTIVE by non-admin clients)
-//   - subscriptionExpiresAt: timestamp | ISO string (optional/nullable)
+//   - subscriptionExpiresAt: timestamp | ISO string (optional/nullable, immutable for non-admins)
 //   - rating: number (optional/nullable, 0..5, admin or narrow review-aggregation update)
 //   - totalReviews: int (optional/nullable, 0..1000000, admin or narrow review-aggregation update)
 //   - createdAt: timestamp | ISO string (optional, immutable)
@@ -208,12 +209,12 @@ rules_version = '2';
 // Fields:
 //   - id: string (optional, <= 128 chars, immutable)
 //   - recipientUid: string (required, 1..128 chars, immutable for recipient)
-//   - actorUid: string (optional/nullable, 1..128 chars, matches request.auth.uid on create)
+//   - actorUid: string (required on create, 1..128 chars, matches request.auth.uid)
 //   - type: string (required, 'BOOKING_CREATED' | 'BOOKING_CONFIRMED' | 'BOOKING_CANCELLED' |
-//       'NEW_REVIEW' | 'PLAN_APPROVED' | 'SYSTEM')
+//       'NEW_REVIEW' | 'PLAN_APPROVED' | 'SYSTEM'; PLAN_APPROVED/SYSTEM admin-only on create)
 //   - title: string (required, 1..160 chars)
 //   - body: string (optional/nullable, <= 600 chars)
-//   - link: string (optional/nullable, <= 200 chars)
+//   - link: string (optional/nullable, <= 200 chars, relative app path ^/[^/].*|^/$ on create)
 //   - read: bool (required, false on create; recipient can update only ['read', 'updatedAt'])
 //   - createdAt: timestamp | ISO string (optional, immutable)
 //   - updatedAt: timestamp | ISO string (optional)
@@ -266,6 +267,13 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
+    function isNotSuspended() {
+      return isAuthenticated() &&
+             (!exists(/databases/$(database)/documents/users/$(request.auth.uid)) ||
+              !('status' in get(/databases/$(database)/documents/users/$(request.auth.uid)).data) ||
+              get(/databases/$(database)/documents/users/$(request.auth.uid)).data.status != 'SUSPENDED');
+    }
+
     function areImmutableFieldsUnchanged(fields) {
       return !request.resource.data.diff(resource.data).affectedKeys().hasAny(fields);
     }
@@ -307,7 +315,8 @@ service cloud.firestore {
     }
 
     function isNonAdminSubscriptionSafe(d) {
-      return !(('subscriptionPlan' in d && d.subscriptionPlan in ['BASIC', 'PREMIUM']) &&
+      return !((('subscriptionPlan' in d && d.subscriptionPlan in ['BASIC', 'PREMIUM']) ||
+                ('requestedPlan' in d && d.requestedPlan in ['BASIC', 'PREMIUM'])) &&
                ('subscriptionStatus' in d && d.subscriptionStatus == 'ACTIVE'));
     }
 
@@ -316,6 +325,7 @@ service cloud.firestore {
              (!('isVerified' in d) || d.isVerified == null || d.isVerified == false) &&
              (!('rating' in d) || d.rating == null || d.rating == 0) &&
              (!('totalReviews' in d) || d.totalReviews == null || d.totalReviews == 0) &&
+             (!('requestedPlan' in d) || d.requestedPlan == null) &&
              isNonAdminSubscriptionSafe(d);
     }
 
@@ -362,7 +372,8 @@ service cloud.firestore {
              (!('maxGuests' in trip.data) || !(trip.data.maxGuests is int) || trip.data.maxGuests <= 0 ||
               guests <= trip.data.maxGuests) &&
              (!('availableSpots' in trip.data) || !(trip.data.availableSpots is int) ||
-              guests <= trip.data.availableSpots) &&
+              guests <= trip.data.availableSpots ||
+              ('departures' in trip.data && trip.data.departures is list && trip.data.departures.size() > 0)) &&
              (!(trip.data.price is number) || trip.data.price <= 0 ||
               d.totalPrice >= trip.data.price * d.adults * 0.5);
     }
@@ -414,7 +425,7 @@ service cloud.firestore {
                'certifications', 'experienceYears', 'availability',
                'heroMode', 'heroBannerUrl', 'heroTitle', 'heroSubtitle',
                'primaryColor', 'secondaryColor', 'theme', 'customSettings',
-               'socialLinks', 'subscriptionPlan', 'subscriptionStatus',
+               'socialLinks', 'subscriptionPlan', 'requestedPlan', 'subscriptionStatus',
                'subscriptionExpiresAt', 'rating', 'totalReviews',
                'createdAt', 'updatedAt'
              ]) &&
@@ -458,6 +469,7 @@ service cloud.firestore {
              (!('customSettings' in d) || d.customSettings == null || (d.customSettings is map && d.customSettings.keys().size() <= 20)) &&
              (!('socialLinks' in d) || d.socialLinks == null || (d.socialLinks is map && d.socialLinks.keys().size() <= 10)) &&
              (!('subscriptionPlan' in d) || d.subscriptionPlan == null || d.subscriptionPlan in ['STARTER', 'BASIC', 'PREMIUM']) &&
+             (!('requestedPlan' in d) || d.requestedPlan == null || d.requestedPlan in ['STARTER', 'BASIC', 'PREMIUM']) &&
              (!('subscriptionStatus' in d) || d.subscriptionStatus == null || d.subscriptionStatus in ['ACTIVE', 'INACTIVE', 'PENDING']) &&
              (!('subscriptionExpiresAt' in d) || d.subscriptionExpiresAt == null || d.subscriptionExpiresAt is timestamp || (d.subscriptionExpiresAt is string && d.subscriptionExpiresAt.size() <= 40)) &&
              (!('rating' in d) || d.rating == null || (d.rating is number && d.rating >= 0 && d.rating <= 5)) &&
@@ -670,7 +682,12 @@ service cloud.firestore {
                        isValidUpdatedOnUpdate() &&
                        (
                          (isOwner(uid) &&
+                          isNotSuspended() &&
                           areImmutableFieldsUnchanged(['status']) &&
+                          (!('email' in resource.data) ||
+                           resource.data.email == null ||
+                           resource.data.email == '' ||
+                           !request.resource.data.diff(resource.data).affectedKeys().hasAny(['email'])) &&
                           resource.data.role in ['CLIENT', 'AGENCY', 'GUIDE'] &&
                           request.resource.data.role in ['CLIENT', 'AGENCY', 'GUIDE']) ||
                          isAdmin()
@@ -689,7 +706,8 @@ service cloud.firestore {
                        (!('id' in request.resource.data) || request.resource.data.id == agencyId) &&
                        isValidCreatedAndUpdatedOnCreate() &&
                        (
-                         (request.resource.data.ownerUid == request.auth.uid &&
+                         (isNotSuspended() &&
+                          request.resource.data.ownerUid == request.auth.uid &&
                           isNonAdminAgencyDefaults(request.resource.data)) ||
                          isAdmin()
                        );
@@ -699,16 +717,24 @@ service cloud.firestore {
                        areImmutableFieldsUnchanged(['id', 'ownerUid', 'createdAt']) &&
                        isValidUpdatedOnUpdate() &&
                        (
-                         (resource.data.ownerUid == request.auth.uid &&
-                          areImmutableFieldsUnchanged(['verified', 'isVerified', 'rating', 'totalReviews']) &&
-                          (areImmutableFieldsUnchanged(['subscriptionPlan', 'subscriptionStatus', 'subscriptionExpiresAt']) ||
-                           isNonAdminSubscriptionSafe(request.resource.data))) ||
-                         isValidRatingAggregationUpdate() ||
+                         (isNotSuspended() &&
+                          (
+                            (resource.data.ownerUid == request.auth.uid &&
+                             areImmutableFieldsUnchanged(['verified', 'isVerified', 'rating', 'totalReviews', 'subscriptionExpiresAt']) &&
+                             (areImmutableFieldsUnchanged(['subscriptionPlan', 'requestedPlan', 'subscriptionStatus']) ||
+                              isNonAdminSubscriptionSafe(request.resource.data)) &&
+                             (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['theme']) ||
+                              ('subscriptionPlan' in resource.data &&
+                               resource.data.subscriptionPlan in ['BASIC', 'PREMIUM'] &&
+                               'subscriptionStatus' in resource.data &&
+                               resource.data.subscriptionStatus == 'ACTIVE'))) ||
+                            isValidRatingAggregationUpdate()
+                          )) ||
                          isAdmin()
                        );
 
       allow delete: if isAuthenticated() &&
-                       (resource.data.ownerUid == request.auth.uid || isAdmin());
+                       ((isNotSuspended() && resource.data.ownerUid == request.auth.uid) || isAdmin());
     }
 
     // 3. trips/{tripId} — Public active listings, owner agency full CRUD
@@ -729,7 +755,8 @@ service cloud.firestore {
                        (!('id' in request.resource.data) || request.resource.data.id == tripId) &&
                        isValidCreatedAndUpdatedOnCreate() &&
                        (
-                         (isAgencyOwner(request.resource.data.agencyId) &&
+                         (isNotSuspended() &&
+                          isAgencyOwner(request.resource.data.agencyId) &&
                           isNonAdminTripDefaults(request.resource.data)) ||
                          isAdmin()
                        );
@@ -739,14 +766,17 @@ service cloud.firestore {
                        areImmutableFieldsUnchanged(['id', 'agencyId', 'createdAt']) &&
                        isValidUpdatedOnUpdate() &&
                        (
-                         (isAgencyOwner(resource.data.agencyId) &&
-                          areImmutableFieldsUnchanged(['featured', 'featuredInHero', 'popularNearSP', 'rating', 'totalReviews', 'views', 'sales'])) ||
-                         isValidRatingAggregationUpdate() ||
+                         (isNotSuspended() &&
+                          (
+                            (isAgencyOwner(resource.data.agencyId) &&
+                             areImmutableFieldsUnchanged(['featured', 'featuredInHero', 'popularNearSP', 'rating', 'totalReviews', 'views', 'sales'])) ||
+                            isValidRatingAggregationUpdate()
+                          )) ||
                          isAdmin()
                        );
 
       allow delete: if isAuthenticated() &&
-                       (isAgencyOwner(resource.data.agencyId) || isAdmin());
+                       ((isNotSuspended() && isAgencyOwner(resource.data.agencyId)) || isAdmin());
     }
 
     // 4. bookings/{bookingId} — Private to client & owning agency; state-machine enforced
@@ -756,7 +786,7 @@ service cloud.firestore {
                       isAgencyOwner(resource.data.agencyId) ||
                       isAdmin());
 
-      allow create: if isAuthenticated() &&
+      allow create: if isNotSuspended() &&
                        isValidBooking(request.resource.data) &&
                        (!('id' in request.resource.data) || request.resource.data.id == bookingId) &&
                        request.resource.data.clientUid == request.auth.uid &&
@@ -769,14 +799,17 @@ service cloud.firestore {
                        areImmutableFieldsUnchanged(['id', 'clientUid', 'tripId', 'agencyId', 'totalPrice', 'createdAt']) &&
                        isValidUpdatedOnUpdate() &&
                        (
-                         (resource.data.clientUid == request.auth.uid &&
-                          resource.data.status in ['PENDING', 'CONFIRMED'] &&
-                          request.resource.data.status == 'CANCELLED' &&
-                          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt', 'cancellationReason'])) ||
-                         (isAgencyOwner(resource.data.agencyId) &&
-                          resource.data.status in ['PENDING', 'CONFIRMED'] &&
-                          request.resource.data.status in ['CONFIRMED', 'CANCELLED'] &&
-                          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt', 'voucherCode', 'cancellationReason'])) ||
+                         (isNotSuspended() &&
+                          (
+                            (resource.data.clientUid == request.auth.uid &&
+                             resource.data.status in ['PENDING', 'CONFIRMED'] &&
+                             request.resource.data.status == 'CANCELLED' &&
+                             request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt', 'cancellationReason'])) ||
+                            (isAgencyOwner(resource.data.agencyId) &&
+                             resource.data.status in ['PENDING', 'CONFIRMED'] &&
+                             request.resource.data.status in ['CONFIRMED', 'CANCELLED'] &&
+                             request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt', 'voucherCode', 'cancellationReason']))
+                          )) ||
                          isAdmin()
                        );
 
@@ -794,20 +827,21 @@ service cloud.firestore {
                        request.resource.data.userUid == request.auth.uid &&
                        isValidCreatedAndUpdatedOnCreate() &&
                        isValidReviewTarget(request.resource.data) &&
-                       (hasVerifiedBookingForReview(request.resource.data) || isAdmin());
+                       ((isNotSuspended() && hasVerifiedBookingForReview(request.resource.data)) || isAdmin());
 
       allow update: if isAuthenticated() &&
                        isValidReview(request.resource.data) &&
                        areImmutableFieldsUnchanged(['id', 'userUid', 'tripId', 'agencyId', 'createdAt']) &&
                        isValidUpdatedOnUpdate() &&
                        (
-                         (resource.data.userUid == request.auth.uid &&
+                         (isNotSuspended() &&
+                          resource.data.userUid == request.auth.uid &&
                           areImmutableFieldsUnchanged(['bookingId', 'verifiedBooking'])) ||
                          isAdmin()
                        );
 
       allow delete: if isAuthenticated() &&
-                       (resource.data.userUid == request.auth.uid || isAdmin());
+                       ((isNotSuspended() && resource.data.userUid == request.auth.uid) || isAdmin());
     }
 
     // 6. user_consents/{consentId} — LGPD Art. 8 audit trail (append-only proof of consent)
@@ -854,9 +888,13 @@ service cloud.firestore {
                        isValidNotification(request.resource.data) &&
                        (!('id' in request.resource.data) || request.resource.data.id == notificationId) &&
                        request.resource.data.read == false &&
-                       (!('actorUid' in request.resource.data) ||
-                        request.resource.data.actorUid == null ||
-                        request.resource.data.actorUid == request.auth.uid) &&
+                       'actorUid' in request.resource.data &&
+                       request.resource.data.actorUid == request.auth.uid &&
+                       (!('link' in request.resource.data) ||
+                        request.resource.data.link == null ||
+                        request.resource.data.link == '' ||
+                        request.resource.data.link.matches('^/[^/].*|^/$')) &&
+                       ((isNotSuspended() && !(request.resource.data.type in ['PLAN_APPROVED', 'SYSTEM'])) || isAdmin()) &&
                        isValidCreatedAndUpdatedOnCreate();
 
       allow update: if isAuthenticated() &&
@@ -864,13 +902,14 @@ service cloud.firestore {
                        areImmutableFieldsUnchanged(['id', 'createdAt']) &&
                        isValidUpdatedOnUpdate() &&
                        (
-                         (resource.data.recipientUid == request.auth.uid &&
+                         (isNotSuspended() &&
+                          resource.data.recipientUid == request.auth.uid &&
                           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read', 'updatedAt'])) ||
                          isAdmin()
                        );
 
       allow delete: if isAuthenticated() &&
-                       (resource.data.recipientUid == request.auth.uid || isAdmin());
+                       ((isNotSuspended() && resource.data.recipientUid == request.auth.uid) || isAdmin());
     }
 
     // 9. error_logs/{logId} — Append-only client crash telemetry, admin-only read/delete

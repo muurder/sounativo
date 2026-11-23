@@ -1,7 +1,14 @@
 import { useMemo } from 'react';
-import { PlanTier } from '@/types';
+import { PlanTier, SubscriptionStatus } from '@/types';
 import { getPlanPermissions } from '@/utils/planPermissions';
 
-export function usePlanPermissions(plan: PlanTier = 'STARTER', activeTripsCount = 0) {
-  return useMemo(() => getPlanPermissions(plan, activeTripsCount), [activeTripsCount, plan]);
+export function usePlanPermissions(
+  plan: PlanTier = 'STARTER',
+  activeTripsCount = 0,
+  subscriptionStatus: SubscriptionStatus = 'ACTIVE'
+) {
+  return useMemo(
+    () => getPlanPermissions(plan, activeTripsCount, subscriptionStatus),
+    [activeTripsCount, plan, subscriptionStatus]
+  );
 }

@@ -269,6 +269,47 @@ export async function createReviewInFirestore(input: CreateReviewInput): Promise
   }
 }
 
+export async function recalculateRatings(tripId?: string, agencyId?: string): Promise<void> {
+  if (!db) return;
+  try {
+    if (tripId) {
+      const tripRevSnap = await getDocs(
+        query(collection(db, COLLECTIONS.reviews), where('tripId', '==', tripId), limit(100))
+      );
+      const tripReviews = tripRevSnap.docs.map((d) =>
+        normalizeReviewDoc(d.id, d.data() as Record<string, unknown>)
+      );
+      const tripStats = computeReviewStats(tripReviews);
+      await updateDoc(doc(db, COLLECTIONS.trips, tripId), {
+        rating: tripStats.rating,
+        totalReviews: tripStats.totalReviews,
+        updatedAt: serverTimestamp(),
+      });
+    }
+  } catch (err) {
+    console.warn('[reviewService] Falha não-bloqueante ao recalcular nota do pacote:', err);
+  }
+
+  try {
+    if (agencyId) {
+      const agencyRevSnap = await getDocs(
+        query(collection(db, COLLECTIONS.reviews), where('agencyId', '==', agencyId), limit(100))
+      );
+      const agencyReviews = agencyRevSnap.docs.map((d) =>
+        normalizeReviewDoc(d.id, d.data() as Record<string, unknown>)
+      );
+      const agencyStats = computeReviewStats(agencyReviews);
+      await updateDoc(doc(db, COLLECTIONS.agencies, agencyId), {
+        rating: agencyStats.rating,
+        totalReviews: agencyStats.totalReviews,
+        updatedAt: serverTimestamp(),
+      });
+    }
+  } catch (err) {
+    console.warn('[reviewService] Falha não-bloqueante ao recalcular nota da agência:', err);
+  }
+}
+
 async function syncPersistedReviewAggregates(
   tripId: string,
   agencyId: string,

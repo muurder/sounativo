@@ -24,6 +24,7 @@ interface AdminCatalogSectionProps {
       verified?: boolean;
       isActive?: boolean;
       subscriptionPlan?: PlanTier;
+      requestedPlan?: PlanTier | null;
       subscriptionStatus?: SubscriptionStatus;
     }
   ) => Promise<void>;
@@ -43,6 +44,7 @@ export const AdminCatalogSection: React.FC<AdminCatalogSectionProps> = ({
 }) => {
   const [busyAgencyId, setBusyAgencyId] = useState<string | null>(null);
   const [busyTripId, setBusyTripId] = useState<string | null>(null);
+  const [confirmDeleteTripId, setConfirmDeleteTripId] = useState<string | null>(null);
 
   const safeAgencies = Array.isArray(agencies) ? agencies : [];
   const safeTrips = Array.isArray(trips) ? trips : [];
@@ -53,6 +55,7 @@ export const AdminCatalogSection: React.FC<AdminCatalogSectionProps> = ({
       verified?: boolean;
       isActive?: boolean;
       subscriptionPlan?: PlanTier;
+      requestedPlan?: PlanTier | null;
       subscriptionStatus?: SubscriptionStatus;
     }
   ) => {
@@ -80,6 +83,7 @@ export const AdminCatalogSection: React.FC<AdminCatalogSectionProps> = ({
     setBusyTripId(tripId);
     try {
       await onDeleteTrip(tripId);
+      setConfirmDeleteTripId(null);
     } finally {
       setBusyTripId(null);
     }
@@ -98,87 +102,103 @@ export const AdminCatalogSection: React.FC<AdminCatalogSectionProps> = ({
           </p>
         ) : (
           <div className="space-y-3">
-            {safeAgencies.map((ag) => (
-              <div
-                key={ag.id}
-                className="flex flex-col md:flex-row md:items-center justify-between gap-3 rounded-xl border border-stone-200 p-4"
-              >
-                <div className="space-y-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Badge tone={ag.verified ? 'success' : 'neutral'}>
-                      {ag.verified ? <ShieldCheck size={12} /> : <ShieldAlert size={12} />}
-                      {ag.verified ? 'Verificada' : 'Pendente selo'}
-                    </Badge>
-                    <Badge tone={ag.isGuide ? 'secondary' : 'primary'}>
-                      {ag.isGuide ? 'Guia / Agente' : 'Agência'}
-                    </Badge>
-                    {!ag.isActive && <Badge tone="warning">Microsite suspenso</Badge>}
-                    {ag.subscriptionStatus === 'PENDING' && (
-                      <Badge tone="warning">
-                        <Clock size={12} /> Upgrade {ag.subscriptionPlan} solicitado
+            {safeAgencies.map((ag) => {
+              const targetUpgradePlan = ag.requestedPlan ?? ag.subscriptionPlan;
+              return (
+                <div
+                  key={ag.id}
+                  className="flex flex-col md:flex-row md:items-center justify-between gap-3 rounded-xl border border-stone-200 p-4"
+                >
+                  <div className="space-y-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge tone={ag.verified ? 'success' : 'neutral'}>
+                        {ag.verified ? <ShieldCheck size={12} /> : <ShieldAlert size={12} />}
+                        {ag.verified ? 'Verificada' : 'Pendente selo'}
                       </Badge>
-                    )}
+                      <Badge tone={ag.isGuide ? 'secondary' : 'primary'}>
+                        {ag.isGuide ? 'Guia / Agente' : 'Agência'}
+                      </Badge>
+                      {!ag.isActive && <Badge tone="warning">Microsite suspenso</Badge>}
+                      {ag.subscriptionStatus === 'PENDING' && (
+                        <Badge tone="warning">
+                          <Clock size={12} /> Upgrade {targetUpgradePlan} solicitado
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-sm font-semibold text-stone-900">
+                      {ag.name} (/{ag.slug})
+                    </p>
+                    <p className="text-xs text-stone-500">
+                      {[
+                        ag.city ? `${ag.city}${ag.state ? `/${ag.state}` : ''}` : ag.state,
+                        ag.cadastur ? `Cadastur: ${ag.cadastur}` : 'Cadastur não informado',
+                        ag.cnpj ? `CNPJ: ${ag.cnpj}` : null,
+                        ag.email || null,
+                        ag.whatsapp ? `WA: ${ag.whatsapp}` : null,
+                      ]
+                        .filter(Boolean)
+                        .join(' · ')}
+                    </p>
                   </div>
-                  <p className="text-sm font-semibold text-stone-900">
-                    {ag.name} (/{ag.slug})
-                  </p>
-                </div>
 
-                <div className="flex flex-wrap items-center gap-2">
-                  <select
-                    aria-label={`Plano de ${ag.name}`}
-                    disabled={busyAgencyId === ag.id}
-                    value={ag.subscriptionPlan}
-                    onChange={(e) =>
-                      void runAgencyUpdate(ag.id, {
-                        subscriptionPlan: e.target.value as PlanTier,
-                        subscriptionStatus: 'ACTIVE',
-                      })
-                    }
-                    className="min-h-[38px] rounded-xl border border-stone-300 bg-white px-2.5 text-xs font-semibold disabled:opacity-60"
-                  >
-                    <option value="STARTER">Starter (Grátis)</option>
-                    <option value="BASIC">Básico</option>
-                    <option value="PREMIUM">Premium</option>
-                  </select>
-
-                  {ag.subscriptionStatus === 'PENDING' && (
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      loading={busyAgencyId === ag.id}
-                      onClick={() =>
+                  <div className="flex flex-wrap items-center gap-2 shrink-0">
+                    <select
+                      aria-label={`Plano de ${ag.name}`}
+                      disabled={busyAgencyId === ag.id}
+                      value={ag.subscriptionPlan}
+                      onChange={(e) =>
                         void runAgencyUpdate(ag.id, {
-                          subscriptionPlan: ag.subscriptionPlan,
+                          subscriptionPlan: e.target.value as PlanTier,
+                          requestedPlan: null,
                           subscriptionStatus: 'ACTIVE',
                         })
                       }
+                      className="min-h-[38px] rounded-xl border border-stone-300 bg-white px-2.5 text-xs font-semibold disabled:opacity-60"
                     >
-                      Aprovar plano
+                      <option value="STARTER">Starter (Grátis)</option>
+                      <option value="BASIC">Básico</option>
+                      <option value="PREMIUM">Premium</option>
+                    </select>
+
+                    {ag.subscriptionStatus === 'PENDING' && (
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        loading={busyAgencyId === ag.id}
+                        onClick={() =>
+                          void runAgencyUpdate(ag.id, {
+                            subscriptionPlan: targetUpgradePlan,
+                            requestedPlan: null,
+                            subscriptionStatus: 'ACTIVE',
+                          })
+                        }
+                      >
+                        Aprovar {targetUpgradePlan}
+                      </Button>
+                    )}
+
+                    <Button
+                      size="sm"
+                      loading={busyAgencyId === ag.id}
+                      variant={ag.verified ? 'outline' : 'primary'}
+                      onClick={() => void runAgencyUpdate(ag.id, { verified: !ag.verified })}
+                    >
+                      {ag.verified ? 'Remover selo' : 'Verificar'}
                     </Button>
-                  )}
 
-                  <Button
-                    size="sm"
-                    loading={busyAgencyId === ag.id}
-                    variant={ag.verified ? 'outline' : 'primary'}
-                    onClick={() => void runAgencyUpdate(ag.id, { verified: !ag.verified })}
-                  >
-                    {ag.verified ? 'Remover selo' : 'Verificar'}
-                  </Button>
-
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    disabled={busyAgencyId === ag.id}
-                    leftIcon={<ShieldBan size={14} className="text-stone-500" />}
-                    onClick={() => void runAgencyUpdate(ag.id, { isActive: !ag.isActive })}
-                  >
-                    {ag.isActive ? 'Pausar' : 'Reativar'}
-                  </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      disabled={busyAgencyId === ag.id}
+                      leftIcon={<ShieldBan size={14} className="text-stone-500" />}
+                      onClick={() => void runAgencyUpdate(ag.id, { isActive: !ag.isActive })}
+                    >
+                      {ag.isActive ? 'Pausar' : 'Reativar'}
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </section>
@@ -192,53 +212,78 @@ export const AdminCatalogSection: React.FC<AdminCatalogSectionProps> = ({
           <p className="text-sm text-stone-500">Nenhum roteiro publicado no Firestore ainda.</p>
         ) : (
           safeTrips.map((trip) => (
-            <div
-              key={trip.id}
-              className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-stone-200 p-3.5"
-            >
-              <div className="space-y-1 min-w-0">
-                <div className="flex flex-wrap items-center gap-2">
-                  <Badge tone={trip.isActive ? 'success' : 'warning'}>
-                    {trip.isActive ? 'Ativo' : 'Pausado'}
-                  </Badge>
-                  <span className="text-xs text-stone-500">
-                    {trip.agencyName} · {trip.destination} · {formatCurrencyBRL(trip.price)}
-                  </span>
+            <div key={trip.id} className="rounded-xl border border-stone-200 p-3.5 space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="space-y-1 min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge tone={trip.isActive ? 'success' : 'warning'}>
+                      {trip.isActive ? 'Ativo' : 'Pausado'}
+                    </Badge>
+                    <span className="text-xs text-stone-500">
+                      {trip.agencyName} · {trip.destination} · {formatCurrencyBRL(trip.price)}
+                    </span>
+                  </div>
+                  <p className="text-sm font-semibold text-stone-900 truncate">{trip.title}</p>
                 </div>
-                <p className="text-sm font-semibold text-stone-900 truncate">{trip.title}</p>
+
+                <div className="flex flex-wrap items-center gap-2 shrink-0">
+                  <Button
+                    size="sm"
+                    loading={busyTripId === trip.id}
+                    variant={trip.featured ? 'primary' : 'outline'}
+                    leftIcon={<Star size={14} />}
+                    onClick={() => void runTripUpdate(trip.id, { featured: !trip.featured })}
+                  >
+                    {trip.featured ? 'Em destaque' : 'Destacar'}
+                  </Button>
+
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    disabled={busyTripId === trip.id}
+                    leftIcon={trip.isActive ? <EyeOff size={14} /> : <Eye size={14} />}
+                    onClick={() => void runTripUpdate(trip.id, { isActive: !trip.isActive })}
+                  >
+                    {trip.isActive ? 'Pausar' : 'Ativar'}
+                  </Button>
+
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    aria-label={`Remover pacote ${trip.title}`}
+                    disabled={busyTripId === trip.id}
+                    onClick={() =>
+                      setConfirmDeleteTripId(confirmDeleteTripId === trip.id ? null : trip.id)
+                    }
+                  >
+                    <Trash2 size={14} className="text-red-600" />
+                  </Button>
+                </div>
               </div>
 
-              <div className="flex flex-wrap items-center gap-2 shrink-0">
-                <Button
-                  size="sm"
-                  loading={busyTripId === trip.id}
-                  variant={trip.featured ? 'primary' : 'outline'}
-                  leftIcon={<Star size={14} />}
-                  onClick={() => void runTripUpdate(trip.id, { featured: !trip.featured })}
-                >
-                  {trip.featured ? 'Em destaque' : 'Destacar'}
-                </Button>
-
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  disabled={busyTripId === trip.id}
-                  leftIcon={trip.isActive ? <EyeOff size={14} /> : <Eye size={14} />}
-                  onClick={() => void runTripUpdate(trip.id, { isActive: !trip.isActive })}
-                >
-                  {trip.isActive ? 'Pausar' : 'Ativar'}
-                </Button>
-
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  aria-label={`Remover pacote ${trip.title}`}
-                  disabled={busyTripId === trip.id}
-                  onClick={() => void runTripDelete(trip.id)}
-                >
-                  <Trash2 size={14} className="text-red-600" />
-                </Button>
-              </div>
+              {confirmDeleteTripId === trip.id && (
+                <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-900">
+                  <span>Confirmar exclusão administrativa de &ldquo;{trip.title}&rdquo;?</span>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      disabled={busyTripId === trip.id}
+                      onClick={() => setConfirmDeleteTripId(null)}
+                    >
+                      Cancelar
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="danger"
+                      loading={busyTripId === trip.id}
+                      onClick={() => void runTripDelete(trip.id)}
+                    >
+                      Confirmar exclusão
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           ))
         )}

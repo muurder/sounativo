@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useOutletContext, useSearchParams } from 'react-router-dom';
 import {
   AlertCircle,
@@ -22,10 +22,49 @@ interface OutletContextValue {
   openAuth: (mode: 'login' | 'signup') => void;
 }
 
+const VALID_CATEGORIES = new Set<TripCategory>([
+  'PRAIA',
+  'AVENTURA',
+  'NATUREZA',
+  'HISTORIA',
+  'GASTRONOMIA',
+  'ROMANTICO',
+  'VIDA_NOTURNA',
+  'CULTURA',
+  'ARTE',
+  'VIAGEM_BARATA',
+]);
+
+const VALID_SORTS = new Set<NonNullable<TripSearchFilters['sortBy']>>([
+  'featured',
+  'price_asc',
+  'price_desc',
+  'rating',
+]);
+
 function parseGuestsParam(raw: string | null): number | undefined {
   if (!raw) return undefined;
   const parsed = Number(raw);
   return Number.isInteger(parsed) && parsed > 0 ? parsed : undefined;
+}
+
+function parseCategoryParam(raw: string | null): TripCategory | 'ALL' {
+  if (!raw) return 'ALL';
+  const upper = raw.toUpperCase() as TripCategory;
+  return VALID_CATEGORIES.has(upper) ? upper : 'ALL';
+}
+
+function parseMaxPriceParam(raw: string | null): number | undefined {
+  if (!raw) return undefined;
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined;
+}
+
+function parseSortParam(raw: string | null): NonNullable<TripSearchFilters['sortBy']> {
+  if (!raw) return 'featured';
+  return VALID_SORTS.has(raw as NonNullable<TripSearchFilters['sortBy']>)
+    ? (raw as NonNullable<TripSearchFilters['sortBy']>)
+    : 'featured';
 }
 
 export const TripsPage: React.FC = () => {
@@ -36,20 +75,49 @@ export const TripsPage: React.FC = () => {
   const [travelers, setTravelers] = useState<number | undefined>(() =>
     parseGuestsParam(searchParams.get('guests'))
   );
-  const [category, setCategory] = useState<TripCategory | 'ALL'>('ALL');
-  const [sortBy, setSortBy] = useState<TripSearchFilters['sortBy']>('featured');
-  const [maxPrice, setMaxPrice] = useState<number | undefined>(undefined);
+  const [category, setCategory] = useState<TripCategory | 'ALL'>(() =>
+    parseCategoryParam(searchParams.get('category'))
+  );
+  const [sortBy, setSortBy] = useState<TripSearchFilters['sortBy']>(() =>
+    parseSortParam(searchParams.get('sort'))
+  );
+  const [maxPrice, setMaxPrice] = useState<number | undefined>(() =>
+    parseMaxPriceParam(searchParams.get('maxPrice'))
+  );
+  const lastWrittenSearchRef = useRef<string | null>(null);
 
   useEffect(() => {
-    const qParam = searchParams.get('q');
-    const monthParam = searchParams.get('month');
-    const guestsParam = parseGuestsParam(searchParams.get('guests'));
-    if (qParam !== null) setQuery(qParam);
-    if (monthParam !== null) setMonth(monthParam);
-    if (guestsParam !== undefined) setTravelers(guestsParam);
+    const rawSearch = searchParams.toString();
+    if (lastWrittenSearchRef.current === rawSearch) {
+      return;
+    }
+    setQuery(searchParams.get('q') ?? '');
+    setMonth(searchParams.get('month') ?? '');
+    setTravelers(parseGuestsParam(searchParams.get('guests')));
+    setCategory(parseCategoryParam(searchParams.get('category')));
+    setMaxPrice(parseMaxPriceParam(searchParams.get('maxPrice')));
+    setSortBy(parseSortParam(searchParams.get('sort')));
   }, [searchParams]);
 
   const debouncedQuery = useDebounce(query, 250);
+
+  useEffect(() => {
+    if (debouncedQuery !== query) return;
+    const next = new URLSearchParams();
+    if (debouncedQuery.trim()) next.set('q', debouncedQuery.trim());
+    if (month) next.set('month', month);
+    if (travelers) next.set('guests', String(travelers));
+    if (category !== 'ALL') next.set('category', category);
+    if (maxPrice) next.set('maxPrice', String(maxPrice));
+    if (sortBy && sortBy !== 'featured') next.set('sort', sortBy);
+
+    const nextStr = next.toString();
+    if (nextStr !== searchParams.toString()) {
+      lastWrittenSearchRef.current = nextStr;
+      setSearchParams(next, { replace: true });
+    }
+  }, [category, debouncedQuery, maxPrice, month, query, searchParams, setSearchParams, sortBy, travelers]);
+
   const { trips, allTrips, loading, error, reload } = useTrips({
     query: debouncedQuery,
     category,
@@ -69,10 +137,17 @@ export const TripsPage: React.FC = () => {
   });
 
   const monthOptions = React.useMemo(() => {
-    const months = new Set<string>(['2026-12', '2027-01']);
+    const months = new Set<string>();
     for (const t of allTrips) {
       if (typeof t.startDate === 'string' && /^\d{4}-\d{2}/.test(t.startDate)) {
         months.add(t.startDate.slice(0, 7));
+      }
+      if (Array.isArray(t.departures)) {
+        for (const dep of t.departures) {
+          if (typeof dep?.startDate === 'string' && /^\d{4}-\d{2}/.test(dep.startDate)) {
+            months.add(dep.startDate.slice(0, 7));
+          }
+        }
       }
     }
     return Array.from(months)
@@ -106,6 +181,8 @@ export const TripsPage: React.FC = () => {
     setCategory('ALL');
     setMaxPrice(undefined);
     setTravelers(undefined);
+    setSortBy('featured');
+    lastWrittenSearchRef.current = '';
     setSearchParams({});
   };
 
@@ -192,6 +269,7 @@ export const TripsPage: React.FC = () => {
               className="w-full min-h-[44px] rounded-xl border border-stone-300 bg-white px-3 text-sm"
             >
               <option value="">Qualquer grupo</option>
+              <option value="1">1+ viajante</option>
               <option value="2">2+ viajantes</option>
               <option value="4">4+ viajantes</option>
               <option value="8">8+ viajantes</option>
@@ -210,7 +288,7 @@ export const TripsPage: React.FC = () => {
               onChange={(e) => setMaxPrice(e.target.value ? Number(e.target.value) : undefined)}
               className="w-full min-h-[44px] rounded-xl border border-stone-300 bg-white px-3 text-sm"
             >
-              <option value="">Qualquer orçamento</option>
+              <option value="">Orçamento</option>
               <option value="1000">Até R$ 1.000</option>
               <option value="2000">Até R$ 2.000</option>
               <option value="3500">Até R$ 3.500</option>

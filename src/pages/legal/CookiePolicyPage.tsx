@@ -2,10 +2,18 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Cookie, RefreshCw, ShieldCheck } from 'lucide-react';
 import { useConsent } from '@/hooks/useConsent';
+import { usePageMeta } from '@/hooks/usePageMeta';
 import { Button } from '@/components/ui/Button';
 
 export const CookiePolicyPage: React.FC = () => {
   const { consent, openConsentBanner } = useConsent();
+
+  usePageMeta({
+    title: 'Política de Cookies',
+    description:
+      'Saiba como utilizamos cookies essenciais, analíticos e de marketing e gerencie suas preferências no SouNativo.',
+    canonicalPath: '/cookies',
+  });
 
   return (
     <article className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-12 sm:py-16 text-stone-800 leading-relaxed space-y-8">

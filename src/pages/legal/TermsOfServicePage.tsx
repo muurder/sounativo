@@ -1,9 +1,16 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { BookOpen, ShieldCheck } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
+import { usePageMeta } from '@/hooks/usePageMeta';
 
 export const TermsOfServicePage: React.FC = () => {
+  usePageMeta({
+    title: 'Termos de Uso',
+    description:
+      'Condições gerais de uso e intermediação do marketplace SouNativo entre viajantes, agências e guias.',
+    canonicalPath: '/terms',
+  });
+
   return (
     <article className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-12 sm:py-16 text-stone-800 leading-relaxed space-y-8">
       {/* Header */}
@@ -173,10 +180,11 @@ export const TermsOfServicePage: React.FC = () => {
         >
           Ver Política de Privacidade &rarr;
         </Link>
-        <Link to="/contact">
-          <Button variant="outline" size="sm">
-            Falar com Atendimento
-          </Button>
+        <Link
+          to="/contact"
+          className="inline-flex items-center justify-center min-h-[36px] rounded-xl border border-stone-300 bg-white px-3.5 py-2 text-xs font-semibold text-stone-800 hover:bg-stone-50 transition-colors"
+        >
+          Falar com Atendimento
         </Link>
       </div>
     </article>

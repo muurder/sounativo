@@ -74,6 +74,7 @@ export async function provisionPartnerAccount({
           ? 'Guia local credenciado pelo SouNativo.'
           : 'Agência parceira curada pelo SouNativo.',
         logo: profile.photoURL ?? '',
+        ...(profile.email ? { email: profile.email } : {}),
         whatsapp: profile.phone ?? '',
         city: '',
         state: 'BR',

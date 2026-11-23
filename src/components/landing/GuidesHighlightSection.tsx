@@ -46,7 +46,8 @@ export const GuidesHighlightSection: React.FC = () => {
               <div className="flex-1 min-w-0">
                 <div className="flex flex-wrap items-center gap-2 mb-1.5">
                   <Badge tone="primary">
-                    <Award size={12} /> Cadastur {guide.cadastur || 'Verificado'}
+                    <Award size={12} />{' '}
+                    {guide.cadastur?.trim() ? `Cadastur ${guide.cadastur.trim()}` : 'Guia Local'}
                   </Badge>
                   {guide.city && (
                     <span className="inline-flex items-center gap-1 text-xs text-stone-500">

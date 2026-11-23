@@ -67,11 +67,12 @@ export const PartnerOnboardingForm: React.FC<PartnerOnboardingFormProps> = ({
           ? 'Guia local credenciado pelo SouNativo.'
           : 'Agência parceira curada pelo SouNativo.',
         logo: logoUrl.trim() || DEFAULT_PARTNER_LOGO,
+        ...(profile.email ? { email: profile.email } : {}),
         whatsapp: whatsapp.trim(),
         city: city.trim(),
         state: uf.trim().toUpperCase() || 'BR',
         isGuide,
-        cadastur: isGuide ? cadastur.trim() : '',
+        cadastur: cadastur.trim(),
         heroMode: 'TRIPS',
         subscriptionPlan: 'STARTER',
         subscriptionStatus: 'ACTIVE',
@@ -222,24 +223,22 @@ export const PartnerOnboardingForm: React.FC<PartnerOnboardingFormProps> = ({
         </div>
       </div>
 
-      {isGuide && (
-        <div>
-          <label
-            htmlFor="partner-cadastur"
-            className="block text-xs font-semibold text-stone-700 mb-1"
-          >
-            Número Cadastur
-          </label>
-          <input
-            id="partner-cadastur"
-            maxLength={50}
-            value={cadastur}
-            onChange={(e) => setCadastur(e.target.value)}
-            placeholder="Número Cadastur (opcional)"
-            className="w-full min-h-[44px] rounded-xl border border-stone-300 px-3 text-sm"
-          />
-        </div>
-      )}
+      <div>
+        <label
+          htmlFor="partner-cadastur"
+          className="block text-xs font-semibold text-stone-700 mb-1"
+        >
+          Número Cadastur {isGuide ? '(Guia)' : '(Agência)'}
+        </label>
+        <input
+          id="partner-cadastur"
+          maxLength={50}
+          value={cadastur}
+          onChange={(e) => setCadastur(e.target.value)}
+          placeholder="Número Cadastur (opcional)"
+          className="w-full min-h-[44px] rounded-xl border border-stone-300 px-3 text-sm"
+        />
+      </div>
 
       <Button type="submit" loading={creatingOrg}>
         Criar meu microsite grátis

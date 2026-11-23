@@ -36,6 +36,10 @@ export const TripCard: React.FC<TripCardProps> = ({
       ? Math.max(0, trip.availableSpots)
       : maxGuests;
   const extraDeparturesCount = Array.isArray(trip.departures) ? trip.departures.length : 0;
+  const allDeparturesSoldOut =
+    remainingSpots === 0 &&
+    (!Array.isArray(trip.departures) ||
+      trip.departures.every((d) => (d?.availableSpots ?? d?.maxGuests ?? 0) === 0));
   const smallGroup = maxGuests <= 12;
   const price = trip.price ?? 0;
   const numericRating =
@@ -75,7 +79,7 @@ export const TripCard: React.FC<TripCardProps> = ({
               Grupo reduzido
             </Badge>
           )}
-          {remainingSpots === 0 && extraDeparturesCount === 0 && (
+          {allDeparturesSoldOut && (
             <Badge tone="warning" className="backdrop-blur-sm">
               Esgotado
             </Badge>
@@ -83,24 +87,29 @@ export const TripCard: React.FC<TripCardProps> = ({
         </div>
 
         {onToggleFavorite && (
-          <Tooltip content={isFavorite ? 'Remover dos favoritos' : 'Salvar nos favoritos'}>
-            <button
-              type="button"
-              onClick={() => onToggleFavorite(trip.id)}
-              aria-label={
-                isFavorite ? `Remover ${trip.title} dos favoritos` : `Favoritar ${trip.title}`
-              }
-              aria-pressed={isFavorite}
-              className="absolute top-3 right-3 min-w-[40px] min-h-[40px] inline-flex items-center justify-center rounded-full bg-white/95 text-stone-700 shadow-sm backdrop-blur-sm hover:scale-105 transition-transform"
+          <div className="absolute top-3 right-3 z-10">
+            <Tooltip
+              position="bottom"
+              content={isFavorite ? 'Remover dos favoritos' : 'Salvar nos favoritos'}
             >
-              <Heart
-                size={18}
-                className={cn(
-                  isFavorite ? 'fill-secondary-500 text-secondary-500' : 'text-stone-700'
-                )}
-              />
-            </button>
-          </Tooltip>
+              <button
+                type="button"
+                onClick={() => onToggleFavorite(trip.id)}
+                aria-label={
+                  isFavorite ? `Remover ${trip.title} dos favoritos` : `Favoritar ${trip.title}`
+                }
+                aria-pressed={isFavorite}
+                className="min-w-[40px] min-h-[40px] inline-flex items-center justify-center rounded-full bg-white/95 text-stone-700 shadow-sm backdrop-blur-sm hover:scale-105 transition-transform"
+              >
+                <Heart
+                  size={18}
+                  className={cn(
+                    isFavorite ? 'fill-secondary-500 text-secondary-500' : 'text-stone-700'
+                  )}
+                />
+              </button>
+            </Tooltip>
+          </div>
         )}
 
         <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-white text-xs font-medium">

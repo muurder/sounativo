@@ -10,6 +10,7 @@ interface ModalProps {
   description?: string;
   children: React.ReactNode;
   maxWidthClass?: string;
+  containerClassName?: string;
 }
 
 export const Modal: React.FC<ModalProps> = ({
@@ -19,6 +20,7 @@ export const Modal: React.FC<ModalProps> = ({
   description,
   children,
   maxWidthClass = 'max-w-lg',
+  containerClassName,
 }) => {
   const titleId = useId();
 
@@ -42,13 +44,16 @@ export const Modal: React.FC<ModalProps> = ({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 isolate"
+      className={cn(
+        'fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 isolate',
+        containerClassName
+      )}
       role="presentation"
     >
       <div
         aria-hidden="true"
         onClick={onClose}
-        className="fixed inset-0 bg-stone-950/65 backdrop-blur-sm animate-fade-in"
+        className="fixed inset-0 bg-stone-950/65 backdrop-blur-sm animate-fade-in print:hidden"
       />
       <div
         role="dialog"
@@ -56,7 +61,7 @@ export const Modal: React.FC<ModalProps> = ({
         aria-labelledby={titleId}
         className={cn(
           'relative z-10 w-full bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl border border-stone-200',
-          'max-h-[92vh] overflow-y-auto animate-scale-in',
+          'max-h-[92vh] overflow-y-auto animate-scale-in print:max-h-none print:overflow-visible print:shadow-none',
           maxWidthClass
         )}
       >

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Heart, MapPin, ShieldCheck, Star } from 'lucide-react';
+import { Heart, MapPin, Share2, ShieldCheck, Star } from 'lucide-react';
 import { Trip } from '@/types';
 import { CATEGORY_LABELS } from '@/utils/constants';
 import { Badge } from '@/components/ui/Badge';
@@ -10,9 +10,15 @@ interface TripHeaderProps {
   trip: Trip;
   isFavorite: boolean;
   onToggleFavorite: () => void;
+  onShare?: () => void;
 }
 
-export const TripHeader: React.FC<TripHeaderProps> = ({ trip, isFavorite, onToggleFavorite }) => {
+export const TripHeader: React.FC<TripHeaderProps> = ({
+  trip,
+  isFavorite,
+  onToggleFavorite,
+  onShare,
+}) => {
   const categoryLabel = CATEGORY_LABELS[trip.category] ?? 'Experiência';
   const numericRating =
     typeof trip.rating === 'number' && Number.isFinite(trip.rating) ? trip.rating : 0;
@@ -30,17 +36,32 @@ export const TripHeader: React.FC<TripHeaderProps> = ({ trip, isFavorite, onTogg
           </Badge>
         </div>
 
-        <button
-          type="button"
-          onClick={onToggleFavorite}
-          className="inline-flex items-center gap-2 min-h-[40px] rounded-xl border border-stone-200 bg-white px-3.5 text-xs font-semibold text-stone-700 hover:border-secondary-300"
-        >
-          <Heart
-            size={16}
-            className={cn(isFavorite ? 'fill-secondary-500 text-secondary-500' : 'text-stone-500')}
-          />
-          {isFavorite ? 'Salvo nos favoritos' : 'Salvar roteiro'}
-        </button>
+        <div className="flex items-center gap-2">
+          {onShare && (
+            <button
+              type="button"
+              onClick={onShare}
+              aria-label={`Compartilhar ${trip.title}`}
+              className="inline-flex items-center gap-2 min-h-[40px] rounded-xl border border-stone-200 bg-white px-3.5 text-xs font-semibold text-stone-700 hover:border-primary-300"
+            >
+              <Share2 size={15} className="text-stone-500" />
+              Compartilhar
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={onToggleFavorite}
+            className="inline-flex items-center gap-2 min-h-[40px] rounded-xl border border-stone-200 bg-white px-3.5 text-xs font-semibold text-stone-700 hover:border-secondary-300"
+          >
+            <Heart
+              size={16}
+              className={cn(
+                isFavorite ? 'fill-secondary-500 text-secondary-500' : 'text-stone-500'
+              )}
+            />
+            {isFavorite ? 'Salvo nos favoritos' : 'Salvar roteiro'}
+          </button>
+        </div>
       </div>
 
       <h1 className="font-serif text-3xl sm:text-4xl font-bold text-stone-900 leading-tight">

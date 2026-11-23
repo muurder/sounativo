@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
 import { useOutletContext, useSearchParams } from 'react-router-dom';
 import { AlertCircle, Briefcase, Compass, Lock, ShieldCheck, User } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
@@ -10,13 +10,24 @@ import {
   isPartnerRole,
   resolveDashboardViewMode,
 } from '@/utils/dashboardRouting';
+import { lazyWithRetry } from '@/utils/lazyWithRetry';
 import { GoogleSignInButton } from '@/components/ui/GoogleSignInButton';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
-import { ClientDashboardView } from './ClientDashboardView';
-import { PartnerDashboardView } from './PartnerDashboardView';
-import { AdminDashboardView } from './AdminDashboardView';
-import { PrivacySettings } from './PrivacySettings';
+import { Skeleton } from '@/components/ui/Skeleton';
+
+const ClientDashboardView = lazyWithRetry(() =>
+  import('./ClientDashboardView').then((m) => ({ default: m.ClientDashboardView }))
+);
+const PartnerDashboardView = lazyWithRetry(() =>
+  import('./PartnerDashboardView').then((m) => ({ default: m.PartnerDashboardView }))
+);
+const AdminDashboardView = lazyWithRetry(() =>
+  import('./AdminDashboardView').then((m) => ({ default: m.AdminDashboardView }))
+);
+const PrivacySettings = lazyWithRetry(() =>
+  import('./PrivacySettings').then((m) => ({ default: m.PrivacySettings }))
+);
 
 interface OutletContextValue {
   openAuth: (mode: 'login' | 'signup') => void;
@@ -225,25 +236,27 @@ export const DashboardPage: React.FC = () => {
         </div>
       </div>
 
-      {viewMode === 'traveler' && (
-        <>
-          {isPartnerAccount && (
-            <div className="rounded-xl border border-primary-200 bg-primary-50/60 px-4 py-3 text-xs text-primary-900 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-              <span>
-                Você está no <strong>Modo Viajante</strong>. Sua conta parceira tem um painel
-                próprio para publicar roteiros e receber reservas.
-              </span>
-              <Button size="sm" onClick={() => setViewMode('partner')}>
-                Ir para o painel do parceiro
-              </Button>
-            </div>
-          )}
-          <ClientDashboardView />
-        </>
-      )}
-      {viewMode === 'partner' && <PartnerDashboardView />}
-      {viewMode === 'privacy' && <PrivacySettings />}
-      {viewMode === 'admin' && isMasterAdmin && <AdminDashboardView />}
+      <Suspense fallback={<Skeleton className="h-96 w-full rounded-2xl" />}>
+        {viewMode === 'traveler' && (
+          <>
+            {isPartnerAccount && (
+              <div className="rounded-xl border border-primary-200 bg-primary-50/60 px-4 py-3 text-xs text-primary-900 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <span>
+                  Você está no <strong>Modo Viajante</strong>. Sua conta parceira tem um painel
+                  próprio para publicar roteiros e receber reservas.
+                </span>
+                <Button size="sm" onClick={() => setViewMode('partner')}>
+                  Ir para o painel do parceiro
+                </Button>
+              </div>
+            )}
+            <ClientDashboardView />
+          </>
+        )}
+        {viewMode === 'partner' && <PartnerDashboardView />}
+        {viewMode === 'privacy' && <PrivacySettings />}
+        {viewMode === 'admin' && isMasterAdmin && <AdminDashboardView />}
+      </Suspense>
     </div>
   );
 };

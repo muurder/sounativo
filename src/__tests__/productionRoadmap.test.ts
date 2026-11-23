@@ -34,7 +34,7 @@ describe('Items 3–8 Production Roadmap Suite', () => {
 
     const afterConfirm = applySpotDeltaToTrip(rawTrip, 4, -1, '2026-12-15T08:00:00.000Z');
     expect(afterConfirm.departures?.[0]?.availableSpots).toBe(2);
-    expect(afterConfirm.availableSpots).toBe(8);
+    expect(afterConfirm.availableSpots).toBe(12);
 
     // Overbooking attempt must throw
     expect(() =>
@@ -50,7 +50,7 @@ describe('Items 3–8 Production Roadmap Suite', () => {
       )
     ).toThrow(/vagas suficientes/i);
 
-    // Cancellation restores exact spots clamped to maxGuests
+    // Cancellation restores exact departure spots without altering global availableSpots
     const afterCancel = applySpotDeltaToTrip(
       {
         ...rawTrip,
@@ -63,6 +63,22 @@ describe('Items 3–8 Production Roadmap Suite', () => {
     );
     expect(afterCancel.departures?.[0]?.availableSpots).toBe(6);
     expect(afterCancel.availableSpots).toBe(12);
+
+    // Booking the primary date decrements and restores global availableSpots independently
+    const afterPrimaryConfirm = applySpotDeltaToTrip(rawTrip, 4, -1);
+    expect(afterPrimaryConfirm.availableSpots).toBe(8);
+    expect(afterPrimaryConfirm.departures?.[0]?.availableSpots).toBe(6);
+
+    const afterPrimaryCancel = applySpotDeltaToTrip(
+      {
+        ...rawTrip,
+        availableSpots: afterPrimaryConfirm.availableSpots,
+      },
+      4,
+      1
+    );
+    expect(afterPrimaryCancel.availableSpots).toBe(12);
+    expect(afterPrimaryCancel.departures?.[0]?.availableSpots).toBe(6);
   });
 
   it('normalizes departures, coordinates, and filters multi-departure trips by month and capacity', () => {

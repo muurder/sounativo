@@ -123,6 +123,9 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     root.style.setProperty('--color-secondary-50', tint(secondary, 0.9));
     root.style.setProperty('--color-secondary-100', tint(secondary, 0.8));
+    root.style.setProperty('--color-secondary-200', tint(secondary, 0.6));
+    root.style.setProperty('--color-secondary-300', tint(secondary, 0.4));
+    root.style.setProperty('--color-secondary-400', tint(secondary, 0.2));
     root.style.setProperty(
       '--color-secondary-500',
       `${secondary[0]} ${secondary[1]} ${secondary[2]}`
@@ -130,6 +133,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     root.style.setProperty('--color-secondary-600', shade(secondary, 0.2));
     root.style.setProperty('--color-secondary-700', shade(secondary, 0.4));
     root.style.setProperty('--color-secondary-800', shade(secondary, 0.6));
+    root.style.setProperty('--color-secondary-900', shade(secondary, 0.8));
   }, [agencyTheme]);
 
   const setAgencyTheme = useCallback((themeOrColors: AgencyTheme | ThemeColors) => {

@@ -14,7 +14,8 @@ interface PartnerPlansSectionProps {
   currentPlan?: PlanTier;
   subscriptionStatus?: SubscriptionStatus;
   onPlanUpdated?: (next: {
-    subscriptionPlan: PlanTier;
+    subscriptionPlan?: PlanTier;
+    requestedPlan?: PlanTier;
     subscriptionStatus: SubscriptionStatus;
   }) => void;
 }
@@ -31,8 +32,11 @@ export const PartnerPlansSection: React.FC<PartnerPlansSectionProps> = ({
 
   const resolvedId = agency?.id ?? agencyId ?? '';
   const resolvedPlan: PlanTier = agency?.subscriptionPlan ?? currentPlan ?? 'STARTER';
+  const resolvedRequestedPlan: PlanTier | undefined = agency?.requestedPlan;
   const resolvedStatus: SubscriptionStatus =
     agency?.subscriptionStatus ?? subscriptionStatus ?? 'ACTIVE';
+  const pendingPlan: PlanTier | undefined =
+    resolvedStatus === 'PENDING' ? (resolvedRequestedPlan ?? resolvedPlan) : undefined;
 
   const handleSelectPlan = async (targetPlan: PlanTier) => {
     if (!resolvedId) return;
@@ -44,7 +48,7 @@ export const PartnerPlansSection: React.FC<PartnerPlansSectionProps> = ({
       onPlanUpdated?.(updated);
       if (updated.subscriptionStatus === 'PENDING') {
         showToast(
-          `Solicitação do plano ${targetPlan} registrada! A ativação será concluída pela equipe comercial.`,
+          `Solicitação do plano ${targetPlan} registrada! Seu plano atual (${resolvedPlan}) permanece ativo até a aprovação.`,
           'info'
         );
       } else {
@@ -69,18 +73,18 @@ export const PartnerPlansSection: React.FC<PartnerPlansSectionProps> = ({
             Amplie seu limite de pacotes ativos e recursos de microsite whitelabel.
           </p>
         </div>
-        {resolvedStatus === 'PENDING' && (
+        {pendingPlan && (
           <Badge tone="warning">
-            <Clock size={12} /> Ativação comercial pendente ({resolvedPlan})
+            <Clock size={12} /> Ativação comercial pendente ({pendingPlan})
           </Badge>
         )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {SUBSCRIPTION_PLANS.map((plan) => {
+          const isActiveCurrent = plan.id === resolvedPlan && resolvedStatus === 'ACTIVE';
+          const isPendingCurrent = pendingPlan === plan.id;
           const isCurrent = plan.id === resolvedPlan;
-          const isPendingCurrent = isCurrent && resolvedStatus === 'PENDING';
-          const isActiveCurrent = isCurrent && resolvedStatus === 'ACTIVE';
 
           return (
             <div
@@ -92,7 +96,7 @@ export const PartnerPlansSection: React.FC<PartnerPlansSectionProps> = ({
               <div>
                 <div className="flex items-center justify-between gap-2">
                   <h4 className="font-serif text-lg font-bold text-stone-900">{plan.name}</h4>
-                  {isActiveCurrent && (
+                  {isCurrent && (
                     <Badge tone="success">
                       <CheckCircle2 size={11} /> Atual
                     </Badge>

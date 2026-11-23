@@ -4,10 +4,20 @@ import { buildWhatsAppLink } from '@/utils/whatsapp';
 import { mapFirebaseAuthError } from '@/services/authService';
 
 describe('whatsapp and auth error helpers', () => {
-  it('builds encoded WhatsApp URL pointing to /viagem/:slug', () => {
-    const url = buildWhatsAppLink('(45) 99999-1111', SEED_TRIPS[0], 'https://sounativo.vercel.app');
-    expect(url).toContain('https://wa.me/45999991111?text=');
-    expect(decodeURIComponent(url!)).toContain(`/viagem/${SEED_TRIPS[0].slug}`);
+  it('builds encoded WhatsApp URL pointing to /viagem/:slug and auto-prepends 55 for BR numbers', () => {
+    const url11 = buildWhatsAppLink(
+      '(45) 99999-1111',
+      SEED_TRIPS[0],
+      'https://sounativo.vercel.app'
+    );
+    expect(url11).toContain('https://wa.me/5545999991111?text=');
+    expect(decodeURIComponent(url11!)).toContain(`/viagem/${SEED_TRIPS[0].slug}`);
+
+    const url10 = buildWhatsAppLink('(11) 3333-4444', SEED_TRIPS[0]);
+    expect(url10).toContain('https://wa.me/551133334444?text=');
+
+    const urlWithCountry = buildWhatsAppLink('+55 45 99999-1111', SEED_TRIPS[0]);
+    expect(urlWithCountry).toContain('https://wa.me/5545999991111?text=');
   });
 
   it('returns null when WhatsApp number is empty or invalid', () => {

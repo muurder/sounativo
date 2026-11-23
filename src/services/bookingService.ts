@@ -11,6 +11,7 @@ import {
   where,
 } from 'firebase/firestore';
 import {
+  auth,
   COLLECTIONS,
   db,
   isMissingIndexError,
@@ -69,12 +70,8 @@ export function applySpotDeltaToTrip(
       const updatedDepartures = departures.map((dep, idx) =>
         idx === matchIdx ? { ...dep, availableSpots: clampedDepSpots } : dep
       );
-      const nextGlobal = Math.min(
-        maxGuests,
-        Math.max(0, currentAvailable + deltaSign * safeGuests)
-      );
       return {
-        availableSpots: nextGlobal,
+        availableSpots: currentAvailable,
         departures: updatedDepartures,
       };
     }
@@ -314,7 +311,7 @@ async function notifyBookingCreated(booking: Booking): Promise<void> {
     const agencySnap = await getDoc(doc(db, COLLECTIONS.agencies, booking.agencyId));
     const agencyData = agencySnap.exists() ? (agencySnap.data() as Record<string, unknown>) : null;
     const ownerUid = typeof agencyData?.ownerUid === 'string' ? agencyData.ownerUid : '';
-    const agencyEmail = typeof agencyData?.email === 'string' ? agencyData.email : '';
+    const agencyEmail = typeof agencyData?.email === 'string' ? agencyData.email.trim() : '';
     const totalGuests = booking.adults + booking.children;
 
     if (ownerUid && ownerUid !== booking.clientUid) {
@@ -327,15 +324,39 @@ async function notifyBookingCreated(booking: Booking): Promise<void> {
       });
     }
 
-    await dispatchTransactionalAlert({
-      event: 'BOOKING_CREATED',
-      recipientEmail: agencyEmail || booking.clientEmail,
-      recipientName: booking.agencyName,
-      subject: `Nova solicitação de reserva (${booking.voucherCode}) — ${booking.tripTitle}`,
-      summary: `${booking.clientName} solicitou ${totalGuests} vaga(s) no roteiro "${booking.tripTitle}". Confirme ou gerencie pelo Painel do Parceiro.`,
-      voucherCode: booking.voucherCode,
-      link: 'https://sounativo.vercel.app/dashboard?mode=partner',
-    });
+    if (agencyEmail) {
+      await dispatchTransactionalAlert({
+        event: 'BOOKING_CREATED',
+        recipientEmail: agencyEmail,
+        recipientName: booking.agencyName,
+        subject: `Nova solicitação de reserva (${booking.voucherCode}) — ${booking.tripTitle}`,
+        summary: `${booking.clientName} solicitou ${totalGuests} vaga(s) no roteiro "${booking.tripTitle}". Confirme ou gerencie pelo Painel do Parceiro.`,
+        voucherCode: booking.voucherCode,
+        link: 'https://sounativo.vercel.app/dashboard?mode=partner',
+      });
+    }
+
+    if (booking.clientUid) {
+      await createNotificationInFirestore({
+        recipientUid: booking.clientUid,
+        type: 'BOOKING_CREATED',
+        title: `Solicitação enviada: ${booking.tripTitle}`,
+        body: `Pedido ${booking.voucherCode} (${totalGuests} vaga(s)) aguardando confirmação da operadora.`,
+        link: '/dashboard',
+      });
+    }
+
+    if (booking.clientEmail) {
+      await dispatchTransactionalAlert({
+        event: 'BOOKING_CREATED_CLIENT',
+        recipientEmail: booking.clientEmail,
+        recipientName: booking.clientName,
+        subject: `Recebemos sua solicitação (${booking.voucherCode}) — ${booking.tripTitle}`,
+        summary: `Seu pedido de reserva para "${booking.tripTitle}" (${totalGuests} vaga(s)) foi enviado para ${booking.agencyName}. Você será avisado assim que a operadora confirmar.`,
+        voucherCode: booking.voucherCode,
+        link: 'https://sounativo.vercel.app/dashboard',
+      });
+    }
   } catch {
     // Non-blocking notification failure ignored cleanly
   }
@@ -452,4 +473,43 @@ async function notifyBookingStatusUpdated(
     voucherCode: booking.voucherCode,
     link: 'https://sounativo.vercel.app/dashboard',
   });
+
+  const cancelledByClient =
+    nextStatus === 'CANCELLED' &&
+    Boolean(auth?.currentUser?.uid && auth.currentUser.uid === booking.clientUid);
+
+  if (cancelledByClient && db && booking.agencyId) {
+    try {
+      const agencySnap = await getDoc(doc(db, COLLECTIONS.agencies, booking.agencyId));
+      const agencyData = agencySnap.exists()
+        ? (agencySnap.data() as Record<string, unknown>)
+        : null;
+      const ownerUid = typeof agencyData?.ownerUid === 'string' ? agencyData.ownerUid : '';
+      const agencyEmail = typeof agencyData?.email === 'string' ? agencyData.email.trim() : '';
+
+      if (ownerUid && ownerUid !== booking.clientUid) {
+        await createNotificationInFirestore({
+          recipientUid: ownerUid,
+          type: 'BOOKING_CANCELLED',
+          title: `Reserva cancelada pelo viajante: ${booking.tripTitle}`,
+          body: `${booking.clientName} cancelou a reserva ${booking.voucherCode}.`,
+          link: '/dashboard?mode=partner',
+        });
+      }
+
+      if (agencyEmail) {
+        await dispatchTransactionalAlert({
+          event: 'BOOKING_CANCELLED',
+          recipientEmail: agencyEmail,
+          recipientName: booking.agencyName,
+          subject: `Cancelamento pelo viajante (${booking.voucherCode}) — ${booking.tripTitle}`,
+          summary: `${booking.clientName} cancelou a reserva ${booking.voucherCode} do roteiro "${booking.tripTitle}".${reason ? ` Motivo: ${reason}` : ''}`,
+          voucherCode: booking.voucherCode,
+          link: 'https://sounativo.vercel.app/dashboard?mode=partner',
+        });
+      }
+    } catch {
+      // Non-blocking partner alert
+    }
+  }
 }

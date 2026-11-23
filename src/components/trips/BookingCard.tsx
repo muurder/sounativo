@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Calendar, Info, MessageCircle, ShieldCheck, Users } from 'lucide-react';
+import { Calendar, Info, MapPin, MessageCircle, ShieldCheck, Users } from 'lucide-react';
 import { isSeedShowcaseTrip } from '@/services/bookingService';
 import { computeRemainingSpots } from '@/services/tripService';
 import { PassengerDetail, PaymentMethod, Trip } from '@/types';
@@ -36,6 +36,12 @@ interface SelectableDeparture {
   price: number;
 }
 
+function formatBoardingOption(time: string, location: string): string {
+  const cleanLoc = location.trim();
+  const cleanTime = time.trim();
+  return cleanTime ? `${cleanTime} · ${cleanLoc}` : cleanLoc;
+}
+
 export const BookingCard: React.FC<BookingCardProps> = ({
   trip,
   agencyWhatsapp,
@@ -45,7 +51,8 @@ export const BookingCard: React.FC<BookingCardProps> = ({
   const [adults, setAdults] = useState(1);
   const [childrenCount, setChildrenCount] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('PIX');
-  const [companions, setCompanions] = useState<PassengerDetail[]>([]);
+  const [adultCompanionNames, setAdultCompanionNames] = useState<string[]>([]);
+  const [childCompanionNames, setChildCompanionNames] = useState<string[]>([]);
   const [notes, setNotes] = useState('');
 
   const departureOptions = useMemo<SelectableDeparture[]>(() => {
@@ -87,13 +94,40 @@ export const BookingCard: React.FC<BookingCardProps> = ({
     return combined;
   }, [trip]);
 
-  const [selectedDeparture, setSelectedDeparture] = useState<string>(
-    () => departureOptions[0]?.startDate ?? ''
+  const firstAvailableDeparture = useMemo(
+    () =>
+      (departureOptions.find((opt) => opt.availableSpots > 0) ?? departureOptions[0])?.startDate ??
+      '',
+    [departureOptions]
+  );
+
+  const [selectedDeparture, setSelectedDeparture] = useState<string>(firstAvailableDeparture);
+
+  useEffect(() => {
+    setSelectedDeparture(firstAvailableDeparture);
+    // Reset default departure only when navigating to a different trip
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [trip?.id]);
+
+  const boardingOptions = useMemo(
+    () =>
+      (Array.isArray(trip?.boardingPoints) ? trip.boardingPoints : [])
+        .filter((bp) => bp && typeof bp.location === 'string' && bp.location.trim().length > 0)
+        .map((bp, idx) => ({
+          key: `${bp.id || 'bp'}-${idx}`,
+          label: formatBoardingOption(bp.time ?? '', bp.location),
+        })),
+    [trip?.boardingPoints]
+  );
+
+  const [selectedBoardingPoint, setSelectedBoardingPoint] = useState<string>(
+    () => boardingOptions[0]?.label ?? ''
   );
 
   useEffect(() => {
-    setSelectedDeparture(departureOptions[0]?.startDate ?? '');
-  }, [departureOptions]);
+    setSelectedBoardingPoint(boardingOptions[0]?.label ?? '');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [trip?.id]);
 
   const activeOption = useMemo(
     () =>
@@ -122,22 +156,46 @@ export const BookingCard: React.FC<BookingCardProps> = ({
     }
   }, [adults, childrenCount, remainingSpots]);
 
+  const targetAdultCompanions = Math.max(0, adults - 1);
+
   useEffect(() => {
-    const targetAdults = Math.max(0, adults - 1);
-    const desired: PassengerDetail[] = [
-      ...Array.from({ length: targetAdults }, (_, i) => ({
-        name: companions[i]?.name ?? '',
+    setAdultCompanionNames((prev) =>
+      Array.from({ length: targetAdultCompanions }, (_, i) => prev[i] ?? '')
+    );
+  }, [targetAdultCompanions]);
+
+  useEffect(() => {
+    setChildCompanionNames((prev) =>
+      Array.from({ length: childrenCount }, (_, i) => prev[i] ?? '')
+    );
+  }, [childrenCount]);
+
+  const companions = useMemo<PassengerDetail[]>(
+    () => [
+      ...Array.from({ length: targetAdultCompanions }, (_, i) => ({
+        name: adultCompanionNames[i] ?? '',
         type: 'adult' as const,
       })),
       ...Array.from({ length: childrenCount }, (_, i) => ({
-        name: companions[targetAdults + i]?.name ?? '',
+        name: childCompanionNames[i] ?? '',
         type: 'child' as const,
       })),
-    ];
-    setCompanions(desired);
-    // Intentionally sync companion slots only when guest counts change
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [adults, childrenCount]);
+    ],
+    [adultCompanionNames, childCompanionNames, childrenCount, targetAdultCompanions]
+  );
+
+  const handleCompanionChange = (idx: number, value: string) => {
+    if (idx < targetAdultCompanions) {
+      setAdultCompanionNames((prev) =>
+        Array.from({ length: targetAdultCompanions }, (_, i) => (i === idx ? value : (prev[i] ?? '')))
+      );
+    } else {
+      const childIdx = idx - targetAdultCompanions;
+      setChildCompanionNames((prev) =>
+        Array.from({ length: childrenCount }, (_, i) => (i === childIdx ? value : (prev[i] ?? '')))
+      );
+    }
+  };
 
   const totalPrice = useMemo(() => {
     const childMultiplier = passengerCfg.allowChildren
@@ -157,6 +215,25 @@ export const BookingCard: React.FC<BookingCardProps> = ({
   const maxChildrenAllowed = Math.max(0, remainingSpots - adults);
   const hasCapacity = Boolean(trip?.isActive) && remainingSpots >= 1;
   const isShowcaseDemo = isSeedShowcaseTrip(trip?.id ?? '');
+
+  const handleSubmit = () => {
+    const cleanNotes = notes.trim();
+    const combinedNotes = selectedBoardingPoint
+      ? cleanNotes
+        ? `Embarque: ${selectedBoardingPoint}\n${cleanNotes}`
+        : `Embarque: ${selectedBoardingPoint}`
+      : cleanNotes;
+
+    void onReserve({
+      adults,
+      children: childrenCount,
+      totalPrice,
+      departureDate: activeOption?.startDate || trip.startDate,
+      paymentMethod,
+      companions,
+      notes: combinedNotes,
+    });
+  };
 
   return (
     <aside className="rounded-2xl border border-stone-200 bg-white p-6 shadow-editorial sticky top-24">
@@ -217,6 +294,30 @@ export const BookingCard: React.FC<BookingCardProps> = ({
           </div>
         )}
 
+        {boardingOptions.length > 0 && (
+          <div>
+            <label
+              htmlFor="boarding-point-select"
+              className="flex items-center gap-1.5 text-xs font-semibold text-stone-600 mb-1.5"
+            >
+              <MapPin size={13} className="text-primary-600" />
+              Ponto de embarque
+            </label>
+            <select
+              id="boarding-point-select"
+              value={selectedBoardingPoint}
+              onChange={(e) => setSelectedBoardingPoint(e.target.value)}
+              className="w-full min-h-[44px] rounded-xl border border-stone-300 bg-white px-3 text-sm font-medium text-stone-900"
+            >
+              {boardingOptions.map((bp) => (
+                <option key={bp.key} value={bp.label}>
+                  {bp.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
         <div className="rounded-xl border border-stone-200 p-3.5 space-y-3">
           <GuestCounterRow
             label="Adultos"
@@ -249,11 +350,7 @@ export const BookingCard: React.FC<BookingCardProps> = ({
           companions={companions}
           notes={notes}
           onNotesChange={setNotes}
-          onCompanionChange={(idx, value) =>
-            setCompanions((prev) =>
-              prev.map((item, i) => (i === idx ? { ...item, name: value } : item))
-            )
-          }
+          onCompanionChange={handleCompanionChange}
         />
 
         <div>
@@ -285,29 +382,23 @@ export const BookingCard: React.FC<BookingCardProps> = ({
         {isShowcaseDemo && (
           <p className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-[11px] text-amber-900 leading-snug">
             <Info size={14} className="shrink-0 mt-0.5" />
-            Roteiro curado demonstrativo. Para testar reserva gravada no Firestore, publique um
-            pacote no Modo Agência / Guia.
+            Roteiro curado demonstrativo. Para reserva online, escolha um pacote publicado por
+            nossas operadoras ou fale no WhatsApp abaixo.
           </p>
         )}
 
         <Button
           fullWidth
           size="lg"
-          disabled={!hasCapacity || submitting}
+          disabled={isShowcaseDemo || !hasCapacity || submitting}
           loading={submitting}
-          onClick={() =>
-            void onReserve({
-              adults,
-              children: childrenCount,
-              totalPrice,
-              departureDate: activeOption?.startDate || trip.startDate,
-              paymentMethod,
-              companions,
-              notes: notes.trim(),
-            })
-          }
+          onClick={handleSubmit}
         >
-          {hasCapacity ? 'Solicitar Reserva' : 'Vagas esgotadas nesta saída'}
+          {isShowcaseDemo
+            ? 'Pacote vitrine — fale no WhatsApp'
+            : hasCapacity
+              ? 'Solicitar Reserva'
+              : 'Vagas esgotadas nesta saída'}
         </Button>
 
         {whatsappUrl && (
@@ -324,7 +415,7 @@ export const BookingCard: React.FC<BookingCardProps> = ({
 
         <p className="flex items-center justify-center gap-1.5 text-xs text-stone-500 pt-1">
           <ShieldCheck size={14} className="text-primary-600" />
-          Agência verificada pelo ecossistema SouNativo
+          Operadora cadastrada no ecossistema SouNativo
         </p>
       </div>
     </aside>

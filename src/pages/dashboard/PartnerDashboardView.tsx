@@ -57,7 +57,11 @@ export const PartnerDashboardView: React.FC = () => {
   });
 
   const activeTripsCount = trips.filter((t) => t?.isActive).length;
-  const permissions = usePlanPermissions(agency?.subscriptionPlan, activeTripsCount);
+  const permissions = usePlanPermissions(
+    agency?.subscriptionPlan,
+    activeTripsCount,
+    agency?.subscriptionStatus
+  );
 
   const loadPartnerWorkspace = useCallback(async () => {
     if (!profile?.uid) {
@@ -127,6 +131,8 @@ export const PartnerDashboardView: React.FC = () => {
       .filter((b) => b.status === 'PENDING')
       .reduce((sum, b) => sum + (b.totalPrice ?? 0), 0);
     const pendingCount = bookings.filter((b) => b.status === 'PENDING').length;
+    const cancelledCount = bookings.filter((b) => b.status === 'CANCELLED').length;
+    const activeBookingsCount = bookings.length - cancelledCount;
     const confirmedPassengers = bookings
       .filter((b) => b.status === 'CONFIRMED')
       .reduce((sum, b) => sum + (b.adults ?? 1) + (b.children ?? 0), 0);
@@ -136,6 +142,8 @@ export const PartnerDashboardView: React.FC = () => {
       confirmedRevenue,
       pendingRevenue,
       pendingCount,
+      cancelledCount,
+      activeBookingsCount,
       confirmedPassengers,
       reviewStats,
     };
@@ -296,9 +304,12 @@ export const PartnerDashboardView: React.FC = () => {
             <span>Reservas &amp; Embarques</span>
             <CalendarCheck size={16} className="text-primary-600" />
           </div>
-          <p className="font-serif text-2xl font-bold text-stone-900">{bookings.length}</p>
+          <p className="font-serif text-2xl font-bold text-stone-900">
+            {metrics.activeBookingsCount}
+          </p>
           <p className="text-xs text-stone-500">
             {metrics.pendingCount} pendente(s) · {metrics.confirmedPassengers} viajantes confirmados
+            {metrics.cancelledCount > 0 ? ` · ${metrics.cancelledCount} cancelada(s)` : ''}
           </p>
         </div>
 
@@ -354,6 +365,7 @@ export const PartnerDashboardView: React.FC = () => {
         <div className="space-y-6">
           <PartnerTripsSection
             trips={trips}
+            canPublishMoreTrips={permissions.canPublishMoreTrips}
             onEdit={(trip) => {
               setEditingTrip(trip);
               setCreateOpen(true);
@@ -368,7 +380,7 @@ export const PartnerDashboardView: React.FC = () => {
 
           <PartnerBookingsSection
             bookings={bookings}
-            onBookingUpdated={(bookingId, status, cancellationReason) =>
+            onBookingUpdated={(bookingId, status, cancellationReason) => {
               setBookings((prev) =>
                 prev.map((item) =>
                   item.id === bookingId
@@ -379,8 +391,13 @@ export const PartnerDashboardView: React.FC = () => {
                       }
                     : item
                 )
-              )
-            }
+              );
+              void fetchTripsByAgency(agency.id, true)
+                .then((freshTrips) => {
+                  if (Array.isArray(freshTrips)) setTrips(freshTrips);
+                })
+                .catch(() => {});
+            }}
           />
 
           <section className="rounded-2xl border border-stone-200 bg-white p-6 shadow-card space-y-4">
@@ -447,6 +464,7 @@ export const PartnerDashboardView: React.FC = () => {
           setEditingTrip(null);
         }}
         agency={agency}
+        canPublishMoreTrips={permissions.canPublishMoreTrips}
         editingTrip={editingTrip}
         onCreated={(created) => setTrips((prev) => [created, ...prev])}
         onUpdated={(updated) =>

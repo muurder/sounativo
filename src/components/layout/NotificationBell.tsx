@@ -8,6 +8,7 @@ import {
 } from '@/services/notificationService';
 import { AppNotification } from '@/types';
 import { cn } from '@/utils/cn';
+import { formatShortDate } from '@/utils/formatters';
 
 interface NotificationBellProps {
   userUid: string;
@@ -50,7 +51,7 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ userUid }) =
       setItems((prev) => prev.map((n) => (n.id === item.id ? { ...n, read: true } : n)));
       await markNotificationReadInFirestore(item.id);
     }
-    if (item.link) {
+    if (item.link && item.link.startsWith('/') && !item.link.startsWith('//')) {
       navigate(item.link);
     }
   };
@@ -83,7 +84,7 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ userUid }) =
         <div
           role="dialog"
           aria-label="Central de notificações"
-          className="absolute right-0 mt-2 w-80 sm:w-96 rounded-2xl border border-stone-200 bg-white shadow-editorial z-50 overflow-hidden"
+          className="absolute right-0 mt-2 w-80 max-w-[calc(100vw-2rem)] sm:w-96 rounded-2xl border border-stone-200 bg-white shadow-editorial z-50 overflow-hidden"
         >
           <div className="flex items-center justify-between px-4 py-3 border-b border-stone-100">
             <span className="text-xs font-bold uppercase tracking-wider text-stone-700">
@@ -128,6 +129,11 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ userUid }) =
                       </p>
                       {item.body && (
                         <p className="text-[11px] text-stone-600 line-clamp-2">{item.body}</p>
+                      )}
+                      {item.createdAt && (
+                        <p className="text-[10px] text-stone-400">
+                          {formatShortDate(item.createdAt)}
+                        </p>
                       )}
                     </div>
                   </button>

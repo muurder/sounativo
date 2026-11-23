@@ -2,6 +2,7 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDoc,
   getDocs,
   limit,
   orderBy,
@@ -24,7 +25,7 @@ import {
   ContactMessageStatus,
   normalizeContactMessageDoc,
 } from './contactService';
-import { normalizeReviewDoc } from './reviewService';
+import { normalizeReviewDoc, recalculateRatings } from './reviewService';
 import { normalizeTripDoc } from './tripService';
 import { normalizeUserProfileDoc } from './userService';
 import {
@@ -106,6 +107,7 @@ export async function updateAgencyAdminControls(
     verified?: boolean;
     isActive?: boolean;
     subscriptionPlan?: PlanTier;
+    requestedPlan?: PlanTier | null;
     subscriptionStatus?: SubscriptionStatus;
   }
 ): Promise<void> {
@@ -122,6 +124,7 @@ export async function updateAgencyAdminControls(
         ...(updates.verified !== undefined ? { isVerified: updates.verified } : {}),
         ...(resolvedSubscriptionStatus ? { subscriptionStatus: resolvedSubscriptionStatus } : {}),
       }),
+      ...(updates.requestedPlan === null ? { requestedPlan: null } : {}),
       updatedAt: serverTimestamp(),
     });
   } catch (err: unknown) {
@@ -278,7 +281,16 @@ export async function deleteReviewAsAdmin(reviewId: string): Promise<void> {
   if (!reviewId) throw new Error('Identificador da avaliação inválido.');
 
   try {
-    await deleteDoc(doc(db, COLLECTIONS.reviews, reviewId));
+    const ref = doc(db, COLLECTIONS.reviews, reviewId);
+    const snap = await getDoc(ref);
+    const data = snap.exists() ? (snap.data() as Record<string, unknown>) : null;
+    const tripId = typeof data?.tripId === 'string' ? data.tripId : undefined;
+    const agencyId = typeof data?.agencyId === 'string' ? data.agencyId : undefined;
+
+    await deleteDoc(ref);
+    if (tripId || agencyId) {
+      void recalculateRatings(tripId, agencyId);
+    }
   } catch (err: unknown) {
     throw mapFirestoreError(err, 'Erro ao excluir avaliação.');
   }

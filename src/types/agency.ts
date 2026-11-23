@@ -42,6 +42,8 @@ export interface Agency {
   city?: string;
   state?: string;
   isGuide: boolean;
+  verified?: boolean;
+  cnpj?: string;
   cadastur?: string;
   languages?: GuideDetails['languages'];
   specialties?: GuideDetails['specialties'];
@@ -52,6 +54,7 @@ export interface Agency {
   heroTitle?: string;
   heroSubtitle?: string;
   subscriptionPlan: PlanTier;
+  requestedPlan?: PlanTier;
   subscriptionStatus: SubscriptionStatus;
   theme?: AgencyTheme;
   isActive: boolean;

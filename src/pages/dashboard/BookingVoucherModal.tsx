@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { CalendarDays, Check, Copy, Printer, Share2, Users } from 'lucide-react';
 import { Booking } from '@/types';
 import { Modal } from '@/components/ui/Modal';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { formatCurrencyBRL } from '@/utils/formatters';
+import { formatCurrencyBRL, formatPaymentMethod, formatShortDate } from '@/utils/formatters';
+import { useToast } from '@/context/ToastContext';
 
 interface BookingVoucherModalProps {
   booking: Booking | null;
@@ -13,18 +14,21 @@ interface BookingVoucherModalProps {
 
 export const BookingVoucherModal: React.FC<BookingVoucherModalProps> = ({ booking, onClose }) => {
   const [copied, setCopied] = useState(false);
+  const { showToast } = useToast();
+
+  useEffect(() => {
+    if (!booking || typeof document === 'undefined') return;
+    document.body.classList.add('printing-voucher');
+    return () => {
+      document.body.classList.remove('printing-voucher');
+    };
+  }, [booking]);
 
   if (!booking) return null;
 
   const passengers = Array.isArray(booking.passengerDetails) ? booking.passengerDetails : [];
   const totalGuests = (booking.adults ?? 1) + (booking.children ?? 0);
-  const formattedDeparture = booking.departureDate
-    ? new Date(booking.departureDate).toLocaleDateString('pt-BR', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-      })
-    : null;
+  const formattedDeparture = booking.departureDate ? formatShortDate(booking.departureDate) : null;
 
   const whatsappShareHref = `https://wa.me/?text=${encodeURIComponent(
     `Voucher SouNativo: ${booking.voucherCode || 'SN-PENDENTE'}\nRoteiro: ${booking.tripTitle}\nOperadora: ${booking.agencyName}${formattedDeparture ? `\nSaída: ${formattedDeparture}` : ''}\nViajantes: ${totalGuests} · Total: ${formatCurrencyBRL(booking.totalPrice)}`
@@ -36,7 +40,7 @@ export const BookingVoucherModal: React.FC<BookingVoucherModalProps> = ({ bookin
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      // Ignore clipboard denials cleanly
+      showToast('Não foi possível copiar o código do voucher.', 'error');
     }
   };
 
@@ -45,8 +49,13 @@ export const BookingVoucherModal: React.FC<BookingVoucherModalProps> = ({ bookin
       isOpen={Boolean(booking)}
       onClose={onClose}
       title="Comprovante de Reserva"
-      description="Apresente este código à operadora parceira no momento do embarque."
+      description={
+        booking.status === 'CANCELLED'
+          ? 'Reserva cancelada.'
+          : 'Apresente este código à operadora parceira no momento do embarque.'
+      }
       maxWidthClass="max-w-md"
+      containerClassName="voucher-modal-shell"
     >
       <div className="space-y-4">
         <div className="rounded-2xl border border-primary-200 bg-primary-50/70 p-4 flex items-center justify-between gap-3">
@@ -61,6 +70,7 @@ export const BookingVoucherModal: React.FC<BookingVoucherModalProps> = ({ bookin
           <Button
             size="sm"
             variant="outline"
+            className="print:hidden"
             leftIcon={copied ? <Check size={14} /> : <Copy size={14} />}
             onClick={() => void handleCopy()}
           >
@@ -94,9 +104,15 @@ export const BookingVoucherModal: React.FC<BookingVoucherModalProps> = ({ bookin
             </p>
           )}
           <p className="text-xs text-stone-600">
-            Pagamento: {booking.paymentMethod} · Total:{' '}
+            Pagamento: {formatPaymentMethod(booking.paymentMethod)} · Total:{' '}
             <strong>{formatCurrencyBRL(booking.totalPrice)}</strong>
           </p>
+          {booking.notes && <p className="text-xs text-stone-500 italic">Obs.: {booking.notes}</p>}
+          {booking.status === 'CANCELLED' && booking.cancellationReason && (
+            <p className="text-xs text-amber-800 bg-amber-50 rounded-lg px-2.5 py-1 inline-block">
+              Motivo do cancelamento: {booking.cancellationReason}
+            </p>
+          )}
         </div>
 
         <div className="rounded-xl border border-stone-200 p-3.5 space-y-2">
@@ -108,11 +124,23 @@ export const BookingVoucherModal: React.FC<BookingVoucherModalProps> = ({ bookin
               Titular: {booking.clientName || 'Viajante SouNativo'}
             </p>
           ) : (
-            <ul className="space-y-1 text-xs text-stone-700">
+            <ul className="space-y-1.5 text-xs text-stone-700">
               {passengers.map((p, idx) => (
                 <li key={`${p?.name ?? 'pax'}-${idx}`}>
-                  {idx + 1}. {p?.name || `Passageiro ${idx + 1}`} (
-                  {p?.type === 'child' ? 'Criança' : 'Adulto'})
+                  <span>
+                    {idx + 1}. {p?.name || `Passageiro ${idx + 1}`} (
+                    {p?.type === 'child' ? 'Criança' : 'Adulto'})
+                  </span>
+                  {(p?.document || p?.phone) && (
+                    <span className="block text-[11px] text-stone-500 pl-3.5">
+                      {[
+                        p.document ? `Doc: ${p.document}` : null,
+                        p.phone ? `Tel: ${p.phone}` : null,
+                      ]
+                        .filter(Boolean)
+                        .join(' · ')}
+                    </span>
+                  )}
                 </li>
               ))}
             </ul>

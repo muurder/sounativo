@@ -1,15 +1,22 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Check, Cookie, Settings2, ShieldCheck, X } from 'lucide-react';
 import { useConsent } from '@/hooks/useConsent';
 
 export const CookieBanner: React.FC = () => {
-  const { consent, isOpen, acceptAll, rejectNonEssential, saveCustomConsent, closeConsentBanner } =
-    useConsent();
+  const { consent, isOpen, acceptAll, rejectNonEssential, saveCustomConsent } = useConsent();
 
   const [showPreferences, setShowPreferences] = useState(false);
   const [analyticsEnabled, setAnalyticsEnabled] = useState(consent.analytics);
   const [marketingEnabled, setMarketingEnabled] = useState(consent.marketing);
+
+  useEffect(() => {
+    if (isOpen) {
+      setShowPreferences(false);
+      setAnalyticsEnabled(consent.analytics);
+      setMarketingEnabled(consent.marketing);
+    }
+  }, [isOpen, consent.analytics, consent.marketing]);
 
   if (!isOpen) return null;
 
@@ -59,8 +66,11 @@ export const CookieBanner: React.FC = () => {
 
         <button
           type="button"
-          onClick={closeConsentBanner}
-          aria-label="Fechar aviso de cookies"
+          onClick={() => {
+            setShowPreferences(false);
+            rejectNonEssential();
+          }}
+          aria-label="Recusar opcionais e fechar aviso de cookies"
           className="h-8 w-8 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 hover:bg-stone-200/50 transition-colors"
         >
           <X size={17} />

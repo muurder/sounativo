@@ -19,6 +19,8 @@ export const PartnerProfileForm: React.FC<PartnerProfileFormProps> = ({ agency, 
   const [city, setCity] = useState(agency.city ?? '');
   const [stateUf, setStateUf] = useState(agency.state ?? 'SP');
   const [whatsapp, setWhatsapp] = useState(agency.whatsapp ?? '');
+  const [email, setEmail] = useState(agency.email ?? '');
+  const [cnpj, setCnpj] = useState(agency.cnpj ?? '');
   const [logo, setLogo] = useState(agency.logo ?? '');
   const [cadastur, setCadastur] = useState(agency.cadastur ?? '');
   const [languagesText, setLanguagesText] = useState((agency.languages ?? []).join(', '));
@@ -45,6 +47,8 @@ export const PartnerProfileForm: React.FC<PartnerProfileFormProps> = ({ agency, 
       city: city.trim(),
       state: stateUf.trim().toUpperCase() || 'BR',
       whatsapp: whatsapp.trim(),
+      email: email.trim().toLowerCase(),
+      ...(!agency.isGuide ? { cnpj: cnpj.trim() } : {}),
       ...(logo.trim() ? { logo: logo.trim() } : {}),
       cadastur: cadastur.trim(),
       languages: languagesText
@@ -148,6 +152,38 @@ export const PartnerProfileForm: React.FC<PartnerProfileFormProps> = ({ agency, 
             className="w-full min-h-[44px] rounded-xl border border-stone-300 px-3 text-sm uppercase"
           />
         </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label htmlFor="ag-email" className="block text-xs font-semibold text-stone-700 mb-1">
+            E-mail operacional (notificações de reservas)
+          </label>
+          <input
+            id="ag-email"
+            type="email"
+            maxLength={254}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="reservas@suaagencia.com.br"
+            className="w-full min-h-[44px] rounded-xl border border-stone-300 px-3 text-sm"
+          />
+        </div>
+        {!agency.isGuide && (
+          <div>
+            <label htmlFor="ag-cnpj" className="block text-xs font-semibold text-stone-700 mb-1">
+              CNPJ da Agência
+            </label>
+            <input
+              id="ag-cnpj"
+              maxLength={25}
+              value={cnpj}
+              onChange={(e) => setCnpj(e.target.value)}
+              placeholder="00.000.000/0001-00"
+              className="w-full min-h-[44px] rounded-xl border border-stone-300 px-3 text-sm"
+            />
+          </div>
+        )}
       </div>
 
       <PartnerGuideFields

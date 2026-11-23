@@ -82,7 +82,7 @@ export const CtaBannerSection: React.FC<CtaBannerSectionProps> = ({ onPartnerSig
               <div className="grid grid-cols-2 gap-2.5 text-xs">
                 <div className="rounded-lg bg-white/10 p-2.5">
                   <p className="text-[11px] text-primary-200">Roteiros ativos</p>
-                  <p className="font-serif text-lg font-bold text-white">Ilimitado</p>
+                  <p className="font-serif text-lg font-bold text-white">Ilimitado no Premium</p>
                 </div>
                 <div className="rounded-lg bg-white/10 p-2.5">
                   <p className="text-[11px] text-primary-200">Emissão direta</p>

@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { useOutletContext } from 'react-router-dom';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 import { HeroSection } from '@/components/landing/HeroSection';
 import { BiomesDiscoverySection } from '@/components/landing/BiomesDiscoverySection';
 import { UpcomingTripsSection } from '@/components/landing/UpcomingTripsSection';
@@ -10,6 +10,7 @@ import { GroupQuoteSection } from '@/components/landing/GroupQuoteSection';
 import { GuidesHighlightSection } from '@/components/landing/GuidesHighlightSection';
 import { FaqSection } from '@/components/landing/FaqSection';
 import { CtaBannerSection } from '@/components/landing/CtaBannerSection';
+import { useAuth } from '@/hooks/useAuth';
 import { useTrips } from '@/hooks/useTrips';
 import { usePageMeta } from '@/hooks/usePageMeta';
 import { useUserProfile } from '@/hooks/useUserProfile';
@@ -21,7 +22,9 @@ interface OutletContextValue {
 }
 
 export const HomePage: React.FC = () => {
+  const navigate = useNavigate();
   const { openAuth } = useOutletContext<OutletContextValue>();
+  const { user } = useAuth();
   const { allTrips, loading } = useTrips();
   const { profile, toggleFavorite } = useUserProfile();
   const { showToast } = useToast();
@@ -62,7 +65,11 @@ export const HomePage: React.FC = () => {
       <GroupQuoteSection />
       <GuidesHighlightSection />
       <FaqSection />
-      <CtaBannerSection onPartnerSignup={() => openAuth('signup', 'AGENCY')} />
+      <CtaBannerSection
+        onPartnerSignup={() =>
+          user ? navigate('/dashboard?mode=partner') : openAuth('signup', 'AGENCY')
+        }
+      />
     </div>
   );
 };

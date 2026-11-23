@@ -68,7 +68,9 @@ export const AdminOperationsSection: React.FC<AdminOperationsSectionProps> = ({
 
   const [leadFilter, setLeadFilter] = useState<'ALL' | ContactMessageStatus>('ALL');
   const [busyLeadId, setBusyLeadId] = useState<string | null>(null);
+  const [confirmDeleteLeadId, setConfirmDeleteLeadId] = useState<string | null>(null);
   const [busyReviewId, setBusyReviewId] = useState<string | null>(null);
+  const [confirmDeleteReviewId, setConfirmDeleteReviewId] = useState<string | null>(null);
   const [busyErrorId, setBusyErrorId] = useState<string | null>(null);
 
   const safeBookings = useMemo(() => (Array.isArray(bookings) ? bookings : []), [bookings]);
@@ -283,76 +285,104 @@ export const AdminOperationsSection: React.FC<AdminOperationsSectionProps> = ({
         ) : (
           <div className="space-y-3">
             {filteredLeads.map((msg) => (
-              <div
-                key={msg.id}
-                className="rounded-xl border border-stone-200 p-4 flex flex-col md:flex-row md:items-start justify-between gap-3"
-              >
-                <div className="space-y-1.5 min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Badge tone={msg.source === 'GROUP_QUOTE' ? 'secondary' : 'neutral'}>
-                      {msg.source === 'GROUP_QUOTE' ? 'Cotação de Grupo' : 'Contato Geral'}
-                    </Badge>
-                    <Badge
-                      tone={
-                        msg.status === 'RESOLVED'
-                          ? 'success'
-                          : msg.status === 'NEW'
-                            ? 'warning'
-                            : 'primary'
+              <div key={msg.id} className="rounded-xl border border-stone-200 p-4 space-y-3">
+                <div className="flex flex-col md:flex-row md:items-start justify-between gap-3">
+                  <div className="space-y-1.5 min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge tone={msg.source === 'GROUP_QUOTE' ? 'secondary' : 'neutral'}>
+                        {msg.source === 'GROUP_QUOTE' ? 'Cotação de Grupo' : 'Contato Geral'}
+                      </Badge>
+                      <Badge
+                        tone={
+                          msg.status === 'RESOLVED'
+                            ? 'success'
+                            : msg.status === 'NEW'
+                              ? 'warning'
+                              : 'primary'
+                        }
+                      >
+                        {CONTACT_STATUS_OPTIONS.find((o) => o.value === msg.status)?.label ??
+                          msg.status}
+                      </Badge>
+                      <span className="text-xs text-stone-400">
+                        {msg.createdAt ? new Date(msg.createdAt).toLocaleDateString('pt-BR') : ''}
+                      </span>
+                    </div>
+                    <p className="text-sm font-semibold text-stone-900">
+                      {msg.name} · <span className="font-normal text-stone-600">{msg.email}</span>
+                    </p>
+                    <p className="text-xs text-stone-700 leading-relaxed whitespace-pre-line">
+                      {msg.message}
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2 shrink-0">
+                    <select
+                      aria-label={`Status de mensagem de ${msg.name}`}
+                      disabled={busyLeadId === msg.id}
+                      value={msg.status}
+                      onChange={(e) => {
+                        const next = e.target.value as ContactMessageStatus;
+                        setBusyLeadId(msg.id);
+                        void onContactStatusChange(msg.id, next).finally(() => setBusyLeadId(null));
+                      }}
+                      className="min-h-[36px] rounded-xl border border-stone-300 bg-white px-2.5 text-xs font-semibold"
+                    >
+                      {CONTACT_STATUS_OPTIONS.map((opt) => (
+                        <option key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
+                    <a
+                      href={`mailto:${msg.email}?subject=${encodeURIComponent('Retorno SouNativo Atendimento')}`}
+                      className="inline-flex items-center gap-1 min-h-[36px] px-2.5 rounded-xl border border-stone-200 text-xs font-semibold text-primary-700 hover:bg-stone-50"
+                    >
+                      <Mail size={13} /> Responder
+                    </a>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      aria-label={`Excluir mensagem de ${msg.name}`}
+                      disabled={busyLeadId === msg.id}
+                      onClick={() =>
+                        setConfirmDeleteLeadId(confirmDeleteLeadId === msg.id ? null : msg.id)
                       }
                     >
-                      {CONTACT_STATUS_OPTIONS.find((o) => o.value === msg.status)?.label ??
-                        msg.status}
-                    </Badge>
-                    <span className="text-xs text-stone-400">
-                      {msg.createdAt ? new Date(msg.createdAt).toLocaleDateString('pt-BR') : ''}
-                    </span>
+                      <Trash2 size={14} className="text-red-600" />
+                    </Button>
                   </div>
-                  <p className="text-sm font-semibold text-stone-900">
-                    {msg.name} · <span className="font-normal text-stone-600">{msg.email}</span>
-                  </p>
-                  <p className="text-xs text-stone-700 leading-relaxed whitespace-pre-line">
-                    {msg.message}
-                  </p>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2 shrink-0">
-                  <select
-                    aria-label={`Status de mensagem de ${msg.name}`}
-                    disabled={busyLeadId === msg.id}
-                    value={msg.status}
-                    onChange={(e) => {
-                      const next = e.target.value as ContactMessageStatus;
-                      setBusyLeadId(msg.id);
-                      void onContactStatusChange(msg.id, next).finally(() => setBusyLeadId(null));
-                    }}
-                    className="min-h-[36px] rounded-xl border border-stone-300 bg-white px-2.5 text-xs font-semibold"
-                  >
-                    {CONTACT_STATUS_OPTIONS.map((opt) => (
-                      <option key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </option>
-                    ))}
-                  </select>
-                  <a
-                    href={`mailto:${msg.email}?subject=${encodeURIComponent('Retorno SouNativo Atendimento')}`}
-                    className="inline-flex items-center gap-1 min-h-[36px] px-2.5 rounded-xl border border-stone-200 text-xs font-semibold text-primary-700 hover:bg-stone-50"
-                  >
-                    <Mail size={13} /> Responder
-                  </a>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    aria-label={`Excluir mensagem de ${msg.name}`}
-                    disabled={busyLeadId === msg.id}
-                    onClick={() => {
-                      setBusyLeadId(msg.id);
-                      void onDeleteContactMessage(msg.id).finally(() => setBusyLeadId(null));
-                    }}
-                  >
-                    <Trash2 size={14} className="text-red-600" />
-                  </Button>
-                </div>
+                {confirmDeleteLeadId === msg.id && (
+                  <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-900">
+                    <span>Confirmar exclusão desta mensagem de {msg.name}?</span>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        disabled={busyLeadId === msg.id}
+                        onClick={() => setConfirmDeleteLeadId(null)}
+                      >
+                        Cancelar
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="danger"
+                        loading={busyLeadId === msg.id}
+                        onClick={() => {
+                          setBusyLeadId(msg.id);
+                          void onDeleteContactMessage(msg.id).finally(() => {
+                            setBusyLeadId(null);
+                            setConfirmDeleteLeadId(null);
+                          });
+                        }}
+                      >
+                        Confirmar exclusão
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -373,35 +403,63 @@ export const AdminOperationsSection: React.FC<AdminOperationsSectionProps> = ({
         ) : (
           <div className="space-y-3">
             {safeReviews.map((rev) => (
-              <div
-                key={rev.id}
-                className="rounded-xl border border-stone-200 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
-              >
-                <div className="space-y-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-sm font-semibold text-stone-900">{rev.userName}</span>
-                    <span className="inline-flex items-center gap-1 text-xs font-bold text-amber-600">
-                      <Star size={12} className="fill-amber-400 text-amber-400" />
-                      {rev.rating}.0
-                    </span>
-                    <span className="text-xs text-stone-400">
-                      Pacote: {(rev.tripId ?? '').slice(0, 10)}...
-                    </span>
+              <div key={rev.id} className="rounded-xl border border-stone-200 p-4 space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="space-y-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-sm font-semibold text-stone-900">{rev.userName}</span>
+                      <span className="inline-flex items-center gap-1 text-xs font-bold text-amber-600">
+                        <Star size={12} className="fill-amber-400 text-amber-400" />
+                        {rev.rating}.0
+                      </span>
+                      <span className="text-xs text-stone-400">
+                        Pacote: {(rev.tripId ?? '').slice(0, 10)}...
+                      </span>
+                    </div>
+                    <p className="text-xs text-stone-600">{rev.comment}</p>
                   </div>
-                  <p className="text-xs text-stone-600">{rev.comment}</p>
+
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    disabled={busyReviewId === rev.id}
+                    onClick={() =>
+                      setConfirmDeleteReviewId(confirmDeleteReviewId === rev.id ? null : rev.id)
+                    }
+                  >
+                    <Trash2 size={14} className="text-red-600 mr-1" /> Remover
+                  </Button>
                 </div>
 
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  loading={busyReviewId === rev.id}
-                  onClick={() => {
-                    setBusyReviewId(rev.id);
-                    void onDeleteReview(rev.id).finally(() => setBusyReviewId(null));
-                  }}
-                >
-                  <Trash2 size={14} className="text-red-600 mr-1" /> Remover
-                </Button>
+                {confirmDeleteReviewId === rev.id && (
+                  <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-900">
+                    <span>Confirmar remoção desta avaliação de {rev.userName}?</span>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        disabled={busyReviewId === rev.id}
+                        onClick={() => setConfirmDeleteReviewId(null)}
+                      >
+                        Cancelar
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="danger"
+                        loading={busyReviewId === rev.id}
+                        onClick={() => {
+                          setBusyReviewId(rev.id);
+                          void onDeleteReview(rev.id).finally(() => {
+                            setBusyReviewId(null);
+                            setConfirmDeleteReviewId(null);
+                          });
+                        }}
+                      >
+                        Confirmar remoção
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -433,16 +491,38 @@ export const AdminOperationsSection: React.FC<AdminOperationsSectionProps> = ({
                 key={errItem.id}
                 className="rounded-xl border border-red-100 bg-red-50/40 p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
               >
-                <div className="space-y-1 min-w-0">
+                <div className="space-y-1.5 min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge tone="warning">{errItem.route}</Badge>
                     <span className="text-xs text-stone-500">
                       {errItem.createdAt ? new Date(errItem.createdAt).toLocaleString('pt-BR') : ''}
                     </span>
+                    {errItem.userUid && (
+                      <span className="text-[11px] font-mono text-stone-500">
+                        UID: {errItem.userUid.slice(0, 10)}...
+                      </span>
+                    )}
                   </div>
                   <p className="text-xs font-mono font-semibold text-red-950 break-words">
                     {errItem.message}
                   </p>
+                  {(errItem.stackSnippet || errItem.userAgent) && (
+                    <details className="text-[11px] text-stone-600">
+                      <summary className="cursor-pointer font-semibold text-stone-700 hover:text-stone-900">
+                        Detalhes técnicos
+                      </summary>
+                      {errItem.userAgent && (
+                        <p className="mt-1 break-all">
+                          <strong>UA:</strong> {errItem.userAgent}
+                        </p>
+                      )}
+                      {errItem.stackSnippet && (
+                        <pre className="mt-1 whitespace-pre-wrap break-words rounded-lg bg-white/80 p-2 font-mono text-[10px] text-red-900 border border-red-100">
+                          {errItem.stackSnippet}
+                        </pre>
+                      )}
+                    </details>
+                  )}
                 </div>
 
                 {onDeleteErrorLog && (

@@ -7,10 +7,18 @@ export function formatCurrencyBRL(value: number | undefined | null): string {
   }).format(safeValue);
 }
 
+export function parseDateSafe(isoDate: string | undefined | null): Date | null {
+  if (!isoDate || typeof isoDate !== 'string') return null;
+  const trimmed = isoDate.trim();
+  if (!trimmed) return null;
+  const normalized = /^\d{4}-\d{2}-\d{2}$/.test(trimmed) ? `${trimmed}T12:00:00` : trimmed;
+  const date = new Date(normalized);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
 export function formatShortDate(isoDate: string | undefined | null): string {
-  if (!isoDate || typeof isoDate !== 'string') return 'Data a definir';
-  const date = new Date(isoDate);
-  if (Number.isNaN(date.getTime())) return 'Data a definir';
+  const date = parseDateSafe(isoDate);
+  if (!date) return 'Data a definir';
   return date.toLocaleDateString('pt-BR', {
     day: '2-digit',
     month: 'short',
@@ -22,12 +30,11 @@ export function formatDateRange(
   startIso: string | undefined | null,
   endIso: string | undefined | null
 ): string {
-  if (!startIso || !endIso || typeof startIso !== 'string' || typeof endIso !== 'string') {
+  const start = parseDateSafe(startIso);
+  const end = parseDateSafe(endIso);
+  if (!start || !end) {
     return 'Datas flexíveis';
   }
-  const start = new Date(startIso);
-  const end = new Date(endIso);
-  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return 'Datas flexíveis';
   const startStr = start.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
   const endStr = end.toLocaleDateString('pt-BR', {
     day: '2-digit',
@@ -35,6 +42,19 @@ export function formatDateRange(
     year: 'numeric',
   });
   return `${startStr} – ${endStr}`;
+}
+
+export function formatPaymentMethod(method: string | undefined | null): string {
+  switch (method) {
+    case 'PIX':
+      return 'Pix';
+    case 'CREDIT_CARD':
+      return 'Cartão de Crédito';
+    case 'BOLETO':
+      return 'Boleto Bancário';
+    default:
+      return method || 'Pix';
+  }
 }
 
 export function getInitials(name: string | undefined | null): string {

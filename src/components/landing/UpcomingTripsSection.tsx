@@ -7,7 +7,7 @@ import { InterestFilterBar } from './InterestFilterBar';
 import { TripGrid } from '@/components/trips/TripGrid';
 import { cn } from '@/utils/cn';
 
-type QuickWindow = 'all' | 'dec' | 'jan' | 'budget';
+type QuickWindow = string;
 
 interface UpcomingTripsSectionProps {
   trips: Trip[];
@@ -16,12 +16,27 @@ interface UpcomingTripsSectionProps {
   onToggleFavorite: (tripId: string) => void;
 }
 
-const WINDOW_TABS: Array<{ id: QuickWindow; label: string }> = [
-  { id: 'all', label: 'Todas as saídas' },
-  { id: 'dec', label: 'Dezembro · Fim de Ano' },
-  { id: 'jan', label: 'Janeiro · Férias' },
-  { id: 'budget', label: 'Até R$ 1.600' },
-];
+const MONTH_NAMES_PT = [
+  'Janeiro',
+  'Fevereiro',
+  'Março',
+  'Abril',
+  'Maio',
+  'Junho',
+  'Julho',
+  'Agosto',
+  'Setembro',
+  'Outubro',
+  'Novembro',
+  'Dezembro',
+] as const;
+
+function formatMonthTabLabel(ym: string): string {
+  const [year, month] = ym.split('-');
+  const monthIdx = Number(month) - 1;
+  const monthName = MONTH_NAMES_PT[monthIdx] ?? ym;
+  return `${monthName} · ${year}`;
+}
 
 export const UpcomingTripsSection: React.FC<UpcomingTripsSectionProps> = ({
   trips,
@@ -32,10 +47,39 @@ export const UpcomingTripsSection: React.FC<UpcomingTripsSectionProps> = ({
   const [selectedCategory, setSelectedCategory] = useState<TripCategory | 'ALL'>('ALL');
   const [quickWindow, setQuickWindow] = useState<QuickWindow>('all');
 
+  const windowTabs = useMemo<Array<{ id: QuickWindow; label: string }>>(() => {
+    const now = new Date();
+    const currentYm = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    const monthsSet = new Set<string>();
+
+    for (const trip of trips) {
+      if (typeof trip.startDate === 'string' && /^\d{4}-\d{2}/.test(trip.startDate)) {
+        monthsSet.add(trip.startDate.slice(0, 7));
+      }
+      if (Array.isArray(trip.departures)) {
+        for (const dep of trip.departures) {
+          if (typeof dep?.startDate === 'string' && /^\d{4}-\d{2}/.test(dep.startDate)) {
+            monthsSet.add(dep.startDate.slice(0, 7));
+          }
+        }
+      }
+    }
+
+    const sortedMonths = Array.from(monthsSet).sort();
+    const upcomingMonths = sortedMonths.filter((ym) => ym >= currentYm);
+    const featuredMonths = (upcomingMonths.length > 0 ? upcomingMonths : sortedMonths).slice(0, 2);
+
+    return [
+      { id: 'all', label: 'Todas as saídas' },
+      ...featuredMonths.map((ym) => ({ id: ym, label: formatMonthTabLabel(ym) })),
+      { id: 'budget', label: 'Até R$ 1.600' },
+    ];
+  }, [trips]);
+
   const filtered = useMemo(() => {
     return filterAndSortTrips(trips, {
       category: selectedCategory,
-      month: quickWindow === 'dec' ? '2026-12' : quickWindow === 'jan' ? '2027-01' : undefined,
+      month: /^\d{4}-\d{2}$/.test(quickWindow) ? quickWindow : undefined,
       maxPrice: quickWindow === 'budget' ? 1600 : undefined,
     });
   }, [quickWindow, selectedCategory, trips]);
@@ -67,7 +111,7 @@ export const UpcomingTripsSection: React.FC<UpcomingTripsSectionProps> = ({
         </div>
 
         <div className="flex flex-wrap gap-2">
-          {WINDOW_TABS.map((tab) => {
+          {windowTabs.map((tab) => {
             const active = quickWindow === tab.id;
             return (
               <button

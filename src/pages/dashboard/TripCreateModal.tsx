@@ -12,6 +12,7 @@ interface TripCreateModalProps {
   isOpen: boolean;
   onClose: () => void;
   agency: Agency;
+  canPublishMoreTrips?: boolean;
   editingTrip?: Trip | null;
   onCreated: (trip: Trip) => void;
   onUpdated?: (trip: Trip) => void;
@@ -92,6 +93,7 @@ export const TripCreateModal: React.FC<TripCreateModalProps> = ({
   isOpen,
   onClose,
   agency,
+  canPublishMoreTrips = true,
   editingTrip,
   onCreated,
   onUpdated,
@@ -112,6 +114,13 @@ export const TripCreateModal: React.FC<TripCreateModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!editingTrip && !canPublishMoreTrips) {
+      showToast(
+        'Limite de roteiros ativos do seu plano atingido. Pause um pacote ou faça upgrade.',
+        'info'
+      );
+      return;
+    }
     setSaving(true);
 
     const parsedIncluded = values.includedText
@@ -140,7 +149,7 @@ export const TripCreateModal: React.FC<TripCreateModalProps> = ({
     const startObj = Number.isNaN(rawStart.getTime())
       ? new Date(Date.now() + 7 * 86400000)
       : rawStart;
-    const endObj = new Date(startObj.getTime() + durationDays * 86400000);
+    const endObj = new Date(startObj.getTime() + Math.max(0, durationDays - 1) * 86400000);
 
     const parsedLat = values.latitude.trim() !== '' ? Number(values.latitude) : NaN;
     const latitude =
@@ -154,11 +163,23 @@ export const TripCreateModal: React.FC<TripCreateModalProps> = ({
       .map((dep, idx) => {
         const depStartRaw = new Date(`${dep.startDate}T08:00:00Z`);
         if (Number.isNaN(depStartRaw.getTime())) return null;
-        const depEndRaw = new Date(depStartRaw.getTime() + durationDays * 86400000);
+        const depEndRaw = new Date(
+          depStartRaw.getTime() + Math.max(0, durationDays - 1) * 86400000
+        );
         const depMax = Math.max(1, Math.round(Number(dep.maxGuests) || maxGuests));
+        const prevDep = editingTrip?.departures?.find((d) => d.id === dep.id);
         const depAvail =
           dep.availableSpots !== undefined
-            ? Math.min(depMax, Math.max(0, dep.availableSpots))
+            ? prevDep
+              ? Math.min(
+                  depMax,
+                  Math.max(
+                    0,
+                    dep.availableSpots +
+                      (depMax - Math.max(1, prevDep.maxGuests || editingTrip?.maxGuests || maxGuests))
+                  )
+                )
+              : Math.min(depMax, Math.max(0, dep.availableSpots))
             : depMax;
         const priceCandidate =
           dep.priceOverride.trim() !== '' ? Number(dep.priceOverride) : undefined;

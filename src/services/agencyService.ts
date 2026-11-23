@@ -12,6 +12,7 @@ import {
 import {
   COLLECTIONS,
   db,
+  isMissingIndexError,
   mapFirestoreError,
   serverTimestamp,
   stripUndefined,
@@ -103,6 +104,8 @@ export function normalizeAgencyDoc(id: string, raw: Record<string, unknown>): Ag
     ...(typeof raw.city === 'string' ? { city: raw.city } : {}),
     ...(typeof raw.state === 'string' ? { state: raw.state } : {}),
     isGuide: Boolean(raw.isGuide || raw.type === 'GUIDE'),
+    verified: Boolean(raw.verified || raw.isVerified),
+    ...(typeof raw.cnpj === 'string' && raw.cnpj ? { cnpj: raw.cnpj } : {}),
     ...(typeof raw.cadastur === 'string' ? { cadastur: raw.cadastur } : {}),
     languages,
     specialties,
@@ -119,6 +122,9 @@ export function normalizeAgencyDoc(id: string, raw: Record<string, unknown>): Ag
     ...(typeof raw.heroTitle === 'string' ? { heroTitle: raw.heroTitle } : {}),
     ...(typeof raw.heroSubtitle === 'string' ? { heroSubtitle: raw.heroSubtitle } : {}),
     subscriptionPlan: planCandidate && VALID_PLANS.has(planCandidate) ? planCandidate : 'STARTER',
+    ...(typeof raw.requestedPlan === 'string' && VALID_PLANS.has(raw.requestedPlan as PlanTier)
+      ? { requestedPlan: raw.requestedPlan as PlanTier }
+      : {}),
     subscriptionStatus:
       statusCandidate && VALID_SUB_STATUSES.has(statusCandidate) ? statusCandidate : 'ACTIVE',
     ...(raw.theme && typeof raw.theme === 'object' ? { theme: raw.theme as AgencyTheme } : {}),
@@ -138,13 +144,37 @@ export async function fetchAllAgencies(guidesOnly?: boolean): Promise<Agency[]> 
   let agencies = SEED_AGENCIES;
 
   if (db) {
+    const firestoreDb = db;
     try {
-      const q = query(
-        collection(db, COLLECTIONS.agencies),
-        where('isActive', '==', true),
-        limit(50)
-      );
-      const snap = await getDocs(q);
+      const q =
+        guidesOnly !== undefined
+          ? query(
+              collection(firestoreDb, COLLECTIONS.agencies),
+              where('isActive', '==', true),
+              where('isGuide', '==', guidesOnly),
+              limit(50)
+            )
+          : query(
+              collection(firestoreDb, COLLECTIONS.agencies),
+              where('isActive', '==', true),
+              limit(50)
+            );
+      let snap;
+      try {
+        snap = await getDocs(q);
+      } catch (queryErr: unknown) {
+        if (guidesOnly !== undefined && isMissingIndexError(queryErr)) {
+          snap = await getDocs(
+            query(
+              collection(firestoreDb, COLLECTIONS.agencies),
+              where('isActive', '==', true),
+              limit(50)
+            )
+          );
+        } else {
+          throw queryErr;
+        }
+      }
       if (!snap.empty) {
         const live = snap.docs.map((d) =>
           normalizeAgencyDoc(d.id, d.data() as Record<string, unknown>)
@@ -252,12 +282,17 @@ export async function createAgencyInFirestore(
       ? payload.logo.slice(0, 2048)
       : DEFAULT_AGENCY_LOGO;
 
+  const cleanEmail = (payload.email ?? '').trim().toLowerCase().slice(0, 254);
+  const cleanCnpj = (payload.cnpj ?? '').trim().slice(0, 25);
+
   const sanitized = {
     ownerUid: payload.ownerUid,
     name: cleanName,
     slug: uniqueSlug,
     description: (payload.description ?? '').trim().slice(0, 5000),
     logo: safeLogo,
+    ...(cleanEmail ? { email: cleanEmail } : {}),
+    ...(cleanCnpj ? { cnpj: cleanCnpj } : {}),
     whatsapp: (payload.whatsapp ?? '').trim().slice(0, 30),
     city: (payload.city ?? '').trim().slice(0, 100),
     state: (payload.state ?? 'BR').trim().slice(0, 50),
@@ -300,6 +335,7 @@ export type EditableAgencyFields = Partial<
     | 'website'
     | 'city'
     | 'state'
+    | 'cnpj'
     | 'cadastur'
     | 'languages'
     | 'specialties'
@@ -353,6 +389,9 @@ export async function updateAgencyProfileInFirestore(
   }
   if (updates.state !== undefined) {
     sanitized.state = updates.state.trim().slice(0, 50);
+  }
+  if (updates.cnpj !== undefined) {
+    sanitized.cnpj = updates.cnpj.trim().slice(0, 25);
   }
   if (updates.cadastur !== undefined) {
     sanitized.cadastur = updates.cadastur.trim().slice(0, 50);
@@ -449,7 +488,11 @@ export async function updateAgencyThemeInFirestore(
 export async function requestAgencyPlanUpgradeInFirestore(
   agencyId: string,
   targetPlan: PlanTier
-): Promise<{ subscriptionPlan: PlanTier; subscriptionStatus: SubscriptionStatus }> {
+): Promise<{
+  subscriptionPlan?: PlanTier;
+  requestedPlan?: PlanTier;
+  subscriptionStatus: SubscriptionStatus;
+}> {
   if (!db) throw new Error('Firestore não configurado.');
   if (!VALID_PLANS.has(targetPlan)) {
     throw new Error('Plano selecionado inválido.');
@@ -457,12 +500,22 @@ export async function requestAgencyPlanUpgradeInFirestore(
 
   const nextStatus: SubscriptionStatus = targetPlan === 'STARTER' ? 'ACTIVE' : 'PENDING';
   try {
+    if (targetPlan === 'STARTER') {
+      await updateDoc(doc(db, COLLECTIONS.agencies, agencyId), {
+        subscriptionPlan: 'STARTER',
+        requestedPlan: null,
+        subscriptionStatus: 'ACTIVE',
+        updatedAt: serverTimestamp(),
+      });
+      return { subscriptionPlan: 'STARTER', requestedPlan: undefined, subscriptionStatus: 'ACTIVE' };
+    }
+
     await updateDoc(doc(db, COLLECTIONS.agencies, agencyId), {
-      subscriptionPlan: targetPlan,
-      subscriptionStatus: nextStatus,
+      requestedPlan: targetPlan,
+      subscriptionStatus: 'PENDING',
       updatedAt: serverTimestamp(),
     });
-    return { subscriptionPlan: targetPlan, subscriptionStatus: nextStatus };
+    return { requestedPlan: targetPlan, subscriptionStatus: nextStatus };
   } catch (err: unknown) {
     throw mapFirestoreError(err, 'Não foi possível registrar a solicitação de plano.');
   }

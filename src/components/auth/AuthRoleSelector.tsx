@@ -38,6 +38,7 @@ export const AuthRoleSelector: React.FC<AuthRoleSelectorProps> = ({
             key={opt.id}
             type="button"
             disabled={disabled}
+            aria-pressed={selected}
             onClick={() => onSelect(opt.id)}
             className={cn(
               'flex flex-col items-center justify-center rounded-xl border p-2.5 text-center transition-all min-h-[68px]',

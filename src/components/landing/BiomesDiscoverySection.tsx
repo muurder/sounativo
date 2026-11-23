@@ -21,14 +21,14 @@ const BIOMES = [
   {
     title: 'Chapadas & Quedas',
     subtitle: 'Cachoeiras turquesas, cânions e Foz do Iguaçu',
-    query: 'Cachoeiras',
+    query: 'Chapadas & Quedas',
     image:
       'https://images.unsplash.com/photo-1432405972618-c60b0225b8f9?auto=format&fit=crop&w=900&q=80',
   },
   {
     title: 'Praias & Cidades Históricas',
     subtitle: 'Costa Verde, Paraty e barroco mineiro com guia',
-    query: 'Paraty',
+    query: 'Praias & Cidades Históricas',
     image:
       'https://images.unsplash.com/photo-1519046904884-53103b34b206?auto=format&fit=crop&w=900&q=80',
   },

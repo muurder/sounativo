@@ -1,8 +1,17 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { AlertCircle, ArrowRight, MapPin, RefreshCw, ShieldCheck, Star } from 'lucide-react';
+import {
+  AlertCircle,
+  ArrowRight,
+  MapPin,
+  RefreshCw,
+  Search,
+  ShieldCheck,
+  Star,
+} from 'lucide-react';
 import { useAgencies } from '@/hooks/useAgencies';
 import { usePageMeta } from '@/hooks/usePageMeta';
+import { normalizeSearchText } from '@/utils/formatters';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -11,6 +20,8 @@ import { Skeleton } from '@/components/ui/Skeleton';
 
 export const AgenciesPage: React.FC = () => {
   const { agencies, loading, error, reload } = useAgencies(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedState, setSelectedState] = useState('');
 
   usePageMeta({
     title: 'Agências de Turismo Verificadas',
@@ -18,9 +29,33 @@ export const AgenciesPage: React.FC = () => {
     canonicalPath: '/agencies',
   });
 
+  const stateOptions = useMemo(() => {
+    const set = new Set<string>();
+    for (const agency of agencies) {
+      if (agency.state?.trim()) {
+        set.add(agency.state.trim().toUpperCase());
+      }
+    }
+    return Array.from(set).sort();
+  }, [agencies]);
+
+  const filteredAgencies = useMemo(() => {
+    const query = normalizeSearchText(searchTerm);
+    return agencies.filter((agency) => {
+      if (selectedState && agency.state?.trim().toUpperCase() !== selectedState) {
+        return false;
+      }
+      if (!query) return true;
+      const haystack = normalizeSearchText(
+        `${agency.name} ${agency.city ?? ''} ${agency.state ?? ''} ${agency.description ?? ''}`
+      );
+      return haystack.includes(query);
+    });
+  }, [agencies, searchTerm, selectedState]);
+
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
-      <div className="max-w-2xl mb-8 space-y-2">
+      <div className="max-w-2xl mb-6 space-y-2">
         <h1 className="font-serif text-3xl sm:text-4xl font-bold text-stone-900">
           Agências Verificadas
         </h1>
@@ -28,6 +63,46 @@ export const AgenciesPage: React.FC = () => {
           Operadoras regionais selecionadas pela excelência em atendimento e curadoria local.
         </p>
       </div>
+
+      {!loading && agencies.length > 0 && (
+        <div className="mb-8 flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1">
+            <Search
+              size={16}
+              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400"
+            />
+            <label htmlFor="agencies-search" className="sr-only">
+              Buscar agência por nome ou cidade
+            </label>
+            <input
+              id="agencies-search"
+              type="search"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Buscar agência, cidade ou especialidade..."
+              className="w-full min-h-[44px] rounded-xl border border-stone-300 bg-white pl-10 pr-4 text-sm focus:border-primary-500 focus:outline-none"
+            />
+          </div>
+          <div className="sm:w-44">
+            <label htmlFor="agencies-state-filter" className="sr-only">
+              Filtrar por estado
+            </label>
+            <select
+              id="agencies-state-filter"
+              value={selectedState}
+              onChange={(e) => setSelectedState(e.target.value)}
+              className="w-full min-h-[44px] rounded-xl border border-stone-300 bg-white px-3 text-sm focus:border-primary-500 focus:outline-none"
+            >
+              <option value="">Todos os estados</option>
+              {stateOptions.map((uf) => (
+                <option key={uf} value={uf}>
+                  {uf}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+      )}
 
       {error && (
         <div
@@ -55,14 +130,23 @@ export const AgenciesPage: React.FC = () => {
             <Skeleton key={n} className="h-64 w-full" />
           ))}
         </div>
-      ) : agencies.length === 0 ? (
+      ) : filteredAgencies.length === 0 ? (
         <EmptyState
           title="Nenhuma agência encontrada"
-          description="Ainda não há operadoras ativas listadas neste filtro."
+          description="Ajuste a busca ou o estado para explorar mais operadoras ativas."
+          actionLabel={searchTerm || selectedState ? 'Limpar filtros' : undefined}
+          onAction={
+            searchTerm || selectedState
+              ? () => {
+                  setSearchTerm('');
+                  setSelectedState('');
+                }
+              : undefined
+          }
         />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {agencies.map((agency) => (
+          {filteredAgencies.map((agency) => (
             <Link
               key={agency.id}
               to={`/${agency.slug}`}
@@ -76,9 +160,15 @@ export const AgenciesPage: React.FC = () => {
                   className="h-16 w-16 rounded-2xl object-cover border border-stone-200 shrink-0"
                 />
                 <div className="min-w-0">
-                  <Badge tone="primary" className="mb-1">
-                    <ShieldCheck size={12} /> Verificada
-                  </Badge>
+                  {agency.verified ? (
+                    <Badge tone="primary" className="mb-1">
+                      <ShieldCheck size={12} /> Verificada
+                    </Badge>
+                  ) : (
+                    <Badge tone="neutral" className="mb-1">
+                      Parceira
+                    </Badge>
+                  )}
                   <h2 className="font-serif text-lg font-bold text-stone-900 truncate group-hover:text-primary-600">
                     {agency.name}
                   </h2>

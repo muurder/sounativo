@@ -156,24 +156,46 @@ export function subscribeToUserNotifications(
     return () => undefined;
   }
 
-  const q = query(
-    collection(db, COLLECTIONS.notifications),
-    where('recipientUid', '==', recipientUid),
-    limit(30)
-  );
+  const firestoreDb = db;
+  let activeUnsub: Unsubscribe = () => undefined;
+  let usingFallback = false;
 
-  return onSnapshot(
-    q,
-    (snap) => {
-      const items = sortNotificationsByRecent(
-        snap.docs.map((d) => normalizeNotificationDoc(d.id, d.data() as Record<string, unknown>))
-      );
-      onChange(items);
-    },
-    (err) => {
-      console.warn('[notificationService] Listener de notificações indisponível:', err);
-    }
-  );
+  const attachListener = (withOrderBy: boolean) => {
+    const q = withOrderBy
+      ? query(
+          collection(firestoreDb, COLLECTIONS.notifications),
+          where('recipientUid', '==', recipientUid),
+          orderBy('createdAt', 'desc'),
+          limit(30)
+        )
+      : query(
+          collection(firestoreDb, COLLECTIONS.notifications),
+          where('recipientUid', '==', recipientUid),
+          limit(30)
+        );
+
+    activeUnsub = onSnapshot(
+      q,
+      (snap) => {
+        const items = sortNotificationsByRecent(
+          snap.docs.map((d) => normalizeNotificationDoc(d.id, d.data() as Record<string, unknown>))
+        );
+        onChange(items);
+      },
+      (err) => {
+        if (withOrderBy && !usingFallback && isMissingIndexError(err)) {
+          usingFallback = true;
+          activeUnsub();
+          attachListener(false);
+          return;
+        }
+        console.warn('[notificationService] Listener de notificações indisponível:', err);
+      }
+    );
+  };
+
+  attachListener(true);
+  return () => activeUnsub();
 }
 
 export async function markNotificationReadInFirestore(notificationId: string): Promise<void> {
@@ -209,9 +231,14 @@ export async function dispatchTransactionalAlert(
 ): Promise<void> {
   if (typeof fetch !== 'function') return;
   try {
+    const idToken = await auth?.currentUser?.getIdToken().catch(() => '');
+    if (!idToken) return;
     await fetch('/api/notify', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${idToken}`,
+      },
       body: JSON.stringify(payload),
     });
   } catch {

@@ -5,20 +5,46 @@ import { Button } from '@/components/ui/Button';
 import { useToast } from '@/context/ToastContext';
 
 const GROUP_PROFILES = ['Amigos', 'Família', 'Corporativo', 'Turma / Faculdade'] as const;
-const TARGET_MONTHS = [
-  'Dezembro 2026',
-  'Janeiro 2027',
-  'Fevereiro 2027 (Carnaval)',
-  'Outro período flexível',
+const MONTH_NAMES_PT = [
+  'Janeiro',
+  'Fevereiro',
+  'Março',
+  'Abril',
+  'Maio',
+  'Junho',
+  'Julho',
+  'Agosto',
+  'Setembro',
+  'Outubro',
+  'Novembro',
+  'Dezembro',
 ] as const;
+
+function buildTargetMonths(): string[] {
+  const now = new Date();
+  const options: string[] = [];
+  for (let offset = 1; offset <= 4; offset += 1) {
+    const dt = new Date(now.getFullYear(), now.getMonth() + offset, 1);
+    options.push(`${MONTH_NAMES_PT[dt.getMonth()]} ${dt.getFullYear()}`);
+  }
+  options.push('Outro período flexível');
+  return options;
+}
 
 export const GroupQuoteSection: React.FC = () => {
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const targetMonths = useMemo(() => buildTargetMonths(), []);
   const [destination, setDestination] = useState('Chapada dos Veadeiros');
-  const [travelers, setTravelers] = useState(10);
-  const [month, setMonth] = useState<string>(TARGET_MONTHS[1]);
+  const [travelersInput, setTravelersInput] = useState('10');
+  const [month, setMonth] = useState<string>(() => targetMonths[1] ?? targetMonths[0]);
   const [groupType, setGroupType] = useState<string>(GROUP_PROFILES[0]);
+
+  const travelers = useMemo(() => {
+    const parsed = Number.parseInt(travelersInput, 10);
+    if (!Number.isFinite(parsed)) return 4;
+    return Math.min(80, Math.max(4, parsed));
+  }, [travelersInput]);
 
   const quoteSummary = useMemo(() => {
     const cleanDest = destination.trim() || 'Destino a definir';
@@ -27,6 +53,7 @@ export const GroupQuoteSection: React.FC = () => {
 
   const handleRequestQuote = (e: React.FormEvent) => {
     e.preventDefault();
+    setTravelersInput(String(travelers));
     if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
       void navigator.clipboard.writeText(quoteSummary).catch(() => undefined);
     }
@@ -112,8 +139,9 @@ export const GroupQuoteSection: React.FC = () => {
                     type="number"
                     min={4}
                     max={80}
-                    value={travelers}
-                    onChange={(e) => setTravelers(Math.max(4, Number(e.target.value) || 4))}
+                    value={travelersInput}
+                    onChange={(e) => setTravelersInput(e.target.value)}
+                    onBlur={() => setTravelersInput(String(travelers))}
                     className="w-full min-h-[44px] rounded-xl border border-stone-300 bg-white px-3 text-sm focus:border-primary-500 focus:outline-none"
                   />
                 </div>
@@ -131,7 +159,7 @@ export const GroupQuoteSection: React.FC = () => {
                     onChange={(e) => setMonth(e.target.value)}
                     className="w-full min-h-[44px] rounded-xl border border-stone-300 bg-white px-2.5 text-sm focus:border-primary-500 focus:outline-none"
                   >
-                    {TARGET_MONTHS.map((item) => (
+                    {targetMonths.map((item) => (
                       <option key={item} value={item}>
                         {item}
                       </option>

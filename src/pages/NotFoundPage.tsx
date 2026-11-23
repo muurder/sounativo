@@ -2,9 +2,17 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Compass, Home, MapPin, UserPlus } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { useAuth } from '@/hooks/useAuth';
+import { usePageMeta } from '@/hooks/usePageMeta';
 
 export const NotFoundPage: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+
+  usePageMeta({
+    title: 'Página não encontrada',
+    noIndex: true,
+  });
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-16 sm:py-20 text-center">
@@ -30,13 +38,15 @@ export const NotFoundPage: React.FC = () => {
           >
             Explorar viagens
           </Button>
-          <Button
-            variant="ghost"
-            onClick={() => navigate('/?auth=signup')}
-            leftIcon={<UserPlus size={16} />}
-          >
-            Criar conta
-          </Button>
+          {!user && (
+            <Button
+              variant="ghost"
+              onClick={() => navigate('/?auth=signup')}
+              leftIcon={<UserPlus size={16} />}
+            >
+              Criar conta
+            </Button>
+          )}
         </div>
 
         <div className="mt-8 border-t border-stone-100 pt-6 text-xs text-stone-500">

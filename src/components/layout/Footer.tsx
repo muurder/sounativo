@@ -38,7 +38,7 @@ export const Footer: React.FC = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/dashboard" className="hover:text-white transition-colors">
+                <Link to="/dashboard?mode=partner" className="hover:text-white transition-colors">
                   Painel do Parceiro
                 </Link>
               </li>

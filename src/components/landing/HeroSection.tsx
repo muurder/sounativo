@@ -28,7 +28,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ highlightTrip }) => {
   return (
     <section className="relative overflow-hidden bg-primary-900 text-white">
       <div className="absolute inset-0">
-        <img
+        <SafeImage
           src={heroImage}
           alt="Paisagem natural brasileira curada pelo SouNativo"
           className="h-full w-full object-cover opacity-60"
@@ -73,7 +73,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ highlightTrip }) => {
             <div className="lg:col-span-4 animate-fade-in-up">
               <Link
                 to={`/viagem/${highlightTrip.slug || highlightTrip.id}`}
-                className="group flex items-center gap-3.5 rounded-2xl border border-white/25 bg-primary-950/75 p-3.5 backdrop-blur-md shadow-2xl hover:bg-primary-950/90 transition-colors"
+                className="group flex items-center gap-3.5 rounded-2xl border border-white/25 bg-primary-900/85 p-3.5 backdrop-blur-md shadow-2xl hover:bg-primary-900/95 transition-colors"
               >
                 <SafeImage
                   src={highlightTrip.images?.[0] || heroImage}

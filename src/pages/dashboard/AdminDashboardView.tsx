@@ -176,6 +176,7 @@ export const AdminDashboardView: React.FC = () => {
       verified?: boolean;
       isActive?: boolean;
       subscriptionPlan?: PlanTier;
+      requestedPlan?: PlanTier | null;
       subscriptionStatus?: SubscriptionStatus;
     }
   ) => {
@@ -197,12 +198,16 @@ export const AdminDashboardView: React.FC = () => {
           link: '/dashboard?mode=partner',
         });
       }
+      const { requestedPlan: updRequestedPlan, ...restUpdates } = updates;
       setAgencies((prev) =>
         prev.map((a) =>
           a.id === agencyId
             ? {
                 ...a,
-                ...updates,
+                ...restUpdates,
+                ...(updRequestedPlan !== undefined
+                  ? { requestedPlan: updRequestedPlan ?? undefined }
+                  : {}),
                 ...(nextSubStatus ? { subscriptionStatus: nextSubStatus } : {}),
               }
             : a

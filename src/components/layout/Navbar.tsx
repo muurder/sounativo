@@ -78,12 +78,29 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenMenu, onOpenAuth, agencyBr
         </div>
 
         <div className="hidden md:flex items-center gap-7">
+          {agencyBrand && (
+            <Link
+              to="/"
+              aria-current={pathname === '/' ? 'page' : undefined}
+              className={cn(
+                'text-sm font-medium transition-colors py-1 border-b-2',
+                pathname === '/'
+                  ? 'border-primary-500 text-primary-600 font-semibold'
+                  : 'border-transparent text-stone-600 hover:text-stone-900'
+              )}
+            >
+              Início
+            </Link>
+          )}
           {NAV_LINKS.map((item) => {
-            const active = pathname.startsWith(item.to);
+            const active =
+              pathname.startsWith(item.to) ||
+              (item.to === '/trips' && pathname.startsWith('/viagem/'));
             return (
               <Link
                 key={item.to}
                 to={item.to}
+                aria-current={active ? 'page' : undefined}
                 className={cn(
                   'text-sm font-medium transition-colors py-1 border-b-2',
                   active

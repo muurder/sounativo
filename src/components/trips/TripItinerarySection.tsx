@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Backpack, Check, ChevronDown, Clock, MapPin, ShieldCheck, X } from 'lucide-react';
 import { Trip } from '@/types';
+import { cn } from '@/utils/cn';
 
 interface TripItinerarySectionProps {
   trip: Trip;
@@ -15,6 +16,7 @@ const DEFAULT_PACKING_ITEMS = [
 ] as const;
 
 export const TripItinerarySection: React.FC<TripItinerarySectionProps> = ({ trip }) => {
+  const [packingOpen, setPackingOpen] = useState(false);
   const itinerary = Array.isArray(trip?.itinerary) ? trip.itinerary : [];
   const boardingPoints = Array.isArray(trip?.boardingPoints) ? trip.boardingPoints : [];
   const included = Array.isArray(trip?.included) ? trip.included : [];
@@ -119,26 +121,46 @@ export const TripItinerarySection: React.FC<TripItinerarySectionProps> = ({ trip
         </section>
       )}
 
-      <details className="group rounded-2xl border border-stone-200 bg-white p-5 shadow-card">
-        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 font-serif text-lg font-bold text-stone-900">
+      <div
+        className={cn(
+          'rounded-2xl border bg-white p-5 shadow-card transition-colors',
+          packingOpen ? 'border-primary-300' : 'border-stone-200'
+        )}
+      >
+        <button
+          type="button"
+          aria-expanded={packingOpen}
+          aria-controls="trip-packing-checklist"
+          onClick={() => setPackingOpen((prev) => !prev)}
+          className="flex w-full items-center justify-between gap-3 text-left font-serif text-lg font-bold text-stone-900"
+        >
           <span className="inline-flex items-center gap-2">
             <Backpack size={18} className="text-secondary-600" aria-hidden="true" />
             Checklist essencial: o que levar na mochila
           </span>
           <ChevronDown
             size={18}
-            className="text-stone-500 transition-transform group-open:rotate-180 shrink-0"
+            className={cn(
+              'text-stone-500 transition-transform shrink-0',
+              packingOpen && 'rotate-180'
+            )}
+            aria-hidden="true"
           />
-        </summary>
-        <ul className="mt-4 space-y-2 border-t border-stone-100 pt-4 text-sm text-stone-700">
-          {DEFAULT_PACKING_ITEMS.map((item) => (
-            <li key={item} className="flex items-start gap-2.5">
-              <Check size={15} className="text-primary-600 mt-0.5 shrink-0" />
-              <span>{item}</span>
-            </li>
-          ))}
-        </ul>
-      </details>
+        </button>
+        {packingOpen && (
+          <ul
+            id="trip-packing-checklist"
+            className="mt-4 space-y-2 border-t border-stone-100 pt-4 text-sm text-stone-700"
+          >
+            {DEFAULT_PACKING_ITEMS.map((item) => (
+              <li key={item} className="flex items-start gap-2.5">
+                <Check size={15} className="text-primary-600 mt-0.5 shrink-0" />
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </div>
   );
 };

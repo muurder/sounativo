@@ -1,6 +1,22 @@
 import { Trip, TripSearchFilters } from '@/types';
 import { normalizeSearchText } from './formatters';
 
+const BIOME_QUERY_ALIASES: Record<string, readonly string[]> = {
+  'chapadas & quedas': ['chapada', 'cachoeira', 'cataratas', 'quedas', 'veadeiros', 'iguacu'],
+  'praias & cidades historicas': [
+    'paraty',
+    'praia',
+    'costa verde',
+    'ouro preto',
+    'barroco',
+    'historia',
+  ],
+  'dunas & lagoas': ['lencois', 'dunas', 'lagoas'],
+  'amazonia & rios': ['amazonia', 'rio negro', 'selva'],
+  cachoeiras: ['cachoeira', 'cataratas'],
+  praias: ['praia', 'costa verde'],
+};
+
 export function filterAndSortTrips(
   trips: Trip[] | undefined | null,
   filters?: TripSearchFilters
@@ -10,6 +26,7 @@ export function filterAndSortTrips(
   const queryText = filters?.query ? normalizeSearchText(filters.query) : '';
   const category = filters?.category && filters.category !== 'ALL' ? filters.category : null;
   const monthPrefix = filters?.month?.trim() || '';
+  const biomeAliases = queryText ? BIOME_QUERY_ALIASES[queryText] : undefined;
 
   const result = trips.filter((trip) => {
     if (!trip) return false;
@@ -22,31 +39,42 @@ export function filterAndSortTrips(
         : typeof trip.maxGuests === 'number' && Number.isFinite(trip.maxGuests)
           ? trip.maxGuests
           : 0;
-    const maxDepartureSpots = Array.isArray(trip.departures)
-      ? trip.departures.reduce((acc, d) => Math.max(acc, d?.availableSpots ?? 0), 0)
-      : 0;
-    const effectiveSpots = Math.max(baseSpots, maxDepartureSpots);
-
     const startDateStr = typeof trip.startDate === 'string' ? trip.startDate : '';
-    const matchesMonth =
-      !monthPrefix ||
-      startDateStr.startsWith(monthPrefix) ||
-      (Array.isArray(trip.departures) &&
-        trip.departures.some(
+    const deps = Array.isArray(trip.departures) ? trip.departures : [];
+    const matchingDeps = monthPrefix
+      ? deps.filter(
           (dep) => typeof dep?.startDate === 'string' && dep.startDate.startsWith(monthPrefix)
-        ));
+        )
+      : deps;
+    const baseMatchesMonth = !monthPrefix || startDateStr.startsWith(monthPrefix);
+
+    if (monthPrefix && !baseMatchesMonth && matchingDeps.length === 0) {
+      return false;
+    }
+
+    const maxMatchingDepSpots = matchingDeps.reduce(
+      (acc, d) => Math.max(acc, d?.availableSpots ?? 0),
+      0
+    );
+    const effectiveSpots = monthPrefix
+      ? Math.max(baseMatchesMonth ? baseSpots : 0, maxMatchingDepSpots)
+      : Math.max(baseSpots, maxMatchingDepSpots);
 
     const safeTags = Array.isArray(trip.tags) ? trip.tags.join(' ') : '';
+    const boardingText = Array.isArray(trip.boardingPoints)
+      ? trip.boardingPoints.map((bp) => bp?.location ?? '').join(' ')
+      : '';
 
     if (filters?.maxPrice !== undefined && price > filters.maxPrice) return false;
     if (filters?.travelers !== undefined && effectiveSpots < filters.travelers) return false;
-    if (!matchesMonth) return false;
 
     if (queryText) {
       const haystack = normalizeSearchText(
-        `${trip.title ?? ''} ${trip.destination ?? ''} ${safeTags} ${trip.agencyName ?? ''}`
+        `${trip.title ?? ''} ${trip.destination ?? ''} ${trip.description ?? ''} ${safeTags} ${boardingText} ${trip.agencyName ?? ''}`
       );
-      if (!haystack.includes(queryText)) return false;
+      const directMatch = haystack.includes(queryText);
+      const aliasMatch = biomeAliases?.some((term) => haystack.includes(term)) ?? false;
+      if (!directMatch && !aliasMatch) return false;
     }
     return true;
   });

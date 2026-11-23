@@ -2,10 +2,18 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Download, Lock, Mail, ShieldCheck } from 'lucide-react';
 import { useConsent } from '@/hooks/useConsent';
+import { usePageMeta } from '@/hooks/usePageMeta';
 import { Button } from '@/components/ui/Button';
 
 export const PrivacyPolicyPage: React.FC = () => {
   const { openConsentBanner } = useConsent();
+
+  usePageMeta({
+    title: 'Política de Privacidade',
+    description:
+      'Como o SouNativo coleta, trata e protege seus dados pessoais em conformidade com a LGPD.',
+    canonicalPath: '/privacy',
+  });
 
   return (
     <article className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-12 sm:py-16 text-stone-800 leading-relaxed space-y-8">
@@ -191,10 +199,12 @@ export const PrivacyPolicyPage: React.FC = () => {
         </div>
 
         <div className="flex flex-wrap items-center gap-3 pt-2">
-          <Link to="/dashboard">
-            <Button variant="primary" size="sm" leftIcon={<Download size={14} />}>
-              Acessar Painel do Titular (Exportar ou Excluir)
-            </Button>
+          <Link
+            to="/dashboard?mode=privacy"
+            className="inline-flex items-center justify-center gap-1.5 min-h-[36px] rounded-xl bg-primary-500 px-3.5 py-2 text-xs font-semibold text-white hover:bg-primary-600 transition-colors"
+          >
+            <Download size={14} aria-hidden="true" />
+            Acessar Painel do Titular (Exportar ou Excluir)
           </Link>
           <Button
             variant="outline"

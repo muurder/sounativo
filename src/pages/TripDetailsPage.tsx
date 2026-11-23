@@ -139,6 +139,28 @@ export const TripDetailsPage: React.FC = () => {
     }
   };
 
+  const handleShare = async () => {
+    const shareUrl = window.location.href;
+    if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
+      try {
+        await navigator.share({
+          title: trip.title,
+          text: `${trip.title} (${trip.destination || 'Brasil'}) — SouNativo`,
+          url: shareUrl,
+        });
+        return;
+      } catch {
+        // User cancelled share or share failed; fall through to clipboard
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      showToast('Link do roteiro copiado!', 'success');
+    } catch {
+      showToast('Não foi possível copiar o link.', 'error');
+    }
+  };
+
   const handleReserve = async (payload: ReservePayload) => {
     if (!user) {
       showToast('Faça login para solicitar sua reserva.', 'info');
@@ -211,6 +233,7 @@ export const TripDetailsPage: React.FC = () => {
             trip={trip}
             isFavorite={isFavorite}
             onToggleFavorite={() => void handleFavoriteClick()}
+            onShare={() => void handleShare()}
           />
           <TripItinerarySection trip={trip} />
           <TripMapSection trip={trip} />
