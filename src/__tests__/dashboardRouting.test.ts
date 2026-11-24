@@ -1,14 +1,32 @@
 import { describe, expect, it } from 'vitest';
 import {
+  formatUserRoleLabel,
   isPartnerRole,
   resolveDashboardViewMode,
 } from '@/utils/dashboardRouting';
+import { parseImageUrlsText } from '@/pages/dashboard/TripFormFields';
 import {
   buildPartnerOrgName,
   buildPartnerSlug,
 } from '@/services/partnerSignupService';
 
 describe('Dashboard routing by account type (post-signup)', () => {
+  it('translates user roles into Portuguese labels instead of raw database enums', () => {
+    expect(formatUserRoleLabel('GUIDE')).toBe('Guia de Turismo');
+    expect(formatUserRoleLabel('AGENCY')).toBe('Agência de Turismo');
+    expect(formatUserRoleLabel('CLIENT')).toBe('Viajante');
+    expect(formatUserRoleLabel('ADMIN')).toBe('Administrador');
+    expect(formatUserRoleLabel(undefined)).toBe('Viajante');
+  });
+
+  it('parses both HTTP(S) and inline raster base64 Data URLs in trip gallery fields', () => {
+    const dataWebp = 'data:image/webp;base64,UklGRh4AAABXRUJQVlA4TBEAAAAvAAAAAAfQ//73v/+BiOh/AAA=';
+    const httpsImg = 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4';
+    const parsed = parseImageUrlsText(`${httpsImg}\n${dataWebp}`);
+    expect(parsed).toEqual([httpsImg, dataWebp]);
+    expect(parseImageUrlsText(`${httpsImg}, ${dataWebp}`)).toEqual([httpsImg, dataWebp]);
+  });
+
   it('lands AGENCY and GUIDE accounts on the partner panel instead of the traveler one', () => {
     expect(
       resolveDashboardViewMode({ requestedMode: null, role: 'AGENCY', isMasterAdmin: false })

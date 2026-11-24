@@ -153,6 +153,27 @@ export async function fetchReviewsByAgency(agencyId: string): Promise<TripReview
   return SEED_REVIEWS.filter((r) => r.agencyId === agencyId);
 }
 
+export async function fetchReviewsByUser(userUid: string): Promise<TripReview[]> {
+  if (!userUid) return [];
+
+  if (db) {
+    try {
+      const snap = await getDocs(
+        query(collection(db, COLLECTIONS.reviews), where('userUid', '==', userUid), limit(50))
+      );
+      if (!snap.empty) {
+        return sortReviewsByRecent(
+          snap.docs.map((d) => normalizeReviewDoc(d.id, d.data() as Record<string, unknown>))
+        );
+      }
+    } catch (err) {
+      console.warn('[reviewService.fetchReviewsByUser] Falha ao buscar avaliações do usuário:', err);
+    }
+  }
+
+  return SEED_REVIEWS.filter((r) => r.userUid === userUid);
+}
+
 export async function fetchRecentReviews(): Promise<TripReview[]> {
   if (db) {
     try {

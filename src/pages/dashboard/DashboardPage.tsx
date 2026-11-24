@@ -1,19 +1,18 @@
-import React, { Suspense, useEffect, useState } from 'react';
+import React, { Suspense, useState } from 'react';
 import { useOutletContext, useSearchParams } from 'react-router-dom';
-import { AlertCircle, Briefcase, Compass, Lock, ShieldCheck, User } from 'lucide-react';
+import { AlertCircle, Compass, ShieldCheck } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { usePageMeta } from '@/hooks/usePageMeta';
 import { useToast } from '@/context/ToastContext';
 import { MASTER_ADMIN_EMAIL } from '@/services/firebase.config';
 import {
   DashboardViewMode,
-  isPartnerRole,
+  formatUserRoleLabel,
   resolveDashboardViewMode,
 } from '@/utils/dashboardRouting';
 import { lazyWithRetry } from '@/utils/lazyWithRetry';
 import { GoogleSignInButton } from '@/components/ui/GoogleSignInButton';
 import { Button } from '@/components/ui/Button';
-import { Badge } from '@/components/ui/Badge';
 import { Skeleton } from '@/components/ui/Skeleton';
 
 const ClientDashboardView = lazyWithRetry(() =>
@@ -35,7 +34,7 @@ interface OutletContextValue {
 
 export const DashboardPage: React.FC = () => {
   const { openAuth } = useOutletContext<OutletContextValue>();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user, loading, authError, clearAuthError, signInWithGoogle } = useAuth();
   const { showToast } = useToast();
   const [googleBusy, setGoogleBusy] = useState(false);
@@ -52,23 +51,14 @@ export const DashboardPage: React.FC = () => {
     user &&
     (user.role === 'ADMIN' || (MASTER_ADMIN_EMAIL && normalizedEmail === MASTER_ADMIN_EMAIL))
   );
-  const isPartnerAccount = isPartnerRole(user?.role);
 
-  // The account type chosen at signup decides the default panel (AGENCY/GUIDE ->
-  // partner). A manual switch on this page overrides it until session/mode changes.
-  const resolvedViewMode = resolveDashboardViewMode({
+  // Each registered account goes straight to its own dashboard (CLIENT -> Viajante,
+  // GUIDE/AGENCY -> Parceiro, ADMIN -> Console Admin) without a mode-switcher bar.
+  const viewMode: DashboardViewMode = resolveDashboardViewMode({
     requestedMode: searchParams.get('mode'),
     role: user?.role,
     isMasterAdmin,
   });
-  const [manualViewMode, setManualViewMode] = useState<DashboardViewMode | null>(null);
-  const viewMode = manualViewMode ?? resolvedViewMode;
-
-  useEffect(() => {
-    setManualViewMode(null);
-  }, [searchParams, user?.role, user?.uid]);
-
-  const setViewMode = (mode: DashboardViewMode) => setManualViewMode(mode);
 
   const handleDashboardGoogle = async () => {
     setGoogleError(null);
@@ -116,7 +106,7 @@ export const DashboardPage: React.FC = () => {
           </h1>
           <p className="text-sm text-stone-600">
             Entre com sua conta Google para gerenciar reservas, favoritos, privacidade ou operar sua
-            agência.
+            agência e roteiros.
           </p>
 
           {visibleAuthError && (
@@ -161,8 +151,10 @@ export const DashboardPage: React.FC = () => {
     );
   }
 
+  const roleLabel = formatUserRoleLabel(user.role);
+
   return (
-    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10 space-y-6">
+    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-4">
       {authError && (
         <div
           role="alert"
@@ -182,77 +174,27 @@ export const DashboardPage: React.FC = () => {
         </div>
       )}
 
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <Badge tone="primary">{user.role}</Badge>
-            {isMasterAdmin && user.role !== 'ADMIN' && <Badge tone="secondary">Admin Master</Badge>}
-            <span className="text-xs text-stone-500">{user.email}</span>
-          </div>
-          <h1 className="font-serif text-3xl font-bold text-stone-900">
-            Olá, {user.name || 'Viajante'}
-          </h1>
-        </div>
-
-        <div className="inline-flex flex-wrap rounded-xl border border-stone-200 bg-white p-1 gap-1">
-          <button
-            type="button"
-            onClick={() => setViewMode('traveler')}
-            className={`inline-flex items-center gap-2 min-h-[38px] px-4 rounded-lg text-xs font-semibold transition-colors ${
-              viewMode === 'traveler' ? 'bg-primary-500 text-white' : 'text-stone-600'
-            }`}
-          >
-            <User size={15} /> Modo Viajante
-          </button>
-          <button
-            type="button"
-            onClick={() => setViewMode('partner')}
-            className={`inline-flex items-center gap-2 min-h-[38px] px-4 rounded-lg text-xs font-semibold transition-colors ${
-              viewMode === 'partner' ? 'bg-primary-500 text-white' : 'text-stone-600'
-            }`}
-          >
-            <Briefcase size={15} /> Modo Agência / Guia
-          </button>
-          <button
-            type="button"
-            onClick={() => setViewMode('privacy')}
-            className={`inline-flex items-center gap-2 min-h-[38px] px-4 rounded-lg text-xs font-semibold transition-colors ${
-              viewMode === 'privacy' ? 'bg-primary-500 text-white' : 'text-stone-600'
-            }`}
-          >
-            <Lock size={15} /> Minha Privacidade
-          </button>
-          {isMasterAdmin && (
-            <button
-              type="button"
-              onClick={() => setViewMode('admin')}
-              className={`inline-flex items-center gap-2 min-h-[38px] px-4 rounded-lg text-xs font-semibold transition-colors ${
-                viewMode === 'admin' ? 'bg-primary-500 text-white' : 'text-stone-600'
-              }`}
+      {isMasterAdmin && user.role !== 'ADMIN' && (
+        <div className="flex items-center justify-end">
+          {viewMode === 'admin' ? (
+            <Button size="sm" variant="outline" onClick={() => setSearchParams({})}>
+              Voltar ao Painel ({roleLabel})
+            </Button>
+          ) : (
+            <Button
+              size="sm"
+              variant="outline"
+              leftIcon={<ShieldCheck size={15} />}
+              onClick={() => setSearchParams({ mode: 'admin' })}
             >
-              <ShieldCheck size={15} /> Admin Master
-            </button>
+              Console Admin Master
+            </Button>
           )}
         </div>
-      </div>
+      )}
 
       <Suspense fallback={<Skeleton className="h-96 w-full rounded-2xl" />}>
-        {viewMode === 'traveler' && (
-          <>
-            {isPartnerAccount && (
-              <div className="rounded-xl border border-primary-200 bg-primary-50/60 px-4 py-3 text-xs text-primary-900 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <span>
-                  Você está no <strong>Modo Viajante</strong>. Sua conta parceira tem um painel
-                  próprio para publicar roteiros e receber reservas.
-                </span>
-                <Button size="sm" onClick={() => setViewMode('partner')}>
-                  Ir para o painel do parceiro
-                </Button>
-              </div>
-            )}
-            <ClientDashboardView />
-          </>
-        )}
+        {viewMode === 'traveler' && <ClientDashboardView />}
         {viewMode === 'partner' && <PartnerDashboardView />}
         {viewMode === 'privacy' && <PrivacySettings />}
         {viewMode === 'admin' && isMasterAdmin && <AdminDashboardView />}

@@ -2,8 +2,17 @@ import React, { useMemo } from 'react';
 import { CalendarPlus, MapPin, Plus, Trash2 } from 'lucide-react';
 import { BoardingPoint, ItineraryDay, TripCategory } from '@/types';
 import { CATEGORY_LABELS } from '@/utils/constants';
+import { isSafeRasterDataUrl } from '@/utils/securitySanitizer';
 import { ImageUploadField } from '@/components/ui/ImageUploadField';
 import { MultiImageUploadField } from '@/components/ui/MultiImageUploadField';
+
+export function parseImageUrlsText(rawText: string): string[] {
+  if (!rawText || !rawText.trim()) return [];
+  return rawText
+    .split(/(?:\r?\n|,\s*(?=https?:\/\/|data:image\/))+/)
+    .map((s) => s.trim())
+    .filter((s) => /^https?:\/\//i.test(s) || isSafeRasterDataUrl(s));
+}
 
 export interface DepartureFormRow {
   id: string;
@@ -36,16 +45,18 @@ export interface TripFormState {
 
 interface TripFormFieldsProps {
   values: TripFormState;
+  isGuide?: boolean;
   onChange: <K extends keyof TripFormState>(field: K, value: TripFormState[K]) => void;
 }
 
-export const TripFormFields: React.FC<TripFormFieldsProps> = ({ values, onChange }) => {
+export const TripFormFields: React.FC<TripFormFieldsProps> = ({
+  values,
+  isGuide = false,
+  onChange,
+}) => {
+  const itemLabelLower = isGuide ? 'da experiência' : 'do pacote';
   const extraImageUrls = useMemo(
-    () =>
-      values.extraImagesText
-        .split(',')
-        .map((s) => s.trim())
-        .filter((s) => /^https?:\/\//i.test(s)),
+    () => parseImageUrlsText(values.extraImagesText),
     [values.extraImagesText]
   );
 
@@ -127,7 +138,7 @@ export const TripFormFields: React.FC<TripFormFieldsProps> = ({ values, onChange
     <div className="space-y-4">
       <div>
         <label htmlFor="trip-title" className="block text-xs font-semibold text-stone-700 mb-1">
-          Título do pacote
+          Título {itemLabelLower}
         </label>
         <input
           id="trip-title"
@@ -395,7 +406,7 @@ export const TripFormFields: React.FC<TripFormFieldsProps> = ({ values, onChange
       {/* Direct Firebase Storage Cover + Gallery Uploads */}
       <ImageUploadField
         id="trip-cover-upload"
-        label="Foto principal (capa do pacote)"
+        label={`Foto principal (capa ${itemLabelLower})`}
         scope="trips"
         previewShape="wide"
         value={values.imageUrl}
@@ -404,11 +415,11 @@ export const TripFormFields: React.FC<TripFormFieldsProps> = ({ values, onChange
 
       <MultiImageUploadField
         id="trip-gallery-upload"
-        label="Galeria extra do roteiro"
+        label={`Galeria extra ${itemLabelLower}`}
         scope="trips"
         urls={extraImageUrls}
         maxImages={12}
-        onChange={(nextUrls) => onChange('extraImagesText', nextUrls.join(', '))}
+        onChange={(nextUrls) => onChange('extraImagesText', nextUrls.join('\n'))}
       />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -515,7 +526,7 @@ export const TripFormFields: React.FC<TripFormFieldsProps> = ({ values, onChange
 
       <div>
         <label htmlFor="trip-desc" className="block text-xs font-semibold text-stone-700 mb-1">
-          Descrição da experiência
+          Descrição {itemLabelLower}
         </label>
         <textarea
           id="trip-desc"

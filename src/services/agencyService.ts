@@ -19,6 +19,7 @@ import {
   toIsoTimestamp,
 } from './firebase';
 import { SEED_AGENCIES } from './seedCatalog';
+import { isSafeRasterDataUrl } from '@/utils/securitySanitizer';
 import { slugify } from '@/utils/slugUtils';
 import { Agency, AgencyTheme, PlanTier, SubscriptionStatus } from '@/types';
 
@@ -426,17 +427,19 @@ export async function updateAgencyProfileInFirestore(
   }
   if (updates.heroBannerUrl !== undefined) {
     const cleanBanner = updates.heroBannerUrl.trim();
-    if (cleanBanner && !/^https?:\/\//i.test(cleanBanner)) {
-      throw new Error('A imagem de capa deve usar uma URL válida (http/https).');
+    const isDataBanner = isSafeRasterDataUrl(cleanBanner);
+    if (cleanBanner && !isDataBanner && !/^https?:\/\//i.test(cleanBanner)) {
+      throw new Error('A imagem de capa deve usar uma URL válida (http/https) ou foto otimizada.');
     }
-    sanitized.heroBannerUrl = cleanBanner.slice(0, 2048);
+    sanitized.heroBannerUrl = isDataBanner ? cleanBanner : cleanBanner.slice(0, 2048);
   }
   if (updates.logo !== undefined) {
     const cleanLogo = updates.logo.trim();
-    if (cleanLogo && !/^https?:\/\//i.test(cleanLogo)) {
-      throw new Error('A logo deve usar uma URL válida (http/https).');
+    const isDataLogo = isSafeRasterDataUrl(cleanLogo);
+    if (cleanLogo && !isDataLogo && !/^https?:\/\//i.test(cleanLogo)) {
+      throw new Error('A logo deve usar uma URL válida (http/https) ou imagem otimizada.');
     }
-    sanitized.logo = cleanLogo.slice(0, 2048);
+    sanitized.logo = isDataLogo ? cleanLogo : cleanLogo.slice(0, 2048);
   }
 
   try {

@@ -4,9 +4,10 @@ import { Button } from '@/components/ui/Button';
 import { createTripInFirestore, updateTripInFirestore } from '@/services/tripService';
 import { Agency, Trip, TripDeparture } from '@/types';
 import { CATEGORY_LABELS } from '@/utils/constants';
+import { isSafeRasterDataUrl } from '@/utils/securitySanitizer';
 import { slugify } from '@/utils/slugUtils';
 import { useToast } from '@/context/ToastContext';
-import { TripFormFields, TripFormState } from './TripFormFields';
+import { parseImageUrlsText, TripFormFields, TripFormState } from './TripFormFields';
 
 interface TripCreateModalProps {
   isOpen: boolean;
@@ -81,7 +82,7 @@ function buildInitialState(editingTrip?: Trip | null): TripFormState {
     allowChildren: editingTrip.passengerConfig?.allowChildren ?? true,
     category: editingTrip.category ?? 'NATUREZA',
     imageUrl: safeImages[0] || DEFAULT_COVER_URL,
-    extraImagesText: safeImages.slice(1).join(', '),
+    extraImagesText: safeImages.slice(1).join('\n'),
     includedText: (editingTrip.included ?? []).join(', '),
     notIncludedText: (editingTrip.notIncluded ?? []).join(', '),
     itinerary: safeItinerary,
@@ -132,15 +133,13 @@ export const TripCreateModal: React.FC<TripCreateModalProps> = ({
       .map((s) => s.trim())
       .filter(Boolean);
 
-    const extraImages = values.extraImagesText
-      .split(',')
-      .map((s) => s.trim())
-      .filter((s) => /^https?:\/\//i.test(s));
+    const extraImages = parseImageUrlsText(values.extraImagesText);
     const cover = values.imageUrl.trim();
-    const allImages = [
-      ...(cover && /^https?:\/\//i.test(cover) ? [cover] : [DEFAULT_COVER_URL]),
-      ...extraImages,
-    ].slice(0, 20);
+    const validCover =
+      cover && (/^https?:\/\//i.test(cover) || isSafeRasterDataUrl(cover))
+        ? cover
+        : DEFAULT_COVER_URL;
+    const allImages = [validCover, ...extraImages].slice(0, 20);
 
     const durationDays = Math.max(1, Number(values.durationDays) || 1);
     const maxGuests = Math.max(1, Number(values.maxGuests) || 16);
@@ -301,20 +300,29 @@ export const TripCreateModal: React.FC<TripCreateModalProps> = ({
     }
   };
 
+  const isGuide = Boolean(agency.isGuide);
+  const itemSingular = isGuide ? 'Experiência' : 'Pacote';
+  const itemSingularLower = isGuide ? 'experiência' : 'pacote';
+  const modalTitle = editingTrip
+    ? `Editar ${itemSingular}`
+    : isGuide
+      ? 'Publicar Nova Experiência'
+      : 'Publicar Novo Pacote';
+
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={editingTrip ? 'Editar Experiência' : 'Publicar Nova Experiência'}
+      title={modalTitle}
     >
       <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4">
-        <TripFormFields values={values} onChange={handleFieldChange} />
+        <TripFormFields values={values} isGuide={isGuide} onChange={handleFieldChange} />
         <div className="flex justify-end gap-3 pt-2">
           <Button variant="ghost" onClick={onClose}>
             Cancelar
           </Button>
           <Button type="submit" loading={saving}>
-            {editingTrip ? 'Salvar alterações' : 'Publicar roteiro'}
+            {editingTrip ? 'Salvar alterações' : `Publicar ${itemSingularLower}`}
           </Button>
         </div>
       </form>

@@ -39,6 +39,44 @@ export interface PassengerConfig {
   childPriceMultiplier: number;
 }
 
+export interface OperationalSeatAssignment {
+  seatNumber: number;
+  passengerName: string;
+  bookingId?: string;
+  document?: string;
+}
+
+export interface OperationalVehicle {
+  id: string;
+  name: string;
+  type: 'BUS' | 'MICROBUS' | 'VAN' | 'SUV';
+  capacity: number;
+  seats: OperationalSeatAssignment[];
+}
+
+export interface OperationalRoom {
+  id: string;
+  name: string;
+  type: 'SINGLE' | 'DOUBLE' | 'TRIPLE' | 'QUAD' | 'SHARED';
+  capacity: number;
+  guests: string[];
+}
+
+export interface OperationalManualPassenger {
+  id: string;
+  name: string;
+  document?: string;
+  phone?: string;
+  boardingLocation?: string;
+}
+
+export interface TripOperationalData {
+  vehicles?: OperationalVehicle[];
+  rooms?: OperationalRoom[];
+  manualPassengers?: OperationalManualPassenger[];
+  notes?: string;
+}
+
 export interface Trip {
   id: string;
   agencyId: string;
@@ -68,6 +106,7 @@ export interface Trip {
   maxGuests: number;
   availableSpots?: number;
   passengerConfig: PassengerConfig;
+  operationalData?: TripOperationalData;
   rating: number;
   totalReviews: number;
   featured: boolean;

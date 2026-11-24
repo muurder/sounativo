@@ -27,8 +27,18 @@ export function sanitizeExternalUrl(rawUrl: string | undefined | null): string |
   }
 }
 
+const SAFE_RASTER_DATA_IMAGE_RE =
+  /^data:image\/(webp|jpeg|png|gif|avif);base64,[A-Za-z0-9+/=]+$/i;
+
+export function isSafeRasterDataUrl(rawSrc: string | undefined | null): boolean {
+  if (!rawSrc) return false;
+  const trimmed = rawSrc.trim();
+  return trimmed.length <= 350_000 && SAFE_RASTER_DATA_IMAGE_RE.test(trimmed);
+}
+
 /**
- * Sanitizes image sources, allowing HTTPS/HTTP URLs or safe single-slash relative paths (/assets/...).
+ * Sanitizes image sources, allowing HTTPS/HTTP URLs, safe single-slash relative paths (/assets/...),
+ * or validated raster base64 Data URLs (webp, jpeg, png, gif, avif).
  * Rejects protocol-relative (//evil.com), javascript:, and arbitrary data:text/html or svg payloads.
  */
 export function sanitizeImageSrc(rawSrc: string | undefined | null, fallback: string): string {
@@ -37,6 +47,10 @@ export function sanitizeImageSrc(rawSrc: string | undefined | null, fallback: st
   if (!trimmed) return fallback;
 
   if (trimmed.startsWith('/') && !trimmed.startsWith('//')) {
+    return trimmed;
+  }
+
+  if (isSafeRasterDataUrl(trimmed)) {
     return trimmed;
   }
 

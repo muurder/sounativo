@@ -65,6 +65,7 @@ export function useUserProfile() {
           | 'phone'
           | 'cpf'
           | 'birthDate'
+          | 'address'
           | 'notificationsEnabled'
           | 'agencyId'
           | 'photoURL'

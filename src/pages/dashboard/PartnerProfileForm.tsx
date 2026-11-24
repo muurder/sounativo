@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { Save } from 'lucide-react';
-import { Agency, GuideDetails } from '@/types';
+import { Award, Briefcase, Save, User, UserCog } from 'lucide-react';
+import { Agency, GuideDetails, UserRole } from '@/types';
 import { updateAgencyProfileInFirestore } from '@/services/agencyService';
+import { formatUserRoleLabel } from '@/utils/dashboardRouting';
+import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { ImageUploadField } from '@/components/ui/ImageUploadField';
 import { useToast } from '@/context/ToastContext';
@@ -9,11 +11,26 @@ import { PartnerGuideFields } from './PartnerGuideFields';
 
 interface PartnerProfileFormProps {
   agency: Agency;
+  currentRole?: UserRole;
+  onChangeRole?: (nextRole: Exclude<UserRole, 'ADMIN'>) => Promise<void>;
   onUpdated: (agency: Agency) => void;
 }
 
-export const PartnerProfileForm: React.FC<PartnerProfileFormProps> = ({ agency, onUpdated }) => {
+export const PartnerProfileForm: React.FC<PartnerProfileFormProps> = ({
+  agency,
+  currentRole,
+  onChangeRole,
+  onUpdated,
+}) => {
   const { showToast } = useToast();
+  const effectiveRole: Exclude<UserRole, 'ADMIN'> =
+    currentRole === 'GUIDE' || currentRole === 'AGENCY' || currentRole === 'CLIENT'
+      ? currentRole
+      : agency.isGuide
+        ? 'GUIDE'
+        : 'AGENCY';
+  const [selectedRole, setSelectedRole] = useState<Exclude<UserRole, 'ADMIN'>>(effectiveRole);
+  const [switchingRole, setSwitchingRole] = useState(false);
   const [name, setName] = useState(agency.name ?? '');
   const [description, setDescription] = useState(agency.description ?? '');
   const [city, setCity] = useState(agency.city ?? '');
@@ -80,14 +97,37 @@ export const PartnerProfileForm: React.FC<PartnerProfileFormProps> = ({ agency, 
     }
   };
 
+  const handleRoleSwitch = async () => {
+    if (!onChangeRole || selectedRole === effectiveRole) return;
+    setSwitchingRole(true);
+    try {
+      await onChangeRole(selectedRole);
+      showToast(
+        `Perfil cadastrado alterado para ${formatUserRoleLabel(selectedRole)}!`,
+        'success'
+      );
+    } catch (err) {
+      showToast(
+        err instanceof Error ? err.message : 'Erro ao alterar tipo de perfil cadastrado.',
+        'error'
+      );
+    } finally {
+      setSwitchingRole(false);
+    }
+  };
+
   return (
-    <form
-      onSubmit={(e) => void handleSubmit(e)}
-      className="rounded-2xl border border-stone-200 bg-white p-6 shadow-card space-y-5"
-    >
-      <h3 className="font-serif text-xl font-bold text-stone-900">
-        Dados do Microsite &amp; Credencial
-      </h3>
+    <div className="space-y-6">
+      <form
+        onSubmit={(e) => void handleSubmit(e)}
+        className="rounded-2xl border border-stone-200 bg-white p-6 shadow-card space-y-5"
+      >
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <h3 className="font-serif text-xl font-bold text-stone-900">
+            Dados {agency.isGuide ? 'do Guia & Microsite' : 'da Agência & Credencial'}
+          </h3>
+          <Badge tone="primary">{formatUserRoleLabel(effectiveRole)}</Badge>
+        </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <ImageUploadField
@@ -257,9 +297,89 @@ export const PartnerProfileForm: React.FC<PartnerProfileFormProps> = ({ agency, 
         />
       </div>
 
-      <Button type="submit" loading={saving} leftIcon={<Save size={16} />}>
-        Atualizar perfil público
-      </Button>
-    </form>
+        <Button type="submit" loading={saving} leftIcon={<Save size={16} />}>
+          Atualizar perfil público
+        </Button>
+      </form>
+
+      {onChangeRole && currentRole !== 'ADMIN' && (
+        <section className="rounded-2xl border border-stone-200 bg-white p-6 shadow-card space-y-4">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-50 text-primary-600">
+              <UserCog size={20} />
+            </div>
+            <div>
+              <h3 className="font-serif text-lg font-bold text-stone-900">
+                Tipo de Perfil Cadastrado
+              </h3>
+              <p className="text-xs text-stone-600">
+                Altere aqui caso queira mudar sua conta entre Guia de Turismo, Agência de Turismo ou
+                Viajante.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {[
+              {
+                role: 'GUIDE' as const,
+                title: 'Guia de Turismo',
+                desc: 'Painel de Guia com experiências autorais, portfólio Cadastur e mural de oportunidades.',
+                icon: Award,
+              },
+              {
+                role: 'AGENCY' as const,
+                title: 'Agência de Turismo',
+                desc: 'Painel de Agência com catálogo de pacotes, operacional e contratação de guias.',
+                icon: Briefcase,
+              },
+              {
+                role: 'CLIENT' as const,
+                title: 'Viajante / Cliente',
+                desc: 'Painel de Viajante focado nas suas próprias reservas, vouchers e favoritos.',
+                icon: User,
+              },
+            ].map((opt) => {
+              const Icon = opt.icon;
+              const isSelected = selectedRole === opt.role;
+              const isCurrent = effectiveRole === opt.role;
+              return (
+                <button
+                  key={opt.role}
+                  type="button"
+                  onClick={() => setSelectedRole(opt.role)}
+                  className={`text-left rounded-xl border p-4 transition-all space-y-1.5 ${
+                    isSelected
+                      ? 'border-primary-500 bg-primary-50/60 ring-2 ring-primary-500/20'
+                      : 'border-stone-200 hover:border-stone-300 bg-white'
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="inline-flex items-center gap-2 text-sm font-bold text-stone-900">
+                      <Icon size={16} className="text-primary-600" />
+                      {opt.title}
+                    </span>
+                    {isCurrent && <Badge tone="success">Atual</Badge>}
+                  </div>
+                  <p className="text-xs text-stone-600 leading-relaxed">{opt.desc}</p>
+                </button>
+              );
+            })}
+          </div>
+
+          {selectedRole !== effectiveRole && (
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-primary-200 bg-primary-50/70 p-4">
+              <p className="text-xs text-primary-950">
+                Confirmar alteração do seu perfil cadastrado para{' '}
+                <strong>{formatUserRoleLabel(selectedRole)}</strong>?
+              </p>
+              <Button size="sm" loading={switchingRole} onClick={() => void handleRoleSwitch()}>
+                Confirmar troca para {formatUserRoleLabel(selectedRole)}
+              </Button>
+            </div>
+          )}
+        </section>
+      )}
+    </div>
   );
 };

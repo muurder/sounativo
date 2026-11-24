@@ -10,7 +10,8 @@ import {
   toIsoTimestamp,
 } from './firebase';
 import { syncStoredConsentOnAuth } from './privacyService';
-import { UserProfile, UserRole } from '@/types';
+import { isSafeRasterDataUrl } from '@/utils/securitySanitizer';
+import { UserAddress, UserProfile, UserRole } from '@/types';
 
 export interface PendingProfileMeta {
   name?: string;
@@ -66,6 +67,20 @@ export function normalizeUserProfileDoc(
   const createdAt = toIsoTimestamp(raw.createdAt);
   const updatedAt = toIsoTimestamp(raw.updatedAt);
 
+  const rawAddr =
+    raw.address && typeof raw.address === 'object' ? (raw.address as Record<string, unknown>) : null;
+  const address: UserAddress | undefined = rawAddr
+    ? {
+        ...(typeof rawAddr.zipCode === 'string' ? { zipCode: rawAddr.zipCode } : {}),
+        ...(typeof rawAddr.street === 'string' ? { street: rawAddr.street } : {}),
+        ...(typeof rawAddr.number === 'string' ? { number: rawAddr.number } : {}),
+        ...(typeof rawAddr.complement === 'string' ? { complement: rawAddr.complement } : {}),
+        ...(typeof rawAddr.district === 'string' ? { district: rawAddr.district } : {}),
+        ...(typeof rawAddr.city === 'string' ? { city: rawAddr.city } : {}),
+        ...(typeof rawAddr.state === 'string' ? { state: rawAddr.state } : {}),
+      }
+    : undefined;
+
   return {
     uid,
     name:
@@ -79,6 +94,7 @@ export function normalizeUserProfileDoc(
     phone: typeof raw.phone === 'string' ? raw.phone : undefined,
     cpf: typeof raw.cpf === 'string' ? raw.cpf : undefined,
     birthDate: typeof raw.birthDate === 'string' ? raw.birthDate : undefined,
+    ...(address ? { address } : {}),
     favorites,
     notificationsEnabled:
       typeof raw.notificationsEnabled === 'boolean' ? raw.notificationsEnabled : true,
@@ -216,6 +232,7 @@ export async function saveUserProfile(
       | 'phone'
       | 'cpf'
       | 'birthDate'
+      | 'address'
       | 'notificationsEnabled'
       | 'agencyId'
       | 'photoURL'
@@ -245,6 +262,17 @@ export async function saveUserProfile(
   if (updates.birthDate !== undefined) {
     sanitizedUpdates.birthDate = updates.birthDate.trim().slice(0, 30);
   }
+  if (updates.address !== undefined && updates.address) {
+    sanitizedUpdates.address = {
+      zipCode: (updates.address.zipCode ?? '').trim().slice(0, 20),
+      street: (updates.address.street ?? '').trim().slice(0, 140),
+      number: (updates.address.number ?? '').trim().slice(0, 30),
+      complement: (updates.address.complement ?? '').trim().slice(0, 80),
+      district: (updates.address.district ?? '').trim().slice(0, 80),
+      city: (updates.address.city ?? '').trim().slice(0, 80),
+      state: (updates.address.state ?? '').trim().toUpperCase().slice(0, 10),
+    };
+  }
   if (updates.notificationsEnabled !== undefined) {
     sanitizedUpdates.notificationsEnabled = Boolean(updates.notificationsEnabled);
   }
@@ -253,10 +281,11 @@ export async function saveUserProfile(
   }
   if (updates.photoURL !== undefined) {
     const cleanPhoto = updates.photoURL.trim();
-    if (cleanPhoto && !/^https?:\/\//i.test(cleanPhoto)) {
-      throw new Error('A foto de perfil deve usar uma URL válida (http/https).');
+    const isDataImg = isSafeRasterDataUrl(cleanPhoto);
+    if (cleanPhoto && !isDataImg && !/^https?:\/\//i.test(cleanPhoto)) {
+      throw new Error('A foto de perfil deve usar uma URL válida (http/https) ou imagem otimizada.');
     }
-    sanitizedUpdates.photoURL = cleanPhoto.slice(0, 2048);
+    sanitizedUpdates.photoURL = isDataImg ? cleanPhoto : cleanPhoto.slice(0, 2048);
   }
   if (updates.role !== undefined) {
     sanitizedUpdates.role = updates.role;

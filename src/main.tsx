@@ -17,10 +17,21 @@ if (typeof window !== 'undefined') {
   }
 
   if ('caches' in window) {
+    const staleCachePatterns = [
+      'supabase',
+      'google-fonts-cache',
+      'gstatic-fonts-cache',
+      'unsplash-images-cache',
+      'firebase-storage-images-cache',
+    ];
     void caches
       .keys()
       .then((keys) =>
-        Promise.all(keys.filter((key) => key.includes('supabase')).map((key) => caches.delete(key)))
+        Promise.all(
+          keys
+            .filter((key) => staleCachePatterns.some((pattern) => key.includes(pattern)))
+            .map((key) => caches.delete(key))
+        )
       );
   }
 

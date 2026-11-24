@@ -282,6 +282,13 @@ service cloud.firestore {
       return url is string && url.size() <= maxLen && url.matches("^https?://.*");
     }
 
+    function isValidImageOrUrl(url, maxLen) {
+      return url is string && (
+        (url.size() <= maxLen && url.matches("^https?://.*")) ||
+        (url.size() <= 350000 && url.matches("^data:image/(webp|jpeg|png|gif|avif);base64,[A-Za-z0-9+/=]+$"))
+      );
+    }
+
     function isValidEmail(email) {
       return email is string &&
              email.size() <= 254 &&
@@ -405,7 +412,7 @@ service cloud.firestore {
              d.role in ['CLIENT', 'AGENCY', 'GUIDE', 'ADMIN'] &&
              (!('phone' in d) || d.phone == null || (d.phone is string && d.phone.size() <= 30)) &&
              (!('cpf' in d) || d.cpf == null || (d.cpf is string && d.cpf.size() <= 20)) &&
-             (!('photoURL' in d) || d.photoURL == null || d.photoURL == '' || isValidUrl(d.photoURL, 2048)) &&
+             (!('photoURL' in d) || d.photoURL == null || d.photoURL == '' || isValidImageOrUrl(d.photoURL, 2048)) &&
              (!('favorites' in d) || d.favorites == null || (d.favorites is list && d.favorites.size() <= 200)) &&
              (!('agencyId' in d) || d.agencyId == null || (d.agencyId is string && d.agencyId.size() <= 128)) &&
              (!('birthDate' in d) || d.birthDate == null || (d.birthDate is string && d.birthDate.size() <= 30)) &&
@@ -440,11 +447,11 @@ service cloud.firestore {
              (!('verified' in d) || d.verified == null || d.verified is bool) &&
              (!('isVerified' in d) || d.isVerified == null || d.isVerified is bool) &&
              (!('description' in d) || d.description == null || (d.description is string && d.description.size() <= 5000)) &&
-             (!('logo' in d) || d.logo == null || d.logo == '' || isValidUrl(d.logo, 2048)) &&
-             (!('logoUrl' in d) || d.logoUrl == null || d.logoUrl == '' || isValidUrl(d.logoUrl, 2048)) &&
-             (!('logoURL' in d) || d.logoURL == null || d.logoURL == '' || isValidUrl(d.logoURL, 2048)) &&
-             (!('coverImage' in d) || d.coverImage == null || d.coverImage == '' || isValidUrl(d.coverImage, 2048)) &&
-             (!('bannerUrl' in d) || d.bannerUrl == null || d.bannerUrl == '' || isValidUrl(d.bannerUrl, 2048)) &&
+             (!('logo' in d) || d.logo == null || d.logo == '' || isValidImageOrUrl(d.logo, 2048)) &&
+             (!('logoUrl' in d) || d.logoUrl == null || d.logoUrl == '' || isValidImageOrUrl(d.logoUrl, 2048)) &&
+             (!('logoURL' in d) || d.logoURL == null || d.logoURL == '' || isValidImageOrUrl(d.logoURL, 2048)) &&
+             (!('coverImage' in d) || d.coverImage == null || d.coverImage == '' || isValidImageOrUrl(d.coverImage, 2048)) &&
+             (!('bannerUrl' in d) || d.bannerUrl == null || d.bannerUrl == '' || isValidImageOrUrl(d.bannerUrl, 2048)) &&
              (!('whatsapp' in d) || d.whatsapp == null || (d.whatsapp is string && d.whatsapp.size() <= 30)) &&
              (!('phone' in d) || d.phone == null || (d.phone is string && d.phone.size() <= 30)) &&
              (!('email' in d) || d.email == null || d.email == '' || isValidEmail(d.email)) &&
@@ -460,7 +467,7 @@ service cloud.firestore {
              (!('experienceYears' in d) || d.experienceYears == null || (d.experienceYears is number && d.experienceYears >= 0 && d.experienceYears <= 100)) &&
              (!('availability' in d) || d.availability == null || d.availability in ['FULL_TIME', 'PART_TIME', 'ON_DEMAND']) &&
              (!('heroMode' in d) || d.heroMode == null || d.heroMode in ['TRIPS', 'STATIC']) &&
-             (!('heroBannerUrl' in d) || d.heroBannerUrl == null || d.heroBannerUrl == '' || isValidUrl(d.heroBannerUrl, 2048)) &&
+             (!('heroBannerUrl' in d) || d.heroBannerUrl == null || d.heroBannerUrl == '' || isValidImageOrUrl(d.heroBannerUrl, 2048)) &&
              (!('heroTitle' in d) || d.heroTitle == null || (d.heroTitle is string && d.heroTitle.size() <= 150)) &&
              (!('heroSubtitle' in d) || d.heroSubtitle == null || (d.heroSubtitle is string && d.heroSubtitle.size() <= 300)) &&
              (!('primaryColor' in d) || d.primaryColor == null || (d.primaryColor is string && d.primaryColor.size() <= 30)) &&
@@ -503,8 +510,8 @@ service cloud.firestore {
              (!('endDate' in d) || d.endDate == null || d.endDate is timestamp || (d.endDate is string && d.endDate.size() <= 40)) &&
              d.durationDays is number && d.durationDays > 0 && d.durationDays <= 365 &&
              (!('images' in d) || d.images == null || (d.images is list && d.images.size() <= 20)) &&
-             (!('coverImage' in d) || d.coverImage == null || d.coverImage == '' || isValidUrl(d.coverImage, 2048)) &&
-             (!('imageUrl' in d) || d.imageUrl == null || d.imageUrl == '' || isValidUrl(d.imageUrl, 2048)) &&
+             (!('coverImage' in d) || d.coverImage == null || d.coverImage == '' || isValidImageOrUrl(d.coverImage, 2048)) &&
+             (!('imageUrl' in d) || d.imageUrl == null || d.imageUrl == '' || isValidImageOrUrl(d.imageUrl, 2048)) &&
              (!('category' in d) || d.category == null || (d.category is string && d.category.size() <= 50)) &&
              (!('categories' in d) || d.categories == null || (d.categories is list && d.categories.size() <= 15)) &&
              (!('tags' in d) || d.tags == null || (d.tags is list && d.tags.size() <= 30)) &&
@@ -525,7 +532,7 @@ service cloud.firestore {
              (!('operationalData' in d) || d.operationalData == null || (d.operationalData is map && d.operationalData.keys().size() <= 20)) &&
              (!('agencyName' in d) || d.agencyName == null || (d.agencyName is string && d.agencyName.size() <= 120)) &&
              (!('agencySlug' in d) || d.agencySlug == null || (d.agencySlug is string && d.agencySlug.size() <= 100)) &&
-             (!('agencyLogo' in d) || d.agencyLogo == null || d.agencyLogo == '' || isValidUrl(d.agencyLogo, 2048)) &&
+             (!('agencyLogo' in d) || d.agencyLogo == null || d.agencyLogo == '' || isValidImageOrUrl(d.agencyLogo, 2048)) &&
              (!('featured' in d) || d.featured == null || d.featured is bool) &&
              (!('featuredInHero' in d) || d.featuredInHero == null || d.featuredInHero is bool) &&
              (!('popularNearSP' in d) || d.popularNearSP == null || d.popularNearSP is bool) &&
@@ -563,7 +570,7 @@ service cloud.firestore {
              (!('departureDate' in d) || d.departureDate == null || d.departureDate is timestamp || (d.departureDate is string && d.departureDate.size() <= 40)) &&
              (!('tripTitle' in d) || d.tripTitle == null || (d.tripTitle is string && d.tripTitle.size() <= 160)) &&
              (!('tripSlug' in d) || d.tripSlug == null || (d.tripSlug is string && d.tripSlug.size() <= 180)) &&
-             (!('tripImage' in d) || d.tripImage == null || d.tripImage == '' || isValidUrl(d.tripImage, 2048)) &&
+             (!('tripImage' in d) || d.tripImage == null || d.tripImage == '' || isValidImageOrUrl(d.tripImage, 2048)) &&
              (!('agencyName' in d) || d.agencyName == null || (d.agencyName is string && d.agencyName.size() <= 120)) &&
              (!('clientName' in d) || d.clientName == null || (d.clientName is string && d.clientName.size() <= 120)) &&
              (!('clientEmail' in d) || d.clientEmail == null || d.clientEmail == '' || isValidEmail(d.clientEmail)) &&
@@ -589,7 +596,7 @@ service cloud.firestore {
              d.rating is int && d.rating >= 1 && d.rating <= 5 &&
              d.comment is string && d.comment.trim().size() >= 3 && d.comment.size() <= 2000 &&
              (!('userName' in d) || d.userName == null || (d.userName is string && d.userName.size() <= 120)) &&
-             (!('userPhotoURL' in d) || d.userPhotoURL == null || d.userPhotoURL == '' || isValidUrl(d.userPhotoURL, 2048));
+             (!('userPhotoURL' in d) || d.userPhotoURL == null || d.userPhotoURL == '' || isValidImageOrUrl(d.userPhotoURL, 2048));
     }
 
     function isValidConsent(d) {

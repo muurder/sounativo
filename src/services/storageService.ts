@@ -12,16 +12,146 @@ import { USE_FIREBASE_EMULATORS, firebaseConfig } from './firebase.config';
 
 let storageInstance: FirebaseStorage | null = null;
 let storageEmulatorConnected = false;
+let bucketAvailabilityCache: boolean | null = null;
+
+const BUCKET_UNAVAILABLE_SESSION_KEY = 'sounativo_storage_bucket_unprovisioned_v1';
 
 function resolveStorage(): FirebaseStorage | null {
   if (storageInstance) return storageInstance;
   if (!firebaseApp || !firebaseConfig.storageBucket) return null;
   storageInstance = getStorage(firebaseApp);
+  storageInstance.maxUploadRetryTime = 8000;
+  storageInstance.maxOperationRetryTime = 8000;
   if (USE_FIREBASE_EMULATORS && !storageEmulatorConnected) {
     connectStorageEmulator(storageInstance, 'localhost', 9199);
     storageEmulatorConnected = true;
   }
   return storageInstance;
+}
+
+async function isStorageBucketProvisioned(): Promise<boolean> {
+  if (USE_FIREBASE_EMULATORS) return true;
+  if (bucketAvailabilityCache !== null) return bucketAvailabilityCache;
+  if (!firebaseConfig.storageBucket) return false;
+
+  if (typeof window !== 'undefined') {
+    try {
+      if (window.sessionStorage.getItem(BUCKET_UNAVAILABLE_SESSION_KEY) === '1') {
+        bucketAvailabilityCache = false;
+        return false;
+      }
+    } catch {
+      // ignore sessionStorage restrictions
+    }
+  }
+
+  try {
+    // Simple GET without custom headers does not trigger a CORS OPTIONS preflight,
+    // and Google's UploadServer returns 404 with Access-Control-Allow-Origin: * when unprovisioned.
+    const probeUrl = `https://firebasestorage.googleapis.com/v0/b/${encodeURIComponent(
+      firebaseConfig.storageBucket
+    )}/o?maxResults=1`;
+    const res = await fetch(probeUrl, { method: 'GET' });
+    if (res.status === 404) {
+      bucketAvailabilityCache = false;
+      try {
+        window.sessionStorage.setItem(BUCKET_UNAVAILABLE_SESSION_KEY, '1');
+      } catch {
+        // ignore
+      }
+      return false;
+    }
+    bucketAvailabilityCache = true;
+    return true;
+  } catch {
+    bucketAvailabilityCache = false;
+    return false;
+  }
+}
+
+function blobToDataUrl(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      if (typeof reader.result === 'string') {
+        resolve(reader.result);
+      } else {
+        reject(new Error('Falha ao codificar imagem otimizada.'));
+      }
+    };
+    reader.onerror = () => reject(new Error('Não foi possível ler a imagem otimizada.'));
+    reader.readAsDataURL(blob);
+  });
+}
+
+async function compressImageForInlineFallback(
+  file: File,
+  scope: StorageMediaScope
+): Promise<{ dataUrl: string; bytes: number; contentType: string }> {
+  validateImageFile(file);
+  if (typeof document === 'undefined') {
+    const dataUrl = await blobToDataUrl(file);
+    return { dataUrl, bytes: file.size, contentType: file.type };
+  }
+
+  const maxDimension = scope === 'avatar' || scope === 'branding' ? 420 : 880;
+  const quality = scope === 'avatar' || scope === 'branding' ? 0.8 : 0.74;
+
+  return new Promise((resolve, reject) => {
+    const objectUrl = URL.createObjectURL(file);
+    const img = new Image();
+
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      const scale = Math.min(maxDimension / img.width, maxDimension / img.height, 1);
+      const targetWidth = Math.max(1, Math.round(img.width * scale));
+      const targetHeight = Math.max(1, Math.round(img.height * scale));
+
+      const canvas = document.createElement('canvas');
+      canvas.width = targetWidth;
+      canvas.height = targetHeight;
+      const ctx = canvas.getContext('2d');
+
+      if (!ctx) {
+        void blobToDataUrl(file)
+          .then((dataUrl) => resolve({ dataUrl, bytes: file.size, contentType: file.type }))
+          .catch(reject);
+        return;
+      }
+
+      ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
+      canvas.toBlob(
+        (webpBlob) => {
+          const finalizeBlob = (chosen: Blob, mime: string) => {
+            void blobToDataUrl(chosen)
+              .then((dataUrl) => {
+                resolve({ dataUrl, bytes: chosen.size, contentType: mime });
+              })
+              .catch(reject);
+          };
+
+          if (webpBlob && webpBlob.type === 'image/webp') {
+            finalizeBlob(webpBlob, 'image/webp');
+          } else {
+            canvas.toBlob(
+              (jpegBlob) => finalizeBlob(jpegBlob ?? file, jpegBlob ? 'image/jpeg' : file.type),
+              'image/jpeg',
+              quality
+            );
+          }
+        },
+        'image/webp',
+        quality
+      );
+    };
+
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error('Não foi possível processar o arquivo de imagem selecionado.'));
+    };
+
+    img.src = objectUrl;
+  });
 }
 
 export type StorageMediaScope = 'avatar' | 'branding' | 'banners' | 'trips';
@@ -220,16 +350,25 @@ export async function uploadImageToStorage(
   scope: StorageMediaScope,
   onProgress?: (percent: number) => void
 ): Promise<UploadedMediaResult> {
-  const activeStorage = resolveStorage();
-  if (!activeStorage) {
-    throw new Error(
-      'Firebase Storage não configurado. Defina VITE_FIREBASE_STORAGE_BUCKET no ambiente.'
-    );
-  }
-
   const currentUid = auth?.currentUser?.uid;
   if (!currentUid) {
     throw new Error('Faça login para enviar imagens ao SouNativo.');
+  }
+
+  const activeStorage = resolveStorage();
+  const bucketReady = activeStorage ? await isStorageBucketProvisioned() : false;
+
+  if (!activeStorage || !bucketReady) {
+    onProgress?.(35);
+    const inline = await compressImageForInlineFallback(file, scope);
+    const storagePath = buildStorageObjectPath(currentUid, scope, file.name, inline.contentType);
+    onProgress?.(100);
+    return {
+      downloadUrl: inline.dataUrl,
+      storagePath,
+      bytes: inline.bytes,
+      contentType: inline.contentType,
+    };
   }
 
   const { blob, contentType } = await compressImageForUpload(file, scope);
@@ -250,8 +389,20 @@ export async function uploadImageToStorage(
           onProgress(Math.min(100, Math.max(0, pct)));
         }
       },
-      (err) => {
-        reject(mapStorageError(err));
+      async (err) => {
+        try {
+          bucketAvailabilityCache = false;
+          const inline = await compressImageForInlineFallback(file, scope);
+          onProgress?.(100);
+          resolve({
+            downloadUrl: inline.dataUrl,
+            storagePath,
+            bytes: inline.bytes,
+            contentType: inline.contentType,
+          });
+        } catch {
+          reject(mapStorageError(err));
+        }
       },
       async () => {
         try {

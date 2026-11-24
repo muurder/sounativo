@@ -21,6 +21,7 @@ import {
   toIsoTimestamp,
 } from './firebase';
 import { SEED_TRIPS } from './seedCatalog';
+import { isSafeRasterDataUrl } from '@/utils/securitySanitizer';
 import { slugify } from '@/utils/slugUtils';
 import {
   BoardingPoint,
@@ -30,6 +31,7 @@ import {
   Trip,
   TripCategory,
   TripDeparture,
+  TripOperationalData,
 } from '@/types';
 
 const VALID_CATEGORIES = new Set<TripCategory>([
@@ -238,6 +240,9 @@ export function normalizeTripDoc(id: string, raw: Record<string, unknown>): Trip
     maxGuests,
     availableSpots,
     passengerConfig,
+    ...(raw.operationalData && typeof raw.operationalData === 'object'
+      ? { operationalData: raw.operationalData as TripOperationalData }
+      : {}),
     rating: Number.isFinite(Number(raw.rating)) ? Math.min(5, Math.max(0, Number(raw.rating))) : 0,
     totalReviews: Number.isFinite(Number(raw.totalReviews))
       ? Math.max(0, Math.round(Number(raw.totalReviews)))
@@ -421,7 +426,9 @@ export async function createTripInFirestore(
     startDate: payload.startDate,
     endDate: payload.endDate,
     durationDays: safeDuration,
-    images: (payload.images ?? []).filter((u) => /^https?:\/\//i.test(u)).slice(0, 20),
+    images: (payload.images ?? [])
+      .filter((u) => /^https?:\/\//i.test(u) || isSafeRasterDataUrl(u))
+      .slice(0, 20),
     category: payload.category,
     tags: (payload.tags ?? []).slice(0, 30),
     travelerTypes: (payload.travelerTypes ?? []).slice(0, 10),
@@ -481,6 +488,7 @@ export type EditableTripFields = Partial<
     | 'maxGuests'
     | 'availableSpots'
     | 'passengerConfig'
+    | 'operationalData'
     | 'isActive'
   >
 >;

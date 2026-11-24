@@ -1,5 +1,15 @@
 export type UserRole = 'CLIENT' | 'AGENCY' | 'GUIDE' | 'ADMIN';
 
+export interface UserAddress {
+  zipCode?: string;
+  street?: string;
+  number?: string;
+  complement?: string;
+  district?: string;
+  city?: string;
+  state?: string;
+}
+
 export interface GuideDetails {
   cadastur: string;
   languages: string[];
@@ -20,6 +30,7 @@ export interface UserProfile {
   phone?: string;
   cpf?: string;
   birthDate?: string;
+  address?: UserAddress;
   favorites: string[];
   notificationsEnabled: boolean;
   agencyId?: string;
